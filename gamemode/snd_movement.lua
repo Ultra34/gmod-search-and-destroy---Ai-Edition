@@ -7,6 +7,19 @@ function SND.Movement.Setup(ply)
 	ply.SND_Sprinting = false
 end
 
+hook.Add("StartCommand", "SND_FreezeInput", function(ply, cmd)
+	if not IsValid(ply) or not ply:Alive() then return end
+
+	local phase = SERVER and SND.Round.Phase or SND.Client.Phase
+	if phase == SND.PHASE_FREEZE then
+		-- Block all action inputs to prevent shooting, reloading, or planting
+		-- Intercepting buttons in StartCommand is more reliable for blocking weapon fire
+		local blocked = bit.bor(IN_ATTACK, IN_ATTACK2, IN_RELOAD, IN_USE)
+		cmd:SetButtons(bit.band(cmd:GetButtons(), bit.bnot(blocked)))
+		cmd:ClearMovement()
+	end
+end)
+
 hook.Add("SetupMove", "SND_Movement", function(ply, mv, cmd)
 	if not IsValid(ply) or not ply:Alive() then return end
 
@@ -17,11 +30,6 @@ hook.Add("SetupMove", "SND_Movement", function(ply, mv, cmd)
 		mv:SetSideSpeed(0)
 		mv:SetUpSpeed(0)
 		mv:SetVelocity(Vector(0, 0, 0))
-		
-		-- Block all action inputs to prevent shooting, reloading, or planting
-		local blocked = bit.bor(IN_ATTACK, IN_ATTACK2, IN_RELOAD, IN_USE)
-		cmd:SetButtons(bit.band(cmd:GetButtons(), bit.bnot(blocked)))
-
 		ply.SND_Sprinting = false
 		return
 	end

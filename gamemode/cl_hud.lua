@@ -18,6 +18,7 @@ local C_DIM    = col(160, 170, 190)
 local C_ATTACK = col(220,  70,  50)
 local C_DEFEND = col( 60, 140, 220)
 local C_BOMB   = col(255, 200,  60)
+local MAT_VIGNETTE = Material("gui/vignette")
 local C_DANGER = col(255,  60,  40) -- Used for "OUT OF AMMO" and match defeat
 local C_GREEN  = col( 80, 220, 100)
 local C_BG     = col(  0,   0,   0, 160)
@@ -36,6 +37,19 @@ hook.Add("HUDPaint", "SND_HUD", function()
 	local cv = GetConVar("snd_hud_scale")
 	local sc = math.Clamp(cv and cv:GetFloat() or 1, 0.75, 1.5)
 	local sw, sh = ScrW(), ScrH()
+
+	-- ── Visual Freeze Effect ──────────────────────────────────────────────
+	local phase = SND.Client.Phase or SND.PHASE_WAIT
+	if phase == SND.PHASE_FREEZE then
+		-- Light blue cold tint overlay
+		surface.SetDrawColor(100, 180, 255, 20)
+		surface.DrawRect(0, 0, sw, sh)
+
+		-- Cold blue vignette around the edges
+		surface.SetDrawColor(0, 120, 255, 120)
+		surface.SetMaterial(MAT_VIGNETTE)
+		surface.DrawTexturedRect(0, 0, sw, sh)
+	end
 
 	-- ── Score bar (top-left) ───────────────────────────────────────────────
 	local scoreW, scoreH = 220 * sc, 44 * sc
@@ -60,7 +74,6 @@ hook.Add("HUDPaint", "SND_HUD", function()
 	)
 
 	-- ── Phase label ───────────────────────────────────────────────────────
-	local phase = SND.Client.Phase or SND.PHASE_WAIT
 	local phaseStr = "WAITING"
 	if phase == SND.PHASE_FREEZE then phaseStr = "GET READY"
 	elseif phase == SND.PHASE_LIVE  then phaseStr = "LIVE"
