@@ -3,6 +3,7 @@ AddCSLuaFile("snd_settings.lua")
 AddCSLuaFile("cl_init.lua")
 AddCSLuaFile("cl_hud.lua")
 AddCSLuaFile("cl_settings.lua")
+AddCSLuaFile("snd_bot_anim.lua")
 
 include("shared.lua")
 include("snd_settings.lua")
@@ -17,6 +18,7 @@ include("snd_bots.lua")
 include("snd_spawns.lua")
 include("snd_rust.lua")
 include("snd_spectate.lua")
+include("snd_bot_anim.lua")
 
 DEFINE_BASECLASS("gamemode_base")
 
