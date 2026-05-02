@@ -22,10 +22,10 @@ hook.Add("TranslateActivity", "SND_CSSAnimTranslate", function(ply, act)
 	if ACT_MP_RUN then t[ACT_MP_RUN] = ACT_RUN end
 	if ACT_MP_CROUCHWALK then t[ACT_MP_CROUCHWALK] = ACT_WALK end
 	if ACT_MP_CROUCH_IDLE then t[ACT_MP_CROUCH_IDLE] = ACT_CROUCHIDLE end
-	if ACT_MP_JUMP then t[ACT_MP_JUMP] = ACT_JUMP end
-	if ACT_MP_JUMP_START then t[ACT_MP_JUMP_START] = ACT_JUMP end
-	if ACT_MP_JUMP_FLOAT then t[ACT_MP_JUMP_FLOAT] = ACT_GLIDE end
-	if ACT_MP_JUMP_LAND then t[ACT_MP_JUMP_LAND] = ACT_LAND end
+	if ACT_MP_JUMP then t[ACT_MP_JUMP] = ACT_HOP end -- CS:S models use ACT_HOP for jumping
+	if ACT_MP_JUMP_START then t[ACT_MP_JUMP_START] = ACT_HOP end
+	if ACT_MP_JUMP_FLOAT then t[ACT_MP_JUMP_FLOAT] = ACT_HOP end
+	if ACT_MP_JUMP_LAND then t[ACT_MP_JUMP_LAND] = ACT_IDLE end -- Map landing to idle to prevent T-pose
 
 	-- Fallback for HL2MP holdtypes if the model supports standard activities
 	if not t[act] and act >= 1600 and act <= 2000 then
@@ -124,7 +124,7 @@ if CLIENT then
 		local onGround = ply:IsOnGround()
 
 		if not onGround then
-			return ACT_JUMP, -1
+			return ACT_MP_JUMP, -1
 		end
 
 		if ply:Crouching() then
