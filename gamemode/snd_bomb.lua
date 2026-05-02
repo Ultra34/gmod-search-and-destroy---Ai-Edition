@@ -115,7 +115,7 @@ function SND.Bomb.TryDefuse(ply)
 	if ply.SND_Defusing then return end
 	ply.SND_Defusing = true
 
-	local defuseTime = SND.Settings.Get("defuse_time", 7.5)
+	local defuseTime = SND.Settings.Get("defuse_time", 8)
 	ply:ChatPrint("[SND] Defusing…")
 
 	local tid = "SND_Defuse_" .. ply:EntIndex()
