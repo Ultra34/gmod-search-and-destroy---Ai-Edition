@@ -174,7 +174,7 @@ hook.Add("HUDPaint", "SND_SiteHUD", function()
 				local timeStr   = string.format("%.1f", remaining)
 				local urgency   = remaining < 10 and Color(255, 60, 40, alpha) or Color(255, 210, 40, alpha)
 				draw.SimpleText(
-					"💣 " .. timeStr,
+					timeStr,
 					"Trebuchet18",
 					sx, sy + 36,
 					urgency,

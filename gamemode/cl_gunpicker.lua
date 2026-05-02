@@ -111,7 +111,7 @@ function SND.GunPicker.Open()
 				draw.SimpleText(friendlyName(class), "Trebuchet18", 12, h/2,
 				    Color(220,220,220), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
 				if self.selected then
-					draw.SimpleText("✔ Selected", "Trebuchet18", w - 12, h/2,
+					draw.SimpleText("Selected", "Trebuchet18", w - 12, h/2,
 					    Color(120,220,120), TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)
 				end
 			end

@@ -153,7 +153,7 @@ hook.Add("HUDPaint", "SND_HUD", function()
 		end
 
 		if bombLine then
-			draw.SimpleText("💣 " .. bombLine, "Trebuchet24", sw * 0.5, sh - 104 * sc,
+			draw.SimpleText(bombLine, "Trebuchet24", sw * 0.5, sh - 104 * sc,
 				C_BOMB, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER
 			)
 		end
