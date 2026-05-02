@@ -1,119 +1,167 @@
---[[
-	Map + loadout config.
-	CHANGES vs original:
-	  - Faction models swapped to Counter-Strike: Source player models
-	  - All other settings unchanged so existing weapon pools / sites still work
-]]
--- REPLACES: gamemode/snd_config.lua
+--[[ Map + loadout config — IW4 (MW2) weapon classes
+     REPLACES: gamemode/snd_config.lua ]]
 
 SND.Config = SND.Config or {}
 
--- ── ARC9 MW2 weapon pools (unchanged from original) ──────────────────────
-SND.Config.Mw2ePrimaries = {
-	"arc9_mw2e_acr",
-	"arc9_mw2e_ak47",
-	"arc9_mw2e_f2000",
-	"arc9_mw2e_fnfal",
-	"arc9_mw2e_famas",
-	"arc9_mw2e_m16a4",
-	"arc9_mw2e_m4a1",
-	"arc9_mw2e_scarh",
-	"arc9_mw2e_tavor",
-	"arc9_mw2e_aug",
-	"arc9_mw2e_m240",
-	"arc9_mw2e_mg4",
-	"arc9_mw2e_m1014",
-	"arc9_mw3e_m1887",
-	"arc9_mw2e_akimbo_1887",
-	"arc9_mw2e_ranger",
-	"arc9_mw2e_spas12",
-	"arc9_mw2e_cheytac",
-	"arc9_mw2e_mp5k",
-	"arc9_mw2e_pp2000",
-	"arc9_mw2e_vector",
+-- ── Assault Rifles ────────────────────────────────────────────────────────
+local AR = {
+	"iw4_acr",
+	"iw4_ak47",
+	"iw4_f200",
+	"iw4_fal",
+	"iw4_famas",
+	"iw4_m16a4",
+	"iw4_m4a1",
+	"iw4_scar",
+	"iw4_tavor",
 }
 
-SND.Config.Mw2eSecondaries = {
-	"arc9_mw2e_g17",
-	"arc9_mw2e_mk23",
-	"arc9_mw2e_m93r",
+-- ── Light Machine Guns ────────────────────────────────────────────────────
+local LMG = {
+	"iw4_rpd",
+	"iw4_mg4",
+	"iw4_m240",
+	"iw4_sa80",
 }
 
-SND.Config.Mw2eSpecial = {
-	"arc9_mw2e_stinger",
-	"arc9_mw2e_javelin",
-	"arc9_mw2e_thumper",
+-- ── Sub-Machine Guns ──────────────────────────────────────────────────────
+local SMG = {
+	"iw4_miniuzi",
+	"iw4_mp5",
+	"iw4_p90",
+	"iw4_ump45",
+	"iw4_vector",
+	"iw4_pp2000",
+	"iw4_tmp",
 }
 
--- ── Default loadouts (unchanged) ──────────────────────────────────────────
+-- ── Shotguns ──────────────────────────────────────────────────────────────
+local SG = {
+	"iw4_aa12",
+	"iw4_m1014",
+	"iw4_1887",
+	"iw4_ranger",
+	"iw4_spas12",
+	"iw4_striker",
+}
+
+-- ── Sniper Rifles ─────────────────────────────────────────────────────────
+local SR = {
+	"iw4_barrett",
+	"iw4_dragunov",
+	"iw4_cheytac",
+	"iw4_m14ebr",
+	"iw4_wa2000",
+}
+
+-- ── Other / Misc primaries ────────────────────────────────────────────────
+local MISC = {
+	"iw4_aug",        -- assault / scoped
+	"iw4_riotshield",
+}
+
+-- ── Secondaries (pistols) ─────────────────────────────────────────────────
+local PISTOLS = {
+	"iw4_anaconda",
+	"iw4_deserteagle",
+	"iw4_beretta",
+	"iw4_usp",
+	"iw4_glock",
+	"iw4_raffica",
+}
+
+-- ── Launchers — special slot, not given on spawn by default ───────────────
+local LAUNCHERS = {
+	"iw4_at4",
+	"iw4_javelin",
+	"iw4_rpg",
+	"iw4_stinger",
+	"iw4_m79",
+}
+
+-- ── Merged primary pool (everything that isn't a pistol or launcher) ──────
+SND.Config.Mw2ePrimaries = {}
+for _, t in ipairs({ AR, LMG, SMG, SG, SR, MISC }) do
+	for _, v in ipairs(t) do
+		table.insert(SND.Config.Mw2ePrimaries, v)
+	end
+end
+
+SND.Config.Mw2eSecondaries = PISTOLS
+SND.Config.Mw2eSpecial     = LAUNCHERS   -- wire to pickups / data loadout if wanted
+
+-- ── Default loadouts ──────────────────────────────────────────────────────
 SND.Config.DefaultLoadouts = {
 	attack = {
 		random_primary   = true,
 		random_secondary = true,
-		primary          = "arc9_mw2e_m4a1",
-		secondary        = "arc9_mw2e_g17",
+		primary          = "iw4_m4a1",
+		secondary        = "iw4_deserteagle",
 		lethal           = "weapon_frag",
 		tactical         = "",
 	},
 	defend = {
 		random_primary   = true,
 		random_secondary = true,
-		primary          = "arc9_mw2e_ak47",
-		secondary        = "arc9_mw2e_mk23",
+		primary          = "iw4_ak47",
+		secondary        = "iw4_usp",
 		lethal           = "weapon_frag",
 		tactical         = "",
 	},
 }
 
--- ── Bomb sites (unchanged) ────────────────────────────────────────────────
+-- ── Bot loadout pools (no snipers / riot shield — keeps AI sane) ──────────
+SND.Config.BotPrimaries = {}
+for _, v in ipairs(AR)  do table.insert(SND.Config.BotPrimaries, v) end
+for _, v in ipairs(SMG) do table.insert(SND.Config.BotPrimaries, v) end
+for _, v in ipairs(LMG) do table.insert(SND.Config.BotPrimaries, v) end
+
+SND.Config.BotSecondaries = {
+	"iw4_deserteagle",
+	"iw4_usp",
+	"iw4_glock",
+}
+
+-- ── Bomb sites ────────────────────────────────────────────────────────────
 SND.Config.MapSites = {
-	["gm_construct"] = {
-		{ id = "A", plantPos = Vector(-2176, -896, -144), defuseRadius = 96 },
-		{ id = "B", plantPos = Vector(2176,   896, -144), defuseRadius = 96 },
-	},
+	-- gm_construct removed; ttt_rust_v* handled by data overrides
 }
 
 SND.Config.MapSpawns = SND.Config.MapSpawns or {}
 
--- ── CSS PLAYER MODELS ─────────────────────────────────────────────────────
--- These ship with Counter-Strike: Source which Garry's Mod can mount.
--- If you don't have CS:S mounted the models will show as ERROR — either
--- mount CS:S in GMod options, or replace the paths with any installed models.
---
--- Attackers  → Terrorist faction models (T-side)
--- Defenders  → Counter-Terrorist faction models (CT-side)
+-- ── CSS faction models ────────────────────────────────────────────────────
 SND.Config.Factions = {
 	attack = {
 		name   = "Terrorists",
 		models = {
-			"models/player/t_phoenix.mdl",   -- Phoenix Connexion (red)
-			"models/player/t_leet.mdl",      -- Elite Crew
-			"models/player/t_guerilla.mdl",  -- Guerilla Warfare
-			"models/player/t_arctic.mdl",    -- Arctic Avengers
+			"models/player/t_phoenix.mdl",
+			"models/player/t_leet.mdl",
+			"models/player/t_guerilla.mdl",
+			"models/player/t_arctic.mdl",
 		},
 	},
 	defend = {
 		name   = "Counter-Terrorists",
 		models = {
-			"models/player/ct_urban.mdl",    -- SEAL Team 6 / Urban
-			"models/player/ct_gign.mdl",     -- GIGN (French)
-			"models/player/ct_sas.mdl",      -- SAS (British)
-			"models/player/ct_gsg9.mdl",     -- GSG-9 (German)
+			"models/player/ct_urban.mdl",
+			"models/player/ct_gign.mdl",
+			"models/player/ct_sas.mdl",
+			"models/player/ct_gsg9.mdl",
 		},
 	},
 }
 
--- ── Announcer (unchanged) ─────────────────────────────────────────────────
+-- ── Announcer ─────────────────────────────────────────────────────────────
 SND.Config.Announcer = {
 	prefix = "snd_mwclassic/announcer/",
 	pack   = "default",
 	sounds = {
-		round_start   = "round_start.wav",
-		bomb_planted  = "bomb_planted.wav",
-		bomb_defused  = "bomb_defused.wav",
-		last_alive    = "last_alive.wav",
-		attack_win    = "attackers_win.wav",
-		defend_win    = "defenders_win.wav",
+		round_start  = "round_start.wav",
+		bomb_planted = "bomb_planted.wav",
+		bomb_defused = "bomb_defused.wav",
+		last_alive   = "last_alive.wav",
+		attack_win   = "attackers_win.wav",
+		defend_win   = "defenders_win.wav",
 	},
 }
 
@@ -135,23 +183,19 @@ function SND.Config.LoadMapOverrides(map)
 	if not file.Exists(path, "DATA") then return end
 	local src = file.Read(path, "DATA")
 	if not src or src == "" then return end
-
 	local fn = CompileString(src, path)
 	if type(fn) ~= "function" then
-		print("[SND] Map override compile error (" .. path .. "): ", fn)
-		return
+		print("[SND] Map override compile error (" .. path .. "): ", fn) return
 	end
-
 	local ok, result = pcall(fn)
 	if not ok then print("[SND] Map override run error: ", result) return end
 	if type(result) ~= "table" then return end
-
 	if result.sites and #result.sites > 0 then
 		SND.Config.MapSites[map] = result.sites
-		print("[SND] Loaded " .. #result.sites .. " bomb site(s) from data for " .. map)
+		print("[SND] Loaded " .. #result.sites .. " site(s) for " .. map)
 	end
 	if result.spawns and (result.spawns.attack or result.spawns.defend) then
 		SND.Config.MapSpawns[map] = result.spawns
-		print("[SND] Loaded team spawns from data for " .. map)
+		print("[SND] Loaded spawns for " .. map)
 	end
 end

@@ -1,24 +1,24 @@
--- Optional: garrysmod/data/snd_mwclassic/loadouts.lua
--- Override defaults; use arc9_mw2e_* (and your pack’s grenade class if any) from ARC9 MW2.
+-- garrysmod/data/snd_mwclassic/loadouts.lua
+-- Optional: uncomment and edit to lock both teams to fixed weapons
+-- instead of drawing from the random iw4_ pools in snd_config.lua.
 
---[[ Example (uncomment for fixed MW2 kit instead of random pools):
-
+--[[
 SND.Config.DefaultLoadouts = {
 	attack = {
-		random_primary = false,
+		random_primary   = false,
 		random_secondary = false,
-		primary = "arc9_mw2e_m4a1",
-		secondary = "arc9_mw2e_g17",
-		lethal = "weapon_frag",
-		tactical = "",
+		primary          = "iw4_ak47",
+		secondary        = "iw4_deserteagle",
+		lethal           = "weapon_frag",
+		tactical         = "",
 	},
 	defend = {
-		random_primary = false,
+		random_primary   = false,
 		random_secondary = false,
-		primary = "arc9_mw2e_ak47",
-		secondary = "arc9_mw2e_mk23",
-		lethal = "weapon_frag",
-		tactical = "",
+		primary          = "iw4_m4a1",
+		secondary        = "iw4_usp",
+		lethal           = "weapon_frag",
+		tactical         = "",
 	},
 }
 ]]
