@@ -1,18 +1,56 @@
---[[ Bomb carry, plant, defuse — with progress networking, bomb prop, screen effects ]]
--- REPLACES: gamemode/snd_bomb.lua
+--[[ Bomb: plant at crosshair ground point, locked prop, CSS beeping, defuse
+     REPLACES: gamemode/snd_bomb.lua ]]
 
 SND.Bomb = SND.Bomb or {}
 
-SND.Bomb.State     = SND.BOMB_STATE_NONE
-SND.Bomb.Carrier   = nil
+SND.Bomb.State       = SND.BOMB_STATE_NONE
+SND.Bomb.Carrier     = nil
 SND.Bomb.PlantedSite = nil
-SND.Bomb.PlantPos  = nil
-SND.Bomb.DefuseEnd = 0
-SND.Bomb.PlantTime = nil
-SND.Bomb.PropEnt   = nil  -- the physical bomb prop in the world
+SND.Bomb.PlantPos    = nil   -- exact world pos where bomb was placed (crosshair trace)
+SND.Bomb.DefuseEnd   = 0
+SND.Bomb.PlantTime   = nil
+SND.Bomb.PropEnt     = nil
 
 util.AddNetworkString("SND_Bomb")
-util.AddNetworkString("SND_BombProgress")  -- plant / defuse progress bar
+util.AddNetworkString("SND_BombProgress")
+
+local FUSE_TIME = 45  -- seconds until detonation
+
+-- ── CSS beep sound ────────────────────────────────────────────────────────
+-- CS:S ships this at sound/weapons/c4/c4_beep1.wav
+-- If CS:S is not mounted fall back to a stock GMod click
+local BEEP_SOUND = "weapons/c4/c4_beep1.wav"
+
+-- Beep interval ramps from 1 s → 0.2 s over the fuse duration
+local function beepInterval(elapsed)
+	local frac = math.Clamp(elapsed / FUSE_TIME, 0, 1)
+	return math.max(0.2, 1.0 - frac * 0.8)
+end
+
+local function startBeepTimer()
+	timer.Remove("SND_BombBeep")
+
+	local function scheduleNext()
+		if SND.Bomb.State ~= SND.BOMB_STATE_PLANTED or not SND.Bomb.PlantTime then return end
+		local elapsed  = CurTime() - SND.Bomb.PlantTime
+		local interval = beepInterval(elapsed)
+
+		-- Emit from bomb position so players can hear where it is
+		for _, ply in ipairs(player.GetAll()) do
+			if IsValid(ply) then
+				ply:EmitSound(BEEP_SOUND, 75, 100, 1.0)
+			end
+		end
+
+		timer.Create("SND_BombBeep", interval, 1, scheduleNext)
+	end
+
+	scheduleNext()
+end
+
+local function stopBeepTimer()
+	timer.Remove("SND_BombBeep")
+end
 
 -- ── Sites helper ──────────────────────────────────────────────────────────
 local function getSites()
@@ -20,9 +58,7 @@ local function getSites()
 	local t   = SND.Config.MapSites[map]
 	if not t or #t == 0 then
 		local o = Vector(0, 0, 0)
-		for _, e in ipairs(ents.FindByClass("info_player_start")) do
-			o = e:GetPos() break
-		end
+		for _, e in ipairs(ents.FindByClass("info_player_start")) do o = e:GetPos() break end
 		return {
 			{ id = "A", plantPos = o + Vector( 400,   0, 0), defuseRadius = 96 },
 			{ id = "B", plantPos = o + Vector(-400, 200, 0), defuseRadius = 96 },
@@ -41,21 +77,55 @@ local function nearestSite(ply)
 	return bi, sites[bi], best
 end
 
--- ── Bomb prop (visible case on the ground) ────────────────────────────────
+-- ── Ground-look trace ─────────────────────────────────────────────────────
+-- Returns the hit position if the player's crosshair is pointing at a
+-- roughly horizontal surface within reach, otherwise returns nil.
+local PLANT_REACH   = 120  -- max distance in front of player
+local GROUND_DOT    = 0.65 -- surface normal dot with up-vector threshold
+                           -- (0.65 ≈ within ~50° of flat ground)
+
+local function getGroundPlantPos(ply)
+	local eyePos = ply:EyePos()
+	local fwd    = ply:EyeAngles():Forward()
+
+	local tr = util.TraceLine({
+		start  = eyePos,
+		endpos = eyePos + fwd * PLANT_REACH,
+		filter = ply,
+		mask   = MASK_SOLID_BRUSHONLY,
+	})
+
+	if not tr.Hit then return nil, "No surface in reach." end
+
+	-- Surface must face mostly upward (not a wall or ceiling)
+	if tr.HitNormal:Dot(Vector(0, 0, 1)) < GROUND_DOT then
+		return nil, "Look at the ground to plant."
+	end
+
+	return tr.HitPos, nil
+end
+
+-- ── Bomb prop (frozen, non-moveable) ─────────────────────────────────────
 local function spawnBombProp(pos)
 	if IsValid(SND.Bomb.PropEnt) then SND.Bomb.PropEnt:Remove() end
 
-	local e = ents.Create("prop_physics_override")
-	-- c4 prop from CS:S; falls back to a crate if CS:S isn't mounted
+	-- Use prop_dynamic: no physics simulation → stays exactly where placed
+	local e = ents.Create("prop_dynamic")
 	e:SetModel("models/weapons/w_c4.mdl")
-	if not e:GetModel() or e:GetModel() == "" then
+	-- Fallback model if CS:S not mounted
+	if not util.IsValidModel(e:GetModel()) then
 		e:SetModel("models/props_junk/wood_crate001a.mdl")
 	end
-	e:SetPos(pos + Vector(0, 0, 4))
-	e:SetCollisionGroup(COLLISION_GROUP_DEBRIS)
+	e:SetPos(pos)
+	e:SetAngles(Angle(0, 0, 0))
 	e:Spawn()
 	e:Activate()
-	e:SetUnFreezable(true)
+
+	-- Make it non-solid to players so they don't get stuck on it,
+	-- but keep it visible
+	e:SetCollisionGroup(COLLISION_GROUP_DEBRIS)
+	e:SetSolid(SOLID_NONE)
+
 	SND.Bomb.PropEnt = e
 end
 
@@ -75,13 +145,13 @@ function SND.Bomb.ResetForRound()
 	SND.Bomb.DefuseEnd   = 0
 	SND.Bomb.PlantTime   = nil
 	removeBombProp()
+	stopBeepTimer()
 
-	-- Cancel any pending timers
 	for _, ply in ipairs(player.GetAll()) do
 		timer.Remove("SND_Plant_"  .. ply:EntIndex())
 		timer.Remove("SND_Defuse_" .. ply:EntIndex())
-		ply.SND_Planting  = false
-		ply.SND_Defusing  = false
+		ply.SND_Planting = false
+		ply.SND_Defusing = false
 	end
 end
 
@@ -97,49 +167,55 @@ function SND.Bomb.AssignCarrier()
 	SND.Bomb.Carrier = carrier
 
 	net.Start("SND_Bomb")
-		net.WriteUInt(1, 3)         -- type 1 = carrier assigned
+		net.WriteUInt(1, 3)
 		net.WriteEntity(carrier)
 	net.Broadcast()
 end
 
 -- ── Plant ─────────────────────────────────────────────────────────────────
-local PLANT_MOVE_CANCEL = 48  -- units; cancel if player moves this far during planting
-
 function SND.Bomb.TryPlant(ply)
 	if SND.Round.Phase ~= SND.PHASE_LIVE       then return end
 	if not IsValid(ply)                         then return end
 	if ply:Team() ~= SND.TEAM_ATTACK           then return end
 	if SND.Bomb.State ~= SND.BOMB_STATE_CARRIED then return end
 	if ply ~= SND.Bomb.Carrier                 then return end
-	if ply.SND_Planting                        then return end  -- already planting
+	if ply.SND_Planting                        then return end
 
+	-- Must be within the nearest site radius
 	local _, site, dist = nearestSite(ply)
 	if not site or dist > (site.defuseRadius or 96) + 32 then
 		ply:ChatPrint("[SND] Move to a bomb site (A or B) to plant.")
 		return
 	end
 
-	local plantTime   = SND.Settings.Get("plant_time", 5)
-	local startPos    = ply:GetPos()
-	ply.SND_Planting  = true
-	local endTime     = CurTime() + plantTime
+	-- Must be looking at the ground
+	local groundPos, err = getGroundPlantPos(ply)
+	if not groundPos then
+		ply:ChatPrint("[SND] " .. (err or "Look at the ground to plant."))
+		return
+	end
 
-	-- Broadcast progress bar start to everyone
+	local plantTime  = SND.Settings.Get("plant_time", 5)
+	ply.SND_Planting = true
+	local endTime    = CurTime() + plantTime
+
+	-- Cache the intended plant position at the start of the plant action
+	-- so it doesn't jump around if the player looks away
+	local intendedPos = groundPos
+
 	net.Start("SND_BombProgress")
-		net.WriteUInt(1, 2)           -- 1 = plant started
+		net.WriteUInt(1, 2)
 		net.WriteEntity(ply)
 		net.WriteFloat(plantTime)
 	net.Broadcast()
 
-	-- Poll every 0.1s so we can cancel if they move or take damage
 	local tid = "SND_Plant_" .. ply:EntIndex()
 	timer.Create(tid, 0.1, 0, function()
 		if not IsValid(ply) or not ply:Alive() then
-			SND.Bomb.CancelAction(ply, "plant")
-			return
+			SND.Bomb.CancelAction(ply, "plant") return
 		end
 
-		-- Cancel if moved out of site
+		-- Cancel if walked out of site
 		local _, st2, d2 = nearestSite(ply)
 		if not st2 or d2 > (st2.defuseRadius or 96) + 80 then
 			SND.Bomb.CancelAction(ply, "plant")
@@ -147,7 +223,6 @@ function SND.Bomb.TryPlant(ply)
 			return
 		end
 
-		-- Done?
 		if CurTime() >= endTime then
 			timer.Remove(tid)
 			if not IsValid(ply) or not ply:Alive() then return end
@@ -157,23 +232,26 @@ function SND.Bomb.TryPlant(ply)
 
 			SND.Bomb.State       = SND.BOMB_STATE_PLANTED
 			SND.Bomb.Carrier     = nil
-			SND.Bomb.PlantedSite = st2 and st2.id or "?"
-			SND.Bomb.PlantPos    = st2 and st2.plantPos or ply:GetPos()
+			SND.Bomb.PlantedSite = (st2 or site).id
+			SND.Bomb.PlantPos    = intendedPos   -- exact crosshair point on ground
 			SND.Bomb.PlantTime   = CurTime()
 
-			spawnBombProp(SND.Bomb.PlantPos)
+			-- Spawn locked prop at the exact ground position
+			spawnBombProp(intendedPos)
+
+			-- Start CSS beeping
+			startBeepTimer()
 
 			SND.Announcer.BombPlanted()
 
 			net.Start("SND_Bomb")
-				net.WriteUInt(2, 3)   -- type 2 = bomb planted
-				net.WriteVector(SND.Bomb.PlantPos)
+				net.WriteUInt(2, 3)
+				net.WriteVector(intendedPos)
 				net.WriteString(SND.Bomb.PlantedSite)
 			net.Broadcast()
 
-			-- Tell clients to hide progress bar
 			net.Start("SND_BombProgress")
-				net.WriteUInt(0, 2)   -- 0 = hidden
+				net.WriteUInt(0, 2)
 				net.WriteEntity(ply)
 				net.WriteFloat(0)
 			net.Broadcast()
@@ -191,12 +269,12 @@ function SND.Bomb.TryDefuse(ply)
 	if ply:GetPos():Distance(SND.Bomb.PlantPos) > 128 then return end
 	if ply.SND_Defusing                        then return end
 
-	ply.SND_Defusing  = true
-	local defuseTime  = SND.Settings.Get("defuse_time", 8)
-	local endTime     = CurTime() + defuseTime
+	ply.SND_Defusing = true
+	local defuseTime = SND.Settings.Get("defuse_time", 8)
+	local endTime    = CurTime() + defuseTime
 
 	net.Start("SND_BombProgress")
-		net.WriteUInt(2, 2)           -- 2 = defuse started
+		net.WriteUInt(2, 2)
 		net.WriteEntity(ply)
 		net.WriteFloat(defuseTime)
 	net.Broadcast()
@@ -204,14 +282,11 @@ function SND.Bomb.TryDefuse(ply)
 	local tid = "SND_Defuse_" .. ply:EntIndex()
 	timer.Create(tid, 0.1, 0, function()
 		if not IsValid(ply) or not ply:Alive() then
-			SND.Bomb.CancelAction(ply, "defuse")
-			return
+			SND.Bomb.CancelAction(ply, "defuse") return
 		end
 		if SND.Bomb.State ~= SND.BOMB_STATE_PLANTED then
-			SND.Bomb.CancelAction(ply, "defuse")
-			return
+			SND.Bomb.CancelAction(ply, "defuse") return
 		end
-		-- Cancel if walked away
 		if ply:GetPos():Distance(SND.Bomb.PlantPos) > 160 then
 			SND.Bomb.CancelAction(ply, "defuse")
 			ply:ChatPrint("[SND] Defuse cancelled — too far from the bomb.")
@@ -220,6 +295,9 @@ function SND.Bomb.TryDefuse(ply)
 		if CurTime() >= endTime then
 			timer.Remove(tid)
 			ply.SND_Defusing = false
+
+			stopBeepTimer()
+			removeBombProp()
 
 			net.Start("SND_BombProgress")
 				net.WriteUInt(0, 2)
@@ -259,38 +337,38 @@ hook.Add("PlayerButtonDown", "SND_BombUse", function(ply, btn)
 	end
 end)
 
--- Cancel plant/defuse on taking damage
+-- Cancel on damage
 hook.Add("EntityTakeDamage", "SND_BombCancelOnDmg", function(ent, dmg)
 	if not IsValid(ent) or not ent:IsPlayer() then return end
-	if ent.SND_Planting then SND.Bomb.CancelAction(ent, "plant")
+	if ent.SND_Planting then
+		SND.Bomb.CancelAction(ent, "plant")
 		ent:ChatPrint("[SND] Plant cancelled — took damage.")
 	end
-	if ent.SND_Defusing then SND.Bomb.CancelAction(ent, "defuse")
+	if ent.SND_Defusing then
+		SND.Bomb.CancelAction(ent, "defuse")
 		ent:ChatPrint("[SND] Defuse cancelled — took damage.")
 	end
 end)
 
 -- ── Explosion countdown ───────────────────────────────────────────────────
-local FUSE_TIME = 45  -- seconds; matches README
-
 timer.Create("SND_BombExplode", 1, 0, function()
-	if SND.Round.Phase ~= SND.PHASE_LIVE then return end
+	if SND.Round.Phase ~= SND.PHASE_LIVE        then return end
 	if SND.Bomb.State  ~= SND.BOMB_STATE_PLANTED then return end
 	if not SND.Bomb.PlantPos or not SND.Bomb.PlantTime then return end
 
 	if CurTime() >= SND.Bomb.PlantTime + FUSE_TIME then
-		-- Explosion effect at planted position
+		stopBeepTimer()
+
 		local eff = EffectData()
 		eff:SetOrigin(SND.Bomb.PlantPos)
 		eff:SetScale(4)
 		util.Effect("Explosion", eff)
 
-		-- Screen shake for everyone nearby
 		for _, ply in ipairs(player.GetAll()) do
 			if IsValid(ply) and ply:Alive() then
 				local d = ply:GetPos():Distance(SND.Bomb.PlantPos)
 				if d < 2000 then
-					util.ScreenShake(ply:GetPos(), 20 * (1 - d/2000), 10, 1.5, 500)
+					util.ScreenShake(ply:GetPos(), 20 * (1 - d / 2000), 10, 1.5, 500)
 				end
 			end
 		end

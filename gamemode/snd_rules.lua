@@ -1,32 +1,38 @@
---[[ Server rules enforced by the gamemode
-     NEW FILE: gamemode/snd_rules.lua
-     Add to init.lua:  include("snd_rules.lua")
-]]
+--[[ Server rules — noclip disabled via every available hook
+     REPLACES: gamemode/snd_rules.lua ]]
 
--- ── Noclip: completely disabled for everyone ──────────────────────────────
-hook.Add("PlayerNoClip", "SND_NoNoclip", function(ply, wantsNoclip)
-	-- Return false to deny the toggle regardless of who asks
+-- ── Noclip: three layers of prevention ───────────────────────────────────
+
+-- Layer 1: the canonical GMod hook — returning false denies the toggle
+hook.Add("PlayerNoClip", "SND_NoNoclip", function(ply, desiredState)
 	return false
 end)
 
--- Belt-and-suspenders: strip noclip if somehow already active on spawn
+-- Layer 2: override the gamemode method itself so the base class can't re-enable it
+function GM:PlayerNoClip(ply, desiredState)
+	return false
+end
+
+-- Layer 3: poll every 0.5 s and forcibly walk anyone who somehow got noclip
+timer.Create("SND_NoclipEnforce", 0.5, 0, function()
+	for _, ply in ipairs(player.GetAll()) do
+		if IsValid(ply) and ply:GetMoveType() == MOVETYPE_NOCLIP then
+			ply:SetMoveType(MOVETYPE_WALK)
+		end
+	end
+end)
+
+-- Layer 4: strip it on every spawn as a safety net
 hook.Add("PlayerSpawn", "SND_StripNoclip", function(ply)
 	if ply:GetMoveType() == MOVETYPE_NOCLIP then
 		ply:SetMoveType(MOVETYPE_WALK)
 	end
 end)
 
--- ── Prevent weapon drop (keeps CSS world models tidy) ────────────────────
+-- ── Dropped weapons removed instantly (keeps map clean) ───────────────────
 hook.Add("PlayerDroppedWeapon", "SND_NoWeaponDrop", function(ply, wep)
-	-- Remove the dropped entity immediately so weapons don't litter the map
-	if IsValid(wep) then
-		wep:Remove()
-	end
+	if IsValid(wep) then wep:Remove() end
 end)
 
--- Block +drop command
-hook.Add("PlayerSwitchWeapon", "SND_DropBlock", function(ply, old, new)
-	-- allow normal switching
-end)
-
+-- Block the drop console command
 concommand.Add("drop", function() end, nil, nil, FCVAR_CLIENTCMD_CAN_EXECUTE)
