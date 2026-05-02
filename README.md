@@ -48,6 +48,26 @@ Garry’s Mod **gamemode** inspired by Call of Duty Search & Destroy: one life p
 
 ---
 
+## Workshop map: Rust (`ttt_rust_v1a`)
+
+The MW2-style Rust port **[TTT] Rust** on the Steam Workshop ([file `2922376072`](https://steamcommunity.com/sharedfiles/filedetails/?id=2922376072)) uses BSP name **`ttt_rust_v1a`**.
+
+1. Subscribe and enable the addon so the map appears under **Sandbox / map browser**.
+2. Launch it with this gamemode, for example:
+   ```
+   gamemode snd_mwclassic
+   map ttt_rust_v1a
+   ```
+3. On first load, the gamemode **auto-builds** two bomb sites and attacker/defender spawn lists by scanning the map’s player spawn entities and tracing down to the ground (site **A** biased toward the **top-right** of the spawn hull, site **B** near the **center** — aligned with classic Rust layout).
+4. If attackers/defenders feel **swapped** relative to the map, set **`snd_rust_swap_spawns 1`** (or use a data override — below).
+5. To **hand-tune** positions, stand where you want a spawn or site and run (SuperAdmin):
+   - **`snd_rust_dump_spawn_line`** — prints one `{ pos, ang }` line for `data/snd_mwclassic/maps/ttt_rust_v1a.lua`
+   - **`snd_rust_dump_site_vectors`** — prints a `plantPos` line at your feet (ground-traced)
+
+Copy **`copy_to_garrysmod_data/snd_mwclassic/maps/ttt_rust_v1a.example.lua`** → rename to **`ttt_rust_v1a.lua`**, uncomment the `return { ... }` block, and paste Vectors from the console. That file overrides auto-layout.
+
+---
+
 ## Configuration
 
 ### Bomb sites & factions
@@ -56,6 +76,7 @@ Edit **`gamemode/snd_config.lua`**:
 
 - **`SND.Config.MapSites`** — per-map A/B (or more) sites: `plantPos`, `defuseRadius`, `id`.  
   Unknown maps fall back to offsets from `info_player_start` (good for testing only).
+- **`garrysmod/data/snd_mwclassic/maps/<mapname>.lua`** — optional Lua file returning `{ sites = {...}, spawns = { attack = {...}, defend = {...} } }` (see **`maps/ttt_rust_v1a.example.lua`** in `copy_to_garrysmod_data`). Overrides auto-layout when present.
 - **`SND.Config.Factions`** — team display names and player `models/` lists.
 - **`SND.Config.Announcer`** — sound filenames under `sound/snd_mwclassic/announcer/`.
 
@@ -83,6 +104,7 @@ Edit **`gamemode/snd_config.lua`**:
 | `snd_team_balance` | `1` shuffles players when team counts differ by more than one |
 | `snd_mapvote_enabled`, `snd_mapvote_time` | End-of-match vote using `data/snd_mwclassic/maps.txt` |
 | `snd_announcer_volume`, `snd_hud_scale` | Client-facing / replicated tuning |
+| `snd_rust_swap_spawns` | `ttt_rust_v1a` only: swap attacker/defender auto-spawn halves (`0` / `1`) |
 
 ### In-game settings menu
 

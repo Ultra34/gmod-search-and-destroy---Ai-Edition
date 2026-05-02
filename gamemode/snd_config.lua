@@ -21,13 +21,17 @@ SND.Config.DefaultLoadouts = {
 	},
 }
 
--- Maps that register bomb sites (add your snd_/de_ maps). Positions are approximate — tune per map.
+-- Maps that register bomb sites (add your snd_/de_/ttt_ maps). Tune via data/snd_mwclassic/maps/<map>.lua or in-game calibration.
 SND.Config.MapSites = {
 	["gm_construct"] = {
 		{ id = "A", plantPos = Vector(-2176, -896, -144), defuseRadius = 96 },
 		{ id = "B", plantPos = Vector(2176, 896, -144), defuseRadius = 96 },
 	},
 }
+
+--[[ Team spawn lists: [map] = { attack = { { pos=Vector, ang=Angle }, ... }, defend = { ... } }
+	Filled by data file or auto-layout (e.g. Workshop ttt_rust_v1a). ]]
+SND.Config.MapSpawns = SND.Config.MapSpawns or {}
 
 -- Model paths for factions (change to your player models)
 SND.Config.Factions = {
@@ -71,5 +75,36 @@ function SND.Config.LoadDataFile()
 		if not ok then
 			print("[SND] Failed loading data loadouts: ", err)
 		end
+	end
+end
+
+--- Optional per-map overrides: garrysmod/data/snd_mwclassic/maps/<mapname>.lua returning { sites = {...}, spawns = {...} }
+function SND.Config.LoadMapOverrides(map)
+	if not SERVER or not map then return end
+	local path = "snd_mwclassic/maps/" .. map .. ".lua"
+	if not file.Exists(path, "DATA") then return end
+	local src = file.Read(path, "DATA")
+	if not src or src == "" then return end
+
+	local fn = CompileString(src, path)
+	if type(fn) ~= "function" then
+		print("[SND] Map override compile error (" .. path .. "): ", fn)
+		return
+	end
+
+	local ok, result = pcall(fn)
+	if not ok then
+		print("[SND] Map override run error: ", result)
+		return
+	end
+	if type(result) ~= "table" then return end
+
+	if result.sites and #result.sites > 0 then
+		SND.Config.MapSites[map] = result.sites
+		print("[SND] Loaded " .. #result.sites .. " bomb site(s) from data for " .. map)
+	end
+	if result.spawns and (result.spawns.attack or result.spawns.defend) then
+		SND.Config.MapSpawns[map] = result.spawns
+		print("[SND] Loaded team spawns from data for " .. map)
 	end
 end

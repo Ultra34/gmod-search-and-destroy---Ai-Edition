@@ -1,3 +1,4 @@
 # Supported maps for voting — one name per line (no .bsp)
 gm_construct
 gm_flatgrass
+ttt_rust_v1a

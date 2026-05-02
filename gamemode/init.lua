@@ -14,6 +14,8 @@ include("snd_loadout.lua")
 include("snd_mapvote.lua")
 include("snd_announcer.lua")
 include("snd_bots.lua")
+include("snd_spawns.lua")
+include("snd_rust.lua")
 
 DEFINE_BASECLASS("gamemode_base")
 
@@ -47,6 +49,7 @@ function GM:PlayerSpawn(ply)
 	SND.Teams.ApplyFactionModel(ply)
 	SND.Movement.Setup(ply)
 	SND.Loadout.Apply(ply)
+	SND.Spawns.Apply(ply)
 	SND.Bots.OnPlayerSpawn(ply)
 end
 
@@ -100,5 +103,11 @@ net.Receive("SND_SetCvar", function(_, ply)
 		cv:SetFloat(num)
 	else
 		cv:SetString(val)
+	end
+end)
+
+hook.Add("InitPostEntity", "SND_RustMapSetup", function()
+	if SERVER then
+		SND.Rust.InitPostEntity()
 	end
 end)
