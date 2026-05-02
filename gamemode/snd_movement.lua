@@ -58,3 +58,24 @@ hook.Add("Move", "SND_AirAccel", function(ply, mv)
 		mv:SetVelocity(vel)
 	end
 end)
+
+-- ── Fall Feedback (Screen Shake / View Punch) ─────────────────────────────
+if SERVER then
+	hook.Add("OnPlayerHitGround", "SND_FallLandingEffects", function(ply, inWater, onFloater, speed)
+		if inWater or speed < 300 then return end
+
+		-- Always apply a slight view dip on landing
+		local punchIntensity = math.Clamp(speed * 0.02, 2, 15)
+		ply:ViewPunch(Angle(punchIntensity, 0, math.random(-2, 2)))
+
+		-- If it was a hard landing (took damage threshold)
+		if speed > 580 then
+			-- Intense screen shake
+			util.ScreenShake(ply:GetPos(), 12, 5, 0.6, 500)
+			
+			-- Play "thud" and grunt sounds
+			ply:EmitSound("player/damage_fall" .. math.random(1, 3) .. ".wav", 75, 100, 0.8)
+			ply:EmitSound("physics/flesh/flesh_bloody_break.wav", 70, 110, 0.4)
+		end
+	end)
+end
