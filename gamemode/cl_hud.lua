@@ -73,6 +73,39 @@ hook.Add("HUDPaint", "SND_HUD", function()
 		C_DIM, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP
 	)
 
+	-- ── Central Timer (Match & Bomb) ─────────────────────────────────────
+	if phase == SND.PHASE_LIVE or phase == SND.PHASE_FREEZE then
+		local timerVal = math.max(0, (SND.Round.RoundTimerEnd or 0) - CurTime())
+		local timerCol = C_WHITE
+		local isBomb = false
+
+		-- Bomb timer takes priority over the round timer once planted
+		if SND.Bomb and SND.Bomb.State == SND.BOMB_STATE_PLANTED and SND.Bomb.PlantTime then
+			local fuse = 45 -- Matches FUSE_TIME in snd_bomb.lua
+			timerVal = math.max(0, fuse - (CurTime() - SND.Bomb.PlantTime))
+			timerCol = C_BOMB
+			isBomb = true
+			
+			-- Pulse red when detonation is imminent (under 10s)
+			if timerVal < 10 then
+				local p = math.abs(math.sin(CurTime() * 10))
+				timerCol = col(255, 60 + 195 * p, 40 + 215 * p)
+			end
+		end
+
+		local m = math.floor(timerVal / 60)
+		local s = math.floor(timerVal % 60)
+		local timerText = (isBomb and timerVal < 10) and string.format("%.1f", timerVal) or string.format("%02d:%02d", m, s)
+
+		surface.SetFont("DermaLarge")
+		local tw, th = surface.GetTextSize(timerText)
+		local boxW = tw + 30 * sc
+		local boxH = th + 4 * sc
+		
+		pill(sw * 0.5 - boxW * 0.5, 12 * sc, boxW, boxH, C_PILL)
+		draw.SimpleText(timerText, "DermaLarge", sw * 0.5, 12 * sc + boxH * 0.5, timerCol, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+	end
+
 	-- ── FREEZE COUNTDOWN BAR (bottom-center) ──────────────────────────────
 	if phase == SND.PHASE_FREEZE and freezeEndTime > 0 then
 		local remaining = math.max(0, freezeEndTime - CurTime())
