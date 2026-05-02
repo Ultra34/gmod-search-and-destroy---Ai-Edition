@@ -1,10 +1,14 @@
 --[[
-	Map + loadout config. Copy to garrysmod/data/snd_mwclassic/ on server or override via ConVars.
-	ARC9 MW2 Extended (arc9_mw2e_*) + one MW3 model1887 entry as provided — verify in spawn menu / gm_giveswep.
+	Map + loadout config.
+	CHANGES vs original:
+	  - Faction models swapped to Counter-Strike: Source player models
+	  - All other settings unchanged so existing weapon pools / sites still work
 ]]
+-- REPLACES: gamemode/snd_config.lua
 
 SND.Config = SND.Config or {}
 
+-- ── ARC9 MW2 weapon pools (unchanged from original) ──────────────────────
 SND.Config.Mw2ePrimaries = {
 	"arc9_mw2e_acr",
 	"arc9_mw2e_ak47",
@@ -35,78 +39,85 @@ SND.Config.Mw2eSecondaries = {
 	"arc9_mw2e_m93r",
 }
 
--- Launchers (not rolled into default random primary — wire pickups or data loadout if wanted)
 SND.Config.Mw2eSpecial = {
 	"arc9_mw2e_stinger",
 	"arc9_mw2e_javelin",
 	"arc9_mw2e_thumper",
 }
 
---[[ Default loadouts: random primary + random secondary from pools unless snd_loadout_* ConVars set.
-	Lethal uses stock frag unless your MW2 pack exposes an arc9 grenade class. ]]
+-- ── Default loadouts (unchanged) ──────────────────────────────────────────
 SND.Config.DefaultLoadouts = {
 	attack = {
-		random_primary = true,
+		random_primary   = true,
 		random_secondary = true,
-		primary = "arc9_mw2e_m4a1",
-		secondary = "arc9_mw2e_g17",
-		lethal = "weapon_frag",
-		tactical = "",
+		primary          = "arc9_mw2e_m4a1",
+		secondary        = "arc9_mw2e_g17",
+		lethal           = "weapon_frag",
+		tactical         = "",
 	},
 	defend = {
-		random_primary = true,
+		random_primary   = true,
 		random_secondary = true,
-		primary = "arc9_mw2e_ak47",
-		secondary = "arc9_mw2e_mk23",
-		lethal = "weapon_frag",
-		tactical = "",
+		primary          = "arc9_mw2e_ak47",
+		secondary        = "arc9_mw2e_mk23",
+		lethal           = "weapon_frag",
+		tactical         = "",
 	},
 }
 
--- Maps that register bomb sites (add your snd_/de_/ttt_ maps). Tune via data/snd_mwclassic/maps/<map>.lua or in-game calibration.
+-- ── Bomb sites (unchanged) ────────────────────────────────────────────────
 SND.Config.MapSites = {
 	["gm_construct"] = {
 		{ id = "A", plantPos = Vector(-2176, -896, -144), defuseRadius = 96 },
-		{ id = "B", plantPos = Vector(2176, 896, -144), defuseRadius = 96 },
+		{ id = "B", plantPos = Vector(2176,   896, -144), defuseRadius = 96 },
 	},
 }
 
---[[ Team spawn lists: [map] = { attack = { { pos=Vector, ang=Angle }, ... }, defend = { ... } }
-	Filled by data file or auto-layout (e.g. Workshop ttt_rust_v1a). ]]
 SND.Config.MapSpawns = SND.Config.MapSpawns or {}
 
--- Model paths for factions (change to your player models)
+-- ── CSS PLAYER MODELS ─────────────────────────────────────────────────────
+-- These ship with Counter-Strike: Source which Garry's Mod can mount.
+-- If you don't have CS:S mounted the models will show as ERROR — either
+-- mount CS:S in GMod options, or replace the paths with any installed models.
+--
+-- Attackers  → Terrorist faction models (T-side)
+-- Defenders  → Counter-Terrorist faction models (CT-side)
 SND.Config.Factions = {
 	attack = {
-		name = "OpFor",
+		name   = "Terrorists",
 		models = {
-			"models/player/group03/male_02.mdl",
-			"models/player/group03/male_04.mdl",
+			"models/player/t_phoenix.mdl",   -- Phoenix Connexion (red)
+			"models/player/t_leet.mdl",      -- Elite Crew
+			"models/player/t_guerilla.mdl",  -- Guerilla Warfare
+			"models/player/t_arctic.mdl",    -- Arctic Avengers
 		},
 	},
 	defend = {
-		name = "TF141",
+		name   = "Counter-Terrorists",
 		models = {
-			"models/player/group01/male_01.mdl",
-			"models/player/group01/male_03.mdl",
+			"models/player/ct_urban.mdl",    -- SEAL Team 6 / Urban
+			"models/player/ct_gign.mdl",     -- GIGN (French)
+			"models/player/ct_sas.mdl",      -- SAS (British)
+			"models/player/ct_gsg9.mdl",     -- GSG-9 (German)
 		},
 	},
 }
 
--- Announcer sounds (place .wav/.mp3 under sound/snd_mwclassic/announcer/…)
+-- ── Announcer (unchanged) ─────────────────────────────────────────────────
 SND.Config.Announcer = {
 	prefix = "snd_mwclassic/announcer/",
-	pack = "default",
+	pack   = "default",
 	sounds = {
-		round_start = "round_start.wav",
-		bomb_planted = "bomb_planted.wav",
-		bomb_defused = "bomb_defused.wav",
-		last_alive = "last_alive.wav",
-		attack_win = "attackers_win.wav",
-		defend_win = "defenders_win.wav",
+		round_start   = "round_start.wav",
+		bomb_planted  = "bomb_planted.wav",
+		bomb_defused  = "bomb_defused.wav",
+		last_alive    = "last_alive.wav",
+		attack_win    = "attackers_win.wav",
+		defend_win    = "defenders_win.wav",
 	},
 }
 
+-- ── Data file loaders (unchanged) ─────────────────────────────────────────
 function SND.Config.LoadDataFile()
 	if not SERVER then return end
 	local path = "snd_mwclassic/loadouts.lua"
@@ -114,13 +125,10 @@ function SND.Config.LoadDataFile()
 		local ok, err = pcall(function()
 			RunString(file.Read(path, "DATA"), "snd_mwclassic/loadouts.lua")
 		end)
-		if not ok then
-			print("[SND] Failed loading data loadouts: ", err)
-		end
+		if not ok then print("[SND] Failed loading data loadouts: ", err) end
 	end
 end
 
---- Optional per-map overrides: garrysmod/data/snd_mwclassic/maps/<mapname>.lua returning { sites = {...}, spawns = {...} }
 function SND.Config.LoadMapOverrides(map)
 	if not SERVER or not map then return end
 	local path = "snd_mwclassic/maps/" .. map .. ".lua"
@@ -135,10 +143,7 @@ function SND.Config.LoadMapOverrides(map)
 	end
 
 	local ok, result = pcall(fn)
-	if not ok then
-		print("[SND] Map override run error: ", result)
-		return
-	end
+	if not ok then print("[SND] Map override run error: ", result) return end
 	if type(result) ~= "table" then return end
 
 	if result.sites and #result.sites > 0 then
