@@ -8,12 +8,15 @@ SND.Client = SND.Client or {}
 SND.Client.Phase = SND.PHASE_WAIT
 SND.Client.AttackScore = 0
 SND.Client.DefendScore = 0
+SND.Round = SND.Round or {}
+SND.Round.RoundTimerEnd = 0
 
 net.Receive("SND_RoundState", function()
 	SND.Client.Phase = net.ReadUInt(3)
 	net.ReadUInt(4)
 	SND.Client.AttackScore = net.ReadUInt(8)
 	SND.Client.DefendScore = net.ReadUInt(8)
+	SND.Round.RoundTimerEnd = net.ReadDouble()
 end)
 
 net.Receive("SND_Bomb", function()
