@@ -126,19 +126,47 @@ hook.Add("HUDPaint", "SND_HUD", function()
 
 	-- ── Victory Messages (Round End) ──────────────────────────────────────
 	if phase == SND.PHASE_POST then
+		local winLimit = SND.Settings.GetInt("win_limit", 4)
+		local matchOver = (SND.Client.AttackScore or 0) >= winLimit or (SND.Client.DefendScore or 0) >= winLimit
+
+		if matchOver then
+			draw.RoundedBox(0, 0, 0, sw, sh, col(0, 0, 0, 200))
+		end
+
 		local winStr = "ROUND DRAW"
 		local winCol = C_WHITE
-		local winner = SND.Client.Winner
+		local subStr = ""
+		local winner = SND.Client.Winner or SND.WIN_NONE
+		local lpTeam = lp:Team()
 
 		if winner == SND.WIN_ATTACK_ELIM or winner == SND.WIN_ATTACK_PLANT then
-			winStr = "ATTACKERS WIN"
-			winCol = C_ATTACK
+			subStr = "ATTACKERS WIN"
+			if lpTeam == SND.TEAM_ATTACK then
+				winStr = matchOver and "MATCH VICTORY" or "VICTORY"
+				winCol = C_GREEN
+			else
+				winStr = matchOver and "MATCH DEFEAT" or "DEFEAT"
+				winCol = C_DANGER
+			end
 		elseif winner == SND.WIN_DEFEND_ELIM or winner == SND.WIN_DEFEND_DEFUSE or winner == SND.WIN_TIME then
-			winStr = "DEFENDERS WIN"
-			winCol = C_DEFEND
+			subStr = "DEFENDERS WIN"
+			if lpTeam == SND.TEAM_DEFEND then
+				winStr = matchOver and "MATCH VICTORY" or "VICTORY"
+				winCol = C_GREEN
+			else
+				winStr = matchOver and "MATCH DEFEAT" or "DEFEAT"
+				winCol = C_DANGER
+			end
+		end
+
+		if matchOver and winner ~= SND.WIN_DRAW then
+			subStr = subStr .. " — FINAL SCORE " .. (SND.Client.AttackScore or 0) .. ":" .. (SND.Client.DefendScore or 0)
 		end
 
 		draw.SimpleText(winStr, "DermaLarge", sw * 0.5, sh * 0.3, winCol, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+		if subStr ~= "" then
+			draw.SimpleText(subStr, "Trebuchet24", sw * 0.5, sh * 0.3 + 40 * sc, C_DIM, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+		end
 	end
 
 	-- ── Spectator label ───────────────────────────────────────────────────
