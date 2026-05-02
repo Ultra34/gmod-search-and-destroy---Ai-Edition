@@ -1,0 +1,28 @@
+================================================================================
+  GARRY'S MOD REQUIRES THIS EXACT FILENAME
+================================================================================
+
+The gamemode descriptor next to the "gamemode" folder MUST be named:
+
+    snd_mwclassic.txt
+
+NOT "gamemode.txt".
+
+The first line inside the file must be the same word as the folder name:
+
+    "snd_mwclassic"
+    {
+        ...
+    }
+
+Official wiki (Gamemode Creation): the text file is named after your gamemode
+folder (same idea as sandbox/sandbox.txt, base/base.txt).
+
+Full path example:
+
+    ...\GarrysMod\garrysmod\gamemodes\snd_mwclassic\snd_mwclassic.txt
+    ...\GarrysMod\garrysmod\gamemodes\snd_mwclassic\gamemode\init.lua
+
+After copying or renaming, completely quit Garry's Mod and start again.
+
+================================================================================

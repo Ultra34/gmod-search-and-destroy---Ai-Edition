@@ -98,7 +98,7 @@ STEP 1 — Get the files
     A) Clone Git:
          git clone https://github.com/Ultra34/gmod-search-and-destroy---Ai-Edition.git
        You will get a folder (repo name). Inside it is the gamemode tree
-       with gamemode.txt at the root of snd_mwclassic.
+       with snd_mwclassic.txt at the root of snd_mwclassic (NOT gamemode.txt).
 
     B) Download ZIP from GitHub → Extract.
 
@@ -109,7 +109,7 @@ STEP 2 — Folder name and placement
     snd_mwclassic
 
   That folder must contain at least:
-    - gamemode.txt
+    - snd_mwclassic.txt
     - gamemode\   (with init.lua, shared.lua, snd_*.lua, cl_*.lua, etc.)
 
   Copy the entire "snd_mwclassic" folder into:
@@ -118,12 +118,12 @@ STEP 2 — Folder name and placement
 
   After copying, this file must exist:
 
-    <GarrysMod>/garrysmod/gamemodes/snd_mwclassic/gamemode.txt
+    <GarrysMod>/garrysmod/gamemodes/snd_mwclassic/snd_mwclassic.txt
 
 STEP 3 — Verify in-game
 -----------------------
   Launch Garry's Mod → Find the gamemode list (depends on main menu / beta
-  UI). Select "Search & Destroy (ARC9 MW2)" or similar title from gamemode.txt.
+  UI). Select "Search and Destroy ARC9 MW2" or similar title from snd_mwclassic.txt.
 
   Or from console (main menu):
 
@@ -526,27 +526,29 @@ PROBLEM: Rust auto spawns feel swapped
 
 PROBLEM: Gamemode does NOT appear in the Garry's Mod menu
 ----------------------------------------------------------
-  This is almost always INSTALL PATH or gamemode.txt parse failure.
+  This is almost always INSTALL PATH, WRONG DESCRIPTOR FILENAME, or KeyValues
+  parse failure. The descriptor file MUST be named snd_mwclassic.txt (see
+  IMPORTANT_FILENAME.txt in this folder).
 
   CORRECT FOLDER LAYOUT (Windows example):
-    ...\Steam\steamapps\common\GarrysMod\garrysmod\gamemodes\snd_mwclassic\gamemode.txt
+    ...\Steam\steamapps\common\GarrysMod\garrysmod\gamemodes\snd_mwclassic\snd_mwclassic.txt
     ...\Steam\steamapps\common\GarrysMod\garrysmod\gamemodes\snd_mwclassic\gamemode\init.lua
 
   WRONG (common mistakes):
     - Putting the gamemode inside addons\ instead of gamemodes\
     - Leaving the repo folder name as gmod-search-and-destroy---Ai-Edition
       GMod expects the INNER folder named exactly: snd_mwclassic
-    - gamemode.txt sitting one level too deep (e.g. ...\snd_mwclassic\snd_mwclassic\)
+    - snd_mwclassic.txt sitting one level too deep (e.g. ...\snd_mwclassic\snd_mwclassic\)
 
   WHERE TO CLICK IN-GAME: Start a new game (single player or listen host).
   In the setup screen, open the GAMEMODE dropdown / list and look for
-  "Search & Destroy (ARC9 MW2)" (exact title may match gamemode.txt).
+  "Search and Destroy ARC9 MW2" (exact title may match snd_mwclassic.txt).
 
   AFTER fixing the path: fully QUIT Garry's Mod and start again (not just
   disconnect) so it rescans gamemodes.
 
   IF STILL MISSING: open main menu console (~) and look for KeyValues / gamemode
-  parse errors. gamemode.txt must be plain ASCII in critical fields (curly
+  parse errors. snd_mwclassic.txt must be plain ASCII in critical fields (curly
   quotes or Unicode dashes in VDF can prevent the gamemode from loading).
 
 

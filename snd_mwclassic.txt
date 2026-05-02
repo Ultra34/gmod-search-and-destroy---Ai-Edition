@@ -1,17 +1,16 @@
 "snd_mwclassic"
 {
 	"base"		"base"
-	"title"		"Search & Destroy (ARC9 MW2)"
+	"title"		"Search and Destroy ARC9 MW2"
 	"maps"		"^snd_|^de_|^gm_|^ttt_"
+	"category"	"pvp"
 	"menusystem"	"1"
 	"author_name"	"Ultra34"
-	"author_email"	""
-	"author_url"	"https://github.com/Ultra34/gmod-search-and-destroy---Ai-Edition"
 	"hide"		"0"
 
 	"settings"
 	{
-		"1"
+		1
 		{
 			"name"		"snd_round_time"
 			"text"		"Round time (sec)"
@@ -19,17 +18,15 @@
 			"type"		"Numeric"
 			"default"	"120"
 		}
-
-		"2"
+		2
 		{
 			"name"		"snd_win_limit"
 			"text"		"Rounds to win"
-			"help"		"First team to this many round wins ends the match (then map vote if enabled)"
+			"help"		"First team to this many round wins ends the match"
 			"type"		"Numeric"
 			"default"	"4"
 		}
-
-		"3"
+		3
 		{
 			"name"		"snd_freeze_time"
 			"text"		"Freeze time (sec)"
@@ -37,8 +34,7 @@
 			"type"		"Numeric"
 			"default"	"6"
 		}
-
-		"4"
+		4
 		{
 			"name"		"snd_plant_time"
 			"text"		"Bomb plant time (sec)"
@@ -46,8 +42,7 @@
 			"type"		"Numeric"
 			"default"	"5"
 		}
-
-		"5"
+		5
 		{
 			"name"		"snd_defuse_time"
 			"text"		"Bomb defuse time (sec)"
@@ -55,8 +50,7 @@
 			"type"		"Numeric"
 			"default"	"8"
 		}
-
-		"6"
+		6
 		{
 			"name"		"snd_walk_speed"
 			"text"		"Walk speed"
@@ -64,8 +58,7 @@
 			"type"		"Numeric"
 			"default"	"190"
 		}
-
-		"7"
+		7
 		{
 			"name"		"snd_run_speed"
 			"text"		"Run speed"
@@ -73,17 +66,15 @@
 			"type"		"Numeric"
 			"default"	"280"
 		}
-
-		"8"
+		8
 		{
 			"name"		"snd_bot_count"
 			"text"		"Bots"
-			"help"		"Number of Lua-driven bot players (0 disables). Dedicated servers may need extra bot setup"
+			"help"		"Number of Lua-driven bot players (0 disables)"
 			"type"		"Numeric"
 			"default"	"0"
 		}
-
-		"9"
+		9
 		{
 			"name"		"snd_mapvote_time"
 			"text"		"Map vote duration (sec)"
@@ -91,30 +82,27 @@
 			"type"		"Numeric"
 			"default"	"20"
 		}
-
-		"10"
+		10
 		{
 			"name"		"snd_team_balance"
 			"text"		"Team balance"
-			"help"		"If enabled, shuffles players between teams when one side has too many players"
+			"help"		"If enabled, shuffles players when one team has too many players"
 			"type"		"CheckBox"
 			"default"	"1"
 		}
-
-		"11"
+		11
 		{
 			"name"		"snd_mapvote_enabled"
 			"text"		"Map vote after match"
-			"help"		"If enabled, runs a vote using maps listed in garrysmod/data/snd_mwclassic/maps.txt"
+			"help"		"If enabled, runs a vote using data/snd_mwclassic/maps.txt"
 			"type"		"CheckBox"
 			"default"	"1"
 		}
-
-		"12"
+		12
 		{
 			"name"		"snd_rust_swap_spawns"
 			"text"		"Rust: swap attack/defend spawns"
-			"help"		"Only affects ttt_rust_v1a auto-layout - flip which half of the map is attackers vs defenders"
+			"help"		"Only for ttt_rust_v1a auto-layout - flip attacker/defender halves"
 			"type"		"CheckBox"
 			"default"	"0"
 		}

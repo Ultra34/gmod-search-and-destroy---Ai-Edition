@@ -20,7 +20,7 @@ Garry’s Mod **gamemode** inspired by Call of Duty Search & Destroy: one life p
 ## Installation
 
 1. Clone or download this repo.
-2. Copy the **`snd_mwclassic`** folder (the one that contains `gamemode.txt` and `gamemode/`) into:
+2. Copy the **`snd_mwclassic`** folder (must contain **`snd_mwclassic.txt`** and **`gamemode/`**) into:
    ```
    garrysmod/gamemodes/snd_mwclassic
    ```

@@ -3,7 +3,7 @@
 	Requires: ARC9 + MW2 Extended (arc9_mw2e_*) or override in data/snd_mwclassic/loadouts.lua / ConVars
 ]]
 
-GM.Name = "Search & Destroy (ARC9 MW2)"
+GM.Name = "Search and Destroy ARC9 MW2"
 GM.Author = "snd_mwclassic"
 GM.Email = ""
 GM.Website = ""
