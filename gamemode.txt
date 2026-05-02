@@ -3,9 +3,121 @@
 	"base"		"base"
 	"title"		"Search & Destroy (ARC9 MW2)"
 	"maps"		"^snd_|^de_|^gm_|^ttt_"
+	"category"	"other"
 	"menusystem"	"1"
-	"author_name"	"Custom"
+	"author_name"	"Ultra34"
 	"author_email"	""
-	"author_url"	""
+	"author_url"	"https://github.com/Ultra34/gmod-search-and-destroy---Ai-Edition"
 	"hide"		"0"
+
+	"settings"
+	{
+		1
+		{
+			"name"		"snd_round_time"
+			"text"		"Round time (sec)"
+			"help"		"Length of the live round after freeze ends"
+			"type"		"Numeric"
+			"default"	"120"
+		}
+
+		2
+		{
+			"name"		"snd_win_limit"
+			"text"		"Rounds to win"
+			"help"		"First team to this many round wins ends the match (then map vote if enabled)"
+			"type"		"Numeric"
+			"default"	"4"
+		}
+
+		3
+		{
+			"name"		"snd_freeze_time"
+			"text"		"Freeze time (sec)"
+			"help"		"Pre-round countdown before players can move and shoot"
+			"type"		"Numeric"
+			"default"	"6"
+		}
+
+		4
+		{
+			"name"		"snd_plant_time"
+			"text"		"Bomb plant time (sec)"
+			"help"		"How long the bomb carrier must hold use on a site to plant"
+			"type"		"Numeric"
+			"default"	"5"
+		}
+
+		5
+		{
+			"name"		"snd_defuse_time"
+			"text"		"Bomb defuse time (sec)"
+			"help"		"How long a defender must hold use on the bomb to defuse"
+			"type"		"Numeric"
+			"default"	"8"
+		}
+
+		6
+		{
+			"name"		"snd_walk_speed"
+			"text"		"Walk speed"
+			"help"		"Player walk speed (Hammer units)"
+			"type"		"Numeric"
+			"default"	"190"
+		}
+
+		7
+		{
+			"name"		"snd_run_speed"
+			"text"		"Run speed"
+			"help"		"Base run speed before sprint multiplier"
+			"type"		"Numeric"
+			"default"	"280"
+		}
+
+		8
+		{
+			"name"		"snd_bot_count"
+			"text"		"Bots"
+			"help"		"Number of Lua-driven bot players (0 disables). Dedicated servers may need extra bot setup"
+			"type"		"Numeric"
+			"default"	"0"
+		}
+
+		9
+		{
+			"name"		"snd_mapvote_time"
+			"text"		"Map vote duration (sec)"
+			"help"		"How long the end-of-match map vote runs before changing level"
+			"type"		"Numeric"
+			"default"	"20"
+		}
+
+		10
+		{
+			"name"		"snd_team_balance"
+			"text"		"Team balance"
+			"help"		"If enabled, shuffles players between teams when one side has too many players"
+			"type"		"CheckBox"
+			"default"	"1"
+		}
+
+		11
+		{
+			"name"		"snd_mapvote_enabled"
+			"text"		"Map vote after match"
+			"help"		"If enabled, runs a vote using maps listed in garrysmod/data/snd_mwclassic/maps.txt"
+			"type"		"CheckBox"
+			"default"	"1"
+		}
+
+		12
+		{
+			"name"		"snd_rust_swap_spawns"
+			"text"		"Rust: swap attack/defend spawns"
+			"help"		"Only affects ttt_rust_v1a auto-layout — flip which half of the map is attackers vs defenders"
+			"type"		"CheckBox"
+			"default"	"0"
+		}
+	}
 }
