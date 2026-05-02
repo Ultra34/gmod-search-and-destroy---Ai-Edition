@@ -16,6 +16,7 @@ include("snd_announcer.lua")
 include("snd_bots.lua")
 include("snd_spawns.lua")
 include("snd_rust.lua")
+include("snd_spectate.lua")
 
 DEFINE_BASECLASS("gamemode_base")
 
@@ -37,6 +38,8 @@ end
 
 function GM:PlayerSpawn(ply)
 	self.BaseClass.PlayerSpawn(self, ply)
+	if ply.UnSpectate then ply:UnSpectate() end
+	ply.SND_SpecIdx = nil
 	ply:SetCollisionGroup(COLLISION_GROUP_PLAYER)
 	ply:SetAvoidPlayers(false)
 
@@ -61,7 +64,7 @@ end
 
 function GM:PlayerDeathThink(ply)
 	if SND.Round.WaitingForSpawn(ply) then
-		ply:Spectate(OBS_MODE_ROAMING)
+		SND.Spectate.Ensure(ply)
 		return true
 	end
 	return self.BaseClass.PlayerDeathThink(self, ply)

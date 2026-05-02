@@ -21,8 +21,20 @@ function SND.Loadout.Apply(ply)
 	local pri = cvarPrimary(t) and cvarPrimary(t):GetString() or ""
 	local sec = cvarSecondary(t) and cvarSecondary(t):GetString() or ""
 
-	if pri == "" then pri = defaults.primary end
-	if sec == "" then sec = defaults.secondary end
+	if pri == "" then
+		if defaults.random_primary and SND.Config.Cod4ePrimaries and #SND.Config.Cod4ePrimaries > 0 then
+			pri = table.Random(SND.Config.Cod4ePrimaries)
+		else
+			pri = defaults.primary
+		end
+	end
+	if sec == "" then
+		if defaults.random_secondary and SND.Config.Cod4eSecondaries and #SND.Config.Cod4eSecondaries > 0 then
+			sec = table.Random(SND.Config.Cod4eSecondaries)
+		else
+			sec = defaults.secondary
+		end
+	end
 
 	local function giveSafe(class)
 		if not class or class == "" then return end
@@ -35,7 +47,9 @@ function SND.Loadout.Apply(ply)
 	giveSafe(pri)
 	giveSafe(sec)
 	giveSafe(defaults.lethal)
-	giveSafe(defaults.tactical)
+	if defaults.tactical and defaults.tactical ~= "" then
+		giveSafe(defaults.tactical)
+	end
 
 	local weps = ply:GetWeapons()
 	if #weps > 0 then

@@ -1,23 +1,64 @@
 --[[
 	Map + loadout config. Copy to garrysmod/data/snd_mwclassic/ on server or override via ConVars.
-	ARC9 weapon class names MUST match your MW Classic pack (spawn with gm_giveswep or ARC9 spawn menu to verify).
+	ARC9 COD4 Extended (arc9_cod4e_*) — verify class names in spawn menu / gm_giveswep.
 ]]
 
 SND.Config = SND.Config or {}
 
--- Default ARC9 class strings (placeholders — replace with your pack's printed class names)
+SND.Config.Cod4ePrimaries = {
+	"arc9_cod4e_m40a3",
+	"arc9_cod4e_rpd",
+	"arc9_cod4e_r700",
+	"arc9_cod4e_ak47",
+	"arc9_cod4e_ak74u",
+	"arc9_cod4e_g3",
+	"arc9_cod4e_g36c",
+	"arc9_cod4e_m14",
+	"arc9_cod4e_m4m16",
+	"arc9_cod4e_mp44",
+	"arc9_cod4e_m249",
+	"arc9_cod4e_m60",
+	"arc9_cod4e_m1014",
+	"arc9_cod4e_w1200",
+	"arc9_cod4e_m82",
+	"arc9_cod4e_dragunov",
+	"arc9_cod4e_uzi",
+	"arc9_cod4e_mp5",
+	"arc9_cod4e_p90",
+	"arc9_cod4e_skorpion",
+}
+
+SND.Config.Cod4eSecondaries = {
+	"arc9_cod4e_deagle",
+	"arc9_cod4e_m1911",
+	"arc9_cod4e_m9",
+	"arc9_cod4e_usp",
+}
+
+-- Launchers / heavy (optional pickup rules — not in default random kit)
+SND.Config.Cod4eSpecial = {
+	"arc9_cod4e_at4",
+	"arc9_cod4e_rpg7",
+}
+
+--[[ Default loadouts: random primary + random secondary from pools each spawn unless ConVars set.
+	lethal = arc9_cod4e_frag; tactical left empty (add arc9 smoke in data loadout if your pack has it). ]]
 SND.Config.DefaultLoadouts = {
 	attack = {
-		primary = "arc9_mwclassic_m4a1",
-		secondary = "arc9_mwclassic_glock",
-		lethal = "weapon_frag",
-		tactical = "weapon_smokegrenade",
+		random_primary = true,
+		random_secondary = true,
+		primary = "arc9_cod4e_m4m16",
+		secondary = "arc9_cod4e_m9",
+		lethal = "arc9_cod4e_frag",
+		tactical = "",
 	},
 	defend = {
-		primary = "arc9_mwclassic_ak47",
-		secondary = "arc9_mwclassic_usp",
-		lethal = "weapon_frag",
-		tactical = "weapon_smokegrenade",
+		random_primary = true,
+		random_secondary = true,
+		primary = "arc9_cod4e_ak47",
+		secondary = "arc9_cod4e_usp",
+		lethal = "arc9_cod4e_frag",
+		tactical = "",
 	},
 }
 

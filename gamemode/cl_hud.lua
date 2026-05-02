@@ -32,4 +32,15 @@ hook.Add("HUDPaint", "SND_HUD", function()
 		local who = SND.Client.BombCarrier == lp and "You have the bomb" or (SND.Client.BombCarrier:Nick() .. " has the bomb")
 		draw.SimpleText(who, "Trebuchet24", ScrW() / 2, ScrH() - 120 * sc, Color(255, 200, 120), TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
 	end
+
+	if not lp:Alive() and (SND.Client.Phase == SND.PHASE_LIVE or SND.Client.Phase == SND.PHASE_FREEZE or SND.Client.Phase == SND.PHASE_POST) then
+		local tgt = lp:GetObserverTarget()
+		local line = "Spectating teammates only — M1: next   M2: prev"
+		if IsValid(tgt) and tgt:IsPlayer() then
+			line = "Watching: " .. tgt:Nick() .. "  (M1 next / M2 prev)"
+		elseif not IsValid(tgt) then
+			line = line .. "  |  No living teammates — free look"
+		end
+		draw.SimpleText(line, "Trebuchet18", ScrW() / 2, ScrH() - 88 * sc, Color(160, 200, 255), TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
+	end
 end)

@@ -1,17 +1,24 @@
--- Optional: place this file at garrysmod/data/snd_mwclassic/loadouts.lua
--- Replace SND.Config.DefaultLoadouts with your verified ARC9 MW Classic SWEP class names.
+-- Optional: garrysmod/data/snd_mwclassic/loadouts.lua
+-- Override defaults; use arc9_cod4e_* classes from your ARC9 COD4 pack.
+
+--[[ Example (uncomment to use fixed guns instead of random pools):
 
 SND.Config.DefaultLoadouts = {
 	attack = {
-		primary = "arc9_mwclassic_m4a1",
-		secondary = "arc9_mwclassic_glock",
-		lethal = "weapon_frag",
-		tactical = "weapon_smokegrenade",
+		random_primary = false,
+		random_secondary = false,
+		primary = "arc9_cod4e_m4m16",
+		secondary = "arc9_cod4e_m9",
+		lethal = "arc9_cod4e_frag",
+		tactical = "",
 	},
 	defend = {
-		primary = "arc9_mwclassic_ak47",
-		secondary = "arc9_mwclassic_usp",
-		lethal = "weapon_frag",
-		tactical = "weapon_smokegrenade",
+		random_primary = false,
+		random_secondary = false,
+		primary = "arc9_cod4e_ak47",
+		secondary = "arc9_cod4e_usp",
+		lethal = "arc9_cod4e_frag",
+		tactical = "",
 	},
 }
+]]

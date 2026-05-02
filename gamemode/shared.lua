@@ -1,6 +1,6 @@
 --[[
 	Search & Destroy — shared definitions
-	Requires: ARC9 + [ARC9] Modern Warfare Classic (weapon class names in data/snd_mwclassic/loadouts.lua or convars)
+	Requires: ARC9 + COD4 Extended (arc9_cod4e_*) or override in data/snd_mwclassic/loadouts.lua / ConVars
 ]]
 
 GM.Name = "Search & Destroy (ARC9 MW Classic)"
