@@ -216,6 +216,13 @@ function SND.Bomb.TryPlant(ply)
 			SND.Bomb.CancelAction(ply, "plant") return
 		end
 
+		-- Cancel if player moves
+		if ply:GetVelocity():Length2DSqr() > 10 then
+			SND.Bomb.CancelAction(ply, "plant")
+			ply:ChatPrint("[SND] Plant cancelled — you moved.")
+			return
+		end
+
 		-- Cancel if walked out of site
 		local _, st2, d2 = nearestSite(ply)
 		if not st2 or d2 > (st2.defuseRadius or 96) + 80 then
@@ -288,6 +295,12 @@ function SND.Bomb.TryDefuse(ply)
 		if SND.Bomb.State ~= SND.BOMB_STATE_PLANTED then
 			SND.Bomb.CancelAction(ply, "defuse") return
 		end
+		-- Cancel if player moves
+		if ply:GetVelocity():Length2DSqr() > 10 then
+			SND.Bomb.CancelAction(ply, "defuse")
+			ply:ChatPrint("[SND] Defuse cancelled — you moved.")
+			return
+		end
 		if ply:GetPos():Distance(SND.Bomb.PlantPos) > 160 then
 			SND.Bomb.CancelAction(ply, "defuse")
 			ply:ChatPrint("[SND] Defuse cancelled — too far from the bomb.")
@@ -339,6 +352,18 @@ end)
 -- ── USE key ───────────────────────────────────────────────────────────────
 hook.Add("PlayerButtonDown", "SND_BombUse", function(ply, btn)
 	if btn ~= KEY_E then return end
+
+	-- Allow cancelling by pressing E again
+	if ply.SND_Planting then
+		SND.Bomb.CancelAction(ply, "plant")
+		ply:ChatPrint("[SND] Plant cancelled.")
+		return
+	elseif ply.SND_Defusing then
+		SND.Bomb.CancelAction(ply, "defuse")
+		ply:ChatPrint("[SND] Defuse cancelled.")
+		return
+	end
+
 	if SND.Bomb.State == SND.BOMB_STATE_CARRIED and ply == SND.Bomb.Carrier then
 		SND.Bomb.TryPlant(ply)
 	elseif SND.Bomb.State == SND.BOMB_STATE_PLANTED and ply:Team() == SND.TEAM_DEFEND then
