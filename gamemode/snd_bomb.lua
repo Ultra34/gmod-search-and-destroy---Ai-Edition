@@ -20,6 +20,7 @@ local FUSE_TIME = 45  -- seconds until detonation
 -- CS:S ships this at sound/weapons/c4/c4_beep1.wav
 -- If CS:S is not mounted fall back to a stock GMod click
 local BEEP_SOUND = "weapons/c4/c4_beep1.wav"
+local PLANT_SOUND = "weapons/c4/c4_plant.wav"
 
 -- Beep interval ramps from 1 s → 0.2 s over the fuse duration
 local function beepInterval(elapsed)
@@ -265,6 +266,11 @@ function SND.Bomb.TryPlant(ply)
 
 			-- Spawn locked prop at the exact ground position
 			spawnBombProp(intendedPos)
+
+			-- Play plant sound at the bomb's location
+			if IsValid(SND.Bomb.PropEnt) then
+				SND.Bomb.PropEnt:EmitSound(PLANT_SOUND, 75, 100, 1.0)
+			end
 
 			-- Start CSS beeping
 			startBeepTimer()
