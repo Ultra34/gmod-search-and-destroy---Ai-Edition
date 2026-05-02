@@ -74,6 +74,7 @@ function SND.Round.EndRound(reason)
 	net.WriteUInt(reason, 4)
 	net.WriteUInt(SND.Round.AttackScore, 8)
 	net.WriteUInt(SND.Round.DefendScore, 8)
+	net.WriteDouble(SND.Round.RoundTimerEnd)
 	net.Broadcast()
 end
 
@@ -99,6 +100,7 @@ function SND.Round.StartNewRound()
 		net.WriteUInt(0, 4)
 		net.WriteUInt(SND.Round.AttackScore, 8)
 		net.WriteUInt(SND.Round.DefendScore, 8)
+		net.WriteDouble(SND.Round.RoundTimerEnd)
 		net.Broadcast()
 	end)
 
@@ -107,6 +109,7 @@ function SND.Round.StartNewRound()
 	net.WriteUInt(0, 4)
 	net.WriteUInt(SND.Round.AttackScore, 8)
 	net.WriteUInt(SND.Round.DefendScore, 8)
+	net.WriteDouble(SND.Round.RoundTimerEnd)
 	net.Broadcast()
 
 	SND.Announcer.RoundFreeze()
@@ -166,6 +169,7 @@ function SND.Round.Sync(ply)
 	net.WriteUInt(SND.Round.Winner or 0, 4)
 	net.WriteUInt(SND.Round.AttackScore, 8)
 	net.WriteUInt(SND.Round.DefendScore, 8)
+	net.WriteDouble(SND.Round.RoundTimerEnd)
 	net.Send(ply)
 end
 
