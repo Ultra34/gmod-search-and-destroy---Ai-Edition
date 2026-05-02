@@ -36,6 +36,9 @@ local function newAI()
 		reloadEnd     = 0,
 		strafeDir     = 1,
 		strafeFlip    = 0,
+		stuckTime     = 0,
+		nextShot      = 0,
+		burstCooldown = 0,
 	}
 end
 
@@ -209,19 +212,26 @@ local function moveToward(bot, cmd, targetPos, speed)
 
 	local ang = diff:Angle()
 	ang.p = 0
-	bot:SetEyeAngles(ang)
+
+	-- Smoothly turn toward destination
+	local current = bot:EyeAngles()
+	bot:SetEyeAngles(LerpAngle(0.15, current, ang))
+	
 	cmd:SetForwardMove(speed)
 
-	-- Stuck detection / Obstacle jumping
+	-- Improved Stuck detection
 	if bot:IsOnGround() and bot:GetVelocity():Length() < (speed * 0.2) then
-		local tr = util.TraceHull({
-			start = bot:GetPos(),
-			endpos = bot:GetPos() + bot:GetForward() * 30,
-			mins = Vector(-16, -16, 0),
-			maxs = Vector(16, 16, 32),
-			filter = bot
-		})
-		if tr.Hit then cmd:SetButtons(bit.bor(cmd:GetButtons(), IN_JUMP)) end
+		bot.SND_AI.stuckTime = bot.SND_AI.stuckTime + FrameTime()
+		if bot.SND_AI.stuckTime > 0.5 then
+			cmd:SetButtons(bit.bor(cmd:GetButtons(), IN_JUMP))
+			-- Try to nudge sideways if jumping doesn't work
+			cmd:SetSideMove(math.random(-1, 1) * speed)
+			if bot.SND_AI.stuckTime > 1.5 then
+				bot.SND_AI.stuckTime = 0 -- Reset
+			end
+		end
+	else
+		bot.SND_AI.stuckTime = 0
 	end
 
 	return dist
@@ -344,13 +354,26 @@ hook.Add("StartCommand", "SND_BotAI", function(bot, cmd)
 		local targetPos = visEnemy:GetPos() + Vector(0, 0, 50)
 		local aimAng    = (targetPos - bot:EyePos()):Angle()
 		local noise     = aimNoise(skill)
+		
+		-- Apply noise to the TARGET, then lerp to it for "human" movement
 		aimAng.p = aimAng.p + (math.random() - 0.5) * noise
 		aimAng.y = aimAng.y + (math.random() - 0.5) * noise
-		bot:SetEyeAngles(aimAng)
+		
+		local curAng = bot:EyeAngles()
+		bot:SetEyeAngles(LerpAngle(math.Clamp(0.1 * (skill/5), 0.05, 0.4), curAng, aimAng))
 
 		local sp = botMoveSpeed(skill)
 		if ai.canShoot then
-			cmd:SetButtons(bit.bor(cmd:GetButtons(), IN_ATTACK))
+			-- Burst firing logic: Tape trigger at close range, burst at long range
+			if now > ai.nextShot then
+				cmd:SetButtons(bit.bor(cmd:GetButtons(), IN_ATTACK))
+				
+				-- At distances > 800, simulate semi-auto/burst
+				if visDist > 800 and skill > 4 then
+					ai.nextShot = now + math.Rand(0.1, 0.25)
+				end
+			end
+
 			-- Smart bots crouch while firing occasionally
 			if skill > 6 and visDist > 500 then cmd:SetButtons(bit.bor(cmd:GetButtons(), IN_DUCK)) end
 		end
@@ -396,7 +419,10 @@ hook.Add("StartCommand", "SND_BotAI", function(bot, cmd)
 			ai.patrolAngle = ai.patrolAngle + math.Rand(-80, 80)
 			ai.patrolFlip  = now + math.Rand(2, 4)
 		end
-		bot:SetEyeAngles(Angle(0, ai.patrolAngle, 0))
+		
+		local curAng = bot:EyeAngles()
+		bot:SetEyeAngles(LerpAngle(0.05, curAng, Angle(0, ai.patrolAngle, 0)))
+		
 		cmd:SetForwardMove(botMoveSpeed(skill) * 0.5)
 	end
 end)
