@@ -1,0 +1,11 @@
+"snd_mwclassic"
+{
+	"base"		"base"
+	"title"		"Search & Destroy (ARC9 MW Classic)"
+	"maps"		"^snd_|^de_|^gm_"
+	"menusystem"	"1"
+	"author_name"	"Custom"
+	"author_email"	""
+	"author_url"	""
+	"hide"		"0"
+}

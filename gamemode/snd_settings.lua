@@ -1,0 +1,42 @@
+--[[ Replicated settings (server authoritative). Client reads for UI. ]]
+
+SND.Settings = SND.Settings or {}
+
+SND.Settings.Defaults = {
+	sprint_mult = 1.65,
+	walk_speed = 190,
+	run_speed = 280,
+	ads_slow = 0.88,
+	air_accel_scale = 1.35,
+	friction_floor = 0.92,
+	plant_time = 5,
+	defuse_time = 7.5,
+	freeze_time = 6,
+	round_time = 120,
+	win_limit = 4,
+	bot_count = 0,
+	bot_skill = 0.65,
+	team_balance = 1,
+	mapvote_enabled = 1,
+	mapvote_time = 20,
+	announcer_volume = 1,
+	hud_scale = 1,
+}
+
+if SERVER then
+	for k, v in pairs(SND.Settings.Defaults) do
+		CreateConVar("snd_" .. k, tostring(v), { FCVAR_ARCHIVE, FCVAR_REPLICATED, FCVAR_NOTIFY })
+	end
+end
+
+function SND.Settings.Get(name, fallback)
+	local cv = GetConVar("snd_" .. name)
+	if cv then return cv:GetFloat() end
+	return fallback or SND.Settings.Defaults[name]
+end
+
+function SND.Settings.GetInt(name, fallback)
+	local cv = GetConVar("snd_" .. name)
+	if cv then return cv:GetInt() end
+	return fallback or SND.Settings.Defaults[name]
+end
