@@ -7,7 +7,7 @@ SND.Config = SND.Config or {}
 local AR = {
 	"iw4_acr",
 	"iw4_ak47",
-	"iw4_f200",
+	"iw4_f2000",
 	"iw4_fal",
 	"iw4_famas",
 	"iw4_m16a4",
