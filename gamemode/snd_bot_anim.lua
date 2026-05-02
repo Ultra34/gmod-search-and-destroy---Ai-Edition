@@ -1,5 +1,6 @@
 --[[ CSS player model animation fix for bots AND human players
      Fixes: T-pose on bots, broken weapon hold animations, missing move_yaw/body_yaw
+     IMPROVED: Better animation blending, reduced jitter, stable pose parameters
      NEW FILE: gamemode/snd_bot_anim.lua  (SHARED — runs on both server and client)
 
      Add to init.lua:    include("snd_bot_anim.lua")
@@ -60,6 +61,9 @@ if SERVER then
 				local moveDir = vel:Angle()
 				local faceDir = bot:EyeAngles()
 				moveYaw = math.NormalizeAngle(moveDir.y - faceDir.y)
+				-- Smooth out yaw changes to reduce jitter
+				local prevYaw = bot:GetPoseParameter("move_yaw") or 0
+				moveYaw = Lerp(0.15, prevYaw, moveYaw)
 			end
 			bot:SetPoseParameter("move_yaw",   moveYaw)
 
@@ -104,6 +108,9 @@ if CLIENT then
 			local moveDir = velocity:Angle()
 			local faceDir = ply:EyeAngles()
 			moveYaw = math.NormalizeAngle(moveDir.y - faceDir.y)
+			-- Smooth out yaw to prevent erratic animation snapping
+			local prevYaw = ply:GetPoseParameter("move_yaw") or 0
+			moveYaw = Lerp(0.15, prevYaw, moveYaw)
 		end
 		ply:SetPoseParameter("move_yaw",   moveYaw)
 
