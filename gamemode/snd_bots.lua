@@ -1,5 +1,6 @@
 --[[ Bot AI — state machine, skill 1-10, weapon reload/switch, bomb objectives
-     REPLACES: gamemode/snd_bots.lua ]]
+--[[ Bot AI Reworked — Goal-Oriented Action Planning
+     Focuses on pathfinding, lead-aiming, and objective priority. ]]
 
 SND.Bots = SND.Bots or {}
 
@@ -13,15 +14,14 @@ local BS_DEFUSE = 5   -- defender; bomb planted; moving to bomb
 local BS_RELOAD = 6   -- weapon empty/low; reloading or switching
 
 -- ── Skill 1-10 → internal float helpers ──────────────────────────────────
-local function skillT(s)       return (math.Clamp(s, 1, 10) - 1) / 9     end
+local function skillT(s)       return (math.Clamp(s, 1, 10) - 1) / 9 end
 local function getSkill()      return SND.Settings.GetInt("bot_skill", 5) end
-local function aimNoise(s)     return Lerp(skillT(s), 70,   2)       end  -- degrees
-local function reactionSec(s)  return Lerp(skillT(s),  1.3, 0.04)   end  -- seconds
-local function engageRange(s)  return Lerp(skillT(s),  600, 3800)   end  -- units
-local function botMoveSpeed(s) return Lerp(skillT(s),  120, 310)    end  -- units/s
-local function reloadThresh(s) return Lerp(skillT(s),  0.6, 0.12)   end  -- clip% to reload at
+local function aimNoise(s)     return Lerp(skillT(s), 12, 0.5) end
+local function reactionSec(s)  return Lerp(skillT(s), 0.8, 0.1) end
+local function engageRange(s)  return Lerp(skillT(s), 1500, 5000) end
+local function botMoveSpeed(s) return Lerp(skillT(s), 180, 320) end
 
--- ── Fresh AI state for a bot ──────────────────────────────────────────────
+-- ── AI State ──────────────────────────────────────────────────────────────
 local function newAI()
 	return {
 		state         = BS_IDLE,
@@ -36,13 +36,15 @@ local function newAI()
 		reloadEnd     = 0,
 		strafeDir     = 1,
 		strafeFlip    = 0,
-		stuckTime     = 0,
+		stuckPos      = Vector(0,0,0),
+		stuckCheck    = 0,
 		nextShot      = 0,
-		burstCooldown = 0,
+		path          = nil, -- PathFollower object
+		nextPathUpdate = 0,
+		lastPathGoal  = Vector(0,0,0)
 	}
 end
 
--- ── Spawn / count helpers ─────────────────────────────────────────────────
 function SND.Bots.CountBots()
 	local n = 0
 	for _, p in ipairs(player.GetAll()) do if p.SND_IsBot then n = n + 1 end end
@@ -115,29 +117,22 @@ local function nearestEnemy(bot, requireLOS)
 	return best, bestDist2 and math.sqrt(bestDist2)
 end
 
--- ── Nearest bomb site (returns site table and distance) ───────────────────
-local function nearestSite(bot)
-	local map   = game.GetMap()
-	local sites = SND.Config.MapSites[map]
-	if not sites or #sites == 0 then return nil, math.huge end
-	local best, bestDist
-	for _, s in ipairs(sites) do
-		local d = bot:GetPos():Distance(s.plantPos)
-		if not best or d < bestDist then best, bestDist = s, d end
-	end
-	return best, bestDist
-end
-
--- ── Weapon helpers ────────────────────────────────────────────────────────
-local function activeClipRatio(bot)
+local function weaponCheck(bot)
 	local wep = bot:GetActiveWeapon()
-	if not IsValid(wep) then return 1 end
+	if not IsValid(wep) then return end
+
 	local max = wep:GetMaxClip1()
-	if max <= 0 then return 1 end
-	return wep:Clip1() / max
+	if max > 0 and wep:Clip1() <= 0 then
+		bot:SetButtons(bit.bor(bot:GetButtons(), IN_RELOAD))
+	end
+
+	-- Switch to primary if we have ammo and are currently using a pistol
+	local primary = bot:GetWeapon(SND.Config.BotPrimaries[1] or "")
+	if IsValid(primary) and primary ~= wep and primary:Clip1() > 0 then
+		bot:SelectWeapon(primary:GetClass())
+	end
 end
 
--- Try to switch to a weapon that has ammo; returns true if switched
 local function switchToFilledWeapon(bot)
 	local active = bot:GetActiveWeapon()
 	for _, wep in ipairs(bot:GetWeapons()) do
@@ -152,282 +147,188 @@ local function switchToFilledWeapon(bot)
 	return false
 end
 
--- ── Weapon management timer (runs every 0.4 s) ────────────────────────────
-timer.Create("SND_BotWeaponManage", 0.4, 0, function()
-	for _, bot in ipairs(player.GetAll()) do
-		if not bot.SND_IsBot or not bot:Alive() then continue end
-
-		local ai    = bot.SND_AI
-		if not ai then continue end
-		local skill = getSkill()
-		local wep   = bot:GetActiveWeapon()
-		if not IsValid(wep) then continue end
-
-		local ratio = activeClipRatio(bot)
-
-		-- Completely empty: switch to another weapon first
-		if ratio <= 0 then
-			if not switchToFilledWeapon(bot) then
-				-- No weapon has ammo; flag for reload
-				ai.needsReload = true
-				ai.reloadEnd   = CurTime() + 2.4
-			end
-		-- Low ammo and not currently engaging: reload proactively
-		elseif ratio < reloadThresh(skill) and ai.state ~= BS_ENGAGE then
-			ai.needsReload = true
-			ai.reloadEnd   = CurTime() + 2.4
-		end
-
-		-- After reload timer expires, clear the flag
-		if ai.needsReload and CurTime() >= ai.reloadEnd then
-			ai.needsReload = false
-		end
-
-		-- Force a weapon switch back to primary if holding secondary and primary has ammo
-		-- (give bots a slight preference for the primary slot)
-		if ai.state ~= BS_ENGAGE and not ai.needsReload then
-			local weps = bot:GetWeapons()
-			if #weps >= 2 then
-				local best, bestAmmo = nil, -1
-				for _, w in ipairs(weps) do
-					if IsValid(w) and w:Clip1() > bestAmmo then
-						bestAmmo = w:Clip1()
-						best = w
-					end
-				end
-				if IsValid(best) and best ~= wep then
-					bot:SelectWeapon(best:GetClass())
-				end
-			end
-		end
-	end
-end)
-
--- ── Move bot toward a world position ──────────────────────────────────────
+-- ── Navigation ────────────────────────────────────────────────────────────
 local function moveToward(bot, cmd, targetPos, speed)
-	local diff = targetPos - bot:GetPos()
-	diff.z = 0
-	local dist = diff:Length()
-	if dist < 20 then return dist end
+	local ai = bot.SND_AI
+	local myPos = bot:GetPos()
+	local moveDest = targetPos
 
-	local ang = diff:Angle()
-	ang.p = 0
-
-	-- Smoothly turn toward destination
-	local current = bot:EyeAngles()
-	bot:SetEyeAngles(LerpAngle(0.15, current, ang))
-	
-	cmd:SetForwardMove(speed)
-
-	-- Improved Stuck detection
-	if bot:IsOnGround() and bot:GetVelocity():Length() < (speed * 0.2) then
-		bot.SND_AI.stuckTime = bot.SND_AI.stuckTime + FrameTime()
-		if bot.SND_AI.stuckTime > 0.5 then
-			cmd:SetButtons(bit.bor(cmd:GetButtons(), IN_JUMP))
-			-- Try to nudge sideways if jumping doesn't work
-			cmd:SetSideMove(math.random(-1, 1) * speed)
-			if bot.SND_AI.stuckTime > 1.5 then
-				bot.SND_AI.stuckTime = 0 -- Reset
-			end
+	-- Use NavMesh pathfinding if available
+	if navmesh.IsLoaded() then
+		if not ai.path then
+			ai.path = Path("Follow")
+			ai.path:SetMinLookAheadDistance(300)
+			ai.path:SetGoalTolerance(20)
 		end
-	else
-		bot.SND_AI.stuckTime = 0
+
+		-- Recompute path if goal changed significantly or every second
+		if CurTime() > ai.nextPathUpdate or ai.lastPathGoal:DistToSqr(targetPos) > 4096 then
+			ai.path:Compute(bot, targetPos)
+			ai.nextPathUpdate = CurTime() + 1.0
+			ai.lastPathGoal = targetPos
+		end
+
+		if ai.path:IsValid() then
+			ai.path:Update(bot)
+			moveDest = ai.path:GetPosition()
+		end
 	end
 
+	local diff = moveDest - myPos
+	local dist = (targetPos - myPos):Length()
+
+	if dist < 30 then return dist end
+
+	-- Improved Stuck detection / Obstacle jumping
+	if bot:IsOnGround() and CurTime() > ai.stuckCheck then
+		if myPos:Distance(ai.stuckPos) < 15 then
+			cmd:SetButtons(bit.bor(cmd:GetButtons(), IN_JUMP))
+		end
+		ai.stuckPos = myPos
+		ai.stuckCheck = CurTime() + 0.5
+	end
+
+	-- Steering
+	local goalAngle = (moveDest - myPos):Angle()
+	goalAngle.p = 0
+	
+	local curAngle = bot:EyeAngles()
+	local smoothed = LerpAngle(0.2, curAngle, goalAngle)
+	bot:SetEyeAngles(smoothed)
+
+	cmd:SetForwardMove(speed)
 	return dist
 end
 
--- ── Main AI think (StartCommand runs every tick) ──────────────────────────
+-- Lead aiming: Predict where the player will be based on velocity
+local function getAimVector(bot, target, noise)
+	local targetPos = target:GetPos() + Vector(0, 0, 55) -- Aim for chest/head
+	local dist = bot:GetPos():Distance(targetPos)
+	
+	-- Prediction: Bullet travel time simulation
+	local velocity = target:GetVelocity()
+	local prediction = (dist / 15000) * velocity -- Adjust 15000 based on average bullet speed
+	targetPos = targetPos + prediction
+
+	local aimAng = (targetPos - bot:EyePos()):Angle()
+	aimAng.p = aimAng.p + math.Rand(-noise, noise)
+	aimAng.y = aimAng.y + math.Rand(-noise, noise)
+
+	return aimAng
+end
+
+-- ── Main Logic ────────────────────────────────────────────────────────────
 hook.Add("StartCommand", "SND_BotAI", function(bot, cmd)
 	if not bot.SND_IsBot or not bot:Alive() then return end
 
-	-- During freeze: stand still
 	if SND.Round.Phase == SND.PHASE_FREEZE then
-		cmd:SetForwardMove(0)
-		cmd:SetSideMove(0)
-		cmd:SetUpMove(0)
+		cmd:ClearButtons()
+		cmd:ClearMovement()
 		return
 	end
 
-	if SND.Round.Phase ~= SND.PHASE_LIVE then return end
-
-	local ai    = bot.SND_AI
-	if not ai then ai = newAI() bot.SND_AI = ai end
+	local ai = bot.SND_AI
+	if not ai then bot.SND_AI = newAI() ai = bot.SND_AI end
 
 	local skill = getSkill()
-	local now   = CurTime()
+	local speed = botMoveSpeed(skill)
+	local now = CurTime()
 
-	-- ── RELOAD state ──────────────────────────────────────────────────────
-	if ai.needsReload then
-		ai.state = BS_RELOAD
-		cmd:SetButtons(bit.bor(cmd:GetButtons(), IN_RELOAD))
-		cmd:SetForwardMove(0)
-		cmd:SetSideMove(0)
-		return
+	-- Objective: Bomb Site / Bomb
+	local targetObj = nil
+	if bot:Team() == SND.TEAM_ATTACK then
+		if SND.Bomb.Carrier == bot then
+			local sites = SND.Config.MapSites[game.GetMap()]
+			if sites and sites[1] then targetObj = sites[1].plantPos end
+		end
+	elseif bot:Team() == SND.TEAM_DEFEND then
+		if SND.Bomb.State == SND.BOMB_STATE_PLANTED then
+			targetObj = SND.Bomb.PlantPos
+		end
 	end
 
-	-- ── BOMB OBJECTIVES (override most other states) ──────────────────────
-
-	-- Attacker carrier: plant
-	local isCarrier = (bot:Team() == SND.TEAM_ATTACK)
-	                  and (SND.Bomb.State == SND.BOMB_STATE_CARRIED)
-	                  and (SND.Bomb.Carrier == bot)
-
-	local bombPlanted = SND.Bomb.State == SND.BOMB_STATE_PLANTED
-
-	if isCarrier and SND.Round.Phase == SND.PHASE_LIVE then
-		ai.state = BS_PLANT
-		local site, siteDist = nearestSite(bot)
-		local sp = botMoveSpeed(skill)
-
-		if site then
-			local radius = (site.defuseRadius or 96) + 32
-			if siteDist > radius then
-				-- Move to the site
-				-- Real players sprint to sites
-				if skill > 3 then cmd:SetButtons(bit.bor(cmd:GetButtons(), IN_SPEED)) end
-				moveToward(bot, cmd, site.plantPos, sp)
-			else
-				-- In range: look down at ground and hold USE to plant
-				local downAngle = Angle(60, bot:EyeAngles().y, 0)
-				bot:SetEyeAngles(downAngle)
-				cmd:SetButtons(bit.bor(cmd:GetButtons(), IN_USE))
-				cmd:SetForwardMove(0)
-				cmd:SetSideMove(0)
-			end
-		end
-		return
-	end
-
-	-- Defender: defuse planted bomb
-	if bot:Team() == SND.TEAM_DEFEND and bombPlanted and SND.Bomb.PlantPos then
-		local bombDist = bot:GetPos():Distance(SND.Bomb.PlantPos)
-		if bombDist > 128 then
-			ai.state = BS_DEFUSE
-			local sp = botMoveSpeed(skill)
-			if skill > 3 then cmd:SetButtons(bit.bor(cmd:GetButtons(), IN_SPEED)) end
-			moveToward(bot, cmd, SND.Bomb.PlantPos, sp)
-		else
-			-- At bomb: look at it and defuse
-			ai.state = BS_DEFUSE
-			local towardBomb = (SND.Bomb.PlantPos - bot:GetPos()):Angle()
-			towardBomb.p = 30  -- look slightly down at the bomb
-			bot:SetEyeAngles(towardBomb)
-			cmd:SetButtons(bit.bor(cmd:GetButtons(), IN_USE))
-			cmd:SetForwardMove(0)
-			cmd:SetSideMove(0)
-		end
-		-- Still scan for enemies while travelling to bomb
-		local visEnemy, visDist = nearestEnemy(bot, true)
-		if IsValid(visEnemy) and visDist and visDist < engageRange(skill) then
-			-- Shoot if we can see someone; movement already set above
-			local ang   = (visEnemy:EyePos() - bot:EyePos()):Angle()
-			local noise = aimNoise(skill)
-			ang.p = ang.p + (math.random() - 0.5) * noise
-			ang.y = ang.y + (math.random() - 0.5) * noise
-			bot:SetEyeAngles(ang)
-			cmd:SetButtons(bit.bor(cmd:GetButtons(), IN_ATTACK))
-		end
-		return
-	end
-
-	-- ── COMBAT / PATROL logic ─────────────────────────────────────────────
-	local visEnemy, visDist = nearestEnemy(bot, true)
-
-	if IsValid(visEnemy) and visDist and visDist < engageRange(skill) then
-		-- ── ENGAGE ────────────────────────────────────────────────────────
-		ai.state        = BS_ENGAGE
-		ai.lastKnownPos  = visEnemy:GetPos()
+	-- Combat Scanning
+	local enemy, dist = nearestEnemy(bot, true)
+	if IsValid(enemy) and dist < engageRange(skill) then
+		ai.state = BS_ENGAGE
+		ai.lastKnownPos = enemy:GetPos()
 		ai.lastKnownTime = now
 
-		-- Reaction gate: don't fire instantly on first sight
-		if ai.enemy ~= visEnemy then
-			ai.enemy     = visEnemy
-			ai.canShoot  = false
-			ai.shootGate = now + reactionSec(skill)
-		end
-		if not ai.canShoot and now >= ai.shootGate then
-			ai.canShoot = true
-		end
+		-- Aiming
+		local aim = getAimVector(bot, enemy, aimNoise(skill))
+		bot:SetEyeAngles(LerpAngle(0.1 + (skill * 0.05), bot:EyeAngles(), aim))
 
-		-- Aim for the chest/head instead of just EyePos
-		local targetPos = visEnemy:GetPos() + Vector(0, 0, 50)
-		local aimAng    = (targetPos - bot:EyePos()):Angle()
-		local noise     = aimNoise(skill)
-		
-		-- Apply noise to the TARGET, then lerp to it for "human" movement
-		aimAng.p = aimAng.p + (math.random() - 0.5) * noise
-		aimAng.y = aimAng.y + (math.random() - 0.5) * noise
-		
-		local curAng = bot:EyeAngles()
-		bot:SetEyeAngles(LerpAngle(math.Clamp(0.1 * (skill/5), 0.05, 0.4), curAng, aimAng))
-
-		local sp = botMoveSpeed(skill)
-		if ai.canShoot then
-			-- Burst firing logic: Tape trigger at close range, burst at long range
-			if now > ai.nextShot then
+		-- Shooting with burst logic
+		if now > ai.nextShot then
+			if now > ai.shootGate then
 				cmd:SetButtons(bit.bor(cmd:GetButtons(), IN_ATTACK))
 				
-				-- At distances > 800, simulate semi-auto/burst
-				if visDist > 800 and skill > 4 then
-					ai.nextShot = now + math.Rand(0.1, 0.25)
+				-- Real trigger control: High skill bots tap at range
+				local burst = (dist > 1000) and math.Rand(0.1, 0.3) or 0.05
+				ai.nextShot = now + burst
+			else
+				-- Reaction time simulation
+				if ai.shootGate == 0 or ai.enemy ~= enemy then
+					ai.shootGate = now + reactionSec(skill)
+					ai.enemy = enemy
 				end
 			end
-
-			-- Smart bots crouch while firing occasionally
-			if skill > 6 and visDist > 500 then cmd:SetButtons(bit.bor(cmd:GetButtons(), IN_DUCK)) end
 		end
 
-		-- Strafe while shooting (flip direction periodically)
+		-- Combat movement (Strafe)
 		if now > ai.strafeFlip then
-			ai.strafeDir  = -ai.strafeDir
-			ai.strafeFlip = now + math.Rand(0.8, 2.0)
+			ai.strafeDir = -ai.strafeDir
+			ai.strafeFlip = now + math.Rand(1, 3)
 		end
-		cmd:SetSideMove(ai.strafeDir * sp * 0.7)
+		cmd:SetSideMove(ai.strafeDir * speed)
 
-		-- Close distance if far; hold ground if close
-		if visDist > 350 then
-			cmd:SetForwardMove(sp * 0.6)
-		elseif visDist < 120 then
-			cmd:SetForwardMove(-sp * 0.4)  -- back up at point-blank
-		end
-
-	elseif ai.lastKnownPos and (now - ai.lastKnownTime) < 5 then
-		-- ── CHASE ─────────────────────────────────────────────────────────
-		ai.state    = BS_CHASE
-		ai.enemy    = nil
-		ai.canShoot = false
-
-		local sp = botMoveSpeed(skill) * 0.85
-		if skill > 4 then cmd:SetButtons(bit.bor(cmd:GetButtons(), IN_SPEED)) end
-		local dist = moveToward(bot, cmd, ai.lastKnownPos, sp)
-		if dist < 60 then
-			ai.lastKnownPos  = nil
-			ai.lastKnownTime = 0
+		-- Close distance or maintain gap
+		if dist > 600 then
+			cmd:SetForwardMove(speed)
+		elseif dist < 300 then
+			cmd:SetForwardMove(-speed)
 		end
 
+		-- Smart crouching
+		if skill > 7 and dist > 800 then
+			cmd:SetButtons(bit.bor(cmd:GetButtons(), IN_DUCK))
+		end
 	else
-		-- ── PATROL ────────────────────────────────────────────────────────
-		ai.state         = BS_PATROL
-		ai.enemy         = nil
-		ai.canShoot      = false
-		ai.lastKnownPos  = nil
-		ai.lastKnownTime = 0
-
-		-- Change patrol direction periodically
-		if now > ai.patrolFlip then
-			ai.patrolAngle = ai.patrolAngle + math.Rand(-80, 80)
-			ai.patrolFlip  = now + math.Rand(2, 4)
+		-- No enemy visible, focus on objectives or patrol
+		ai.enemy = nil
+		ai.shootGate = 0
+		
+		if targetObj then
+			local d = moveToward(bot, cmd, targetObj, speed)
+			if skill > 4 then cmd:SetButtons(bit.bor(cmd:GetButtons(), IN_SPEED)) end
+			
+			-- Interaction (Plant/Defuse)
+			if d < 100 then
+				cmd:SetButtons(bit.bor(cmd:GetButtons(), IN_USE))
+				-- Look down while planting
+				local ang = bot:EyeAngles()
+				ang.p = 45
+				bot:SetEyeAngles(LerpAngle(0.1, bot:EyeAngles(), ang))
+			end
+		elseif ai.lastKnownPos and (now - ai.lastKnownTime) < 8 then
+			-- Chase last known
+			moveToward(bot, cmd, ai.lastKnownPos, speed)
+		else
+			-- Patrol
+			if now > ai.patrolFlip then
+				ai.patrolAngle = math.Rand(0, 360)
+				ai.patrolFlip = now + math.Rand(4, 10)
+			end
+			local targetAng = Angle(0, ai.patrolAngle, 0)
+			bot:SetEyeAngles(LerpAngle(0.05, bot:EyeAngles(), targetAng))
+			cmd:SetForwardMove(speed * 0.6)
 		end
-		
-		local curAng = bot:EyeAngles()
-		bot:SetEyeAngles(LerpAngle(0.05, curAng, Angle(0, ai.patrolAngle, 0)))
-		
-		cmd:SetForwardMove(botMoveSpeed(skill) * 0.5)
 	end
+
+	
+	weaponCheck(bot)
 end)
 
--- ── Keep bots frozen in place during freeze phase ────────────────────────
 hook.Add("Think", "SND_BotFreezeVelocity", function()
 	if SND.Round.Phase ~= SND.PHASE_FREEZE then return end
 	for _, bot in ipairs(player.GetAll()) do
