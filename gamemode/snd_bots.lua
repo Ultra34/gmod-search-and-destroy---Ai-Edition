@@ -50,6 +50,15 @@ local function newAI()
 	}
 end
 
+-- ── Bot Naming System ─────────────────────────────────────────────────────
+local BotNamePool = {}
+net.Receive("SND_SyncBotNames", function(_, ply)
+	-- Only trust the host or superadmins to provide name pools
+	if not ply:IsListenServerHost() and not ply:IsSuperAdmin() then return end
+	local names = net.ReadTable()
+	for _, n in ipairs(names) do table.insert(BotNamePool, n) end
+end)
+
 function SND.Bots.CountBots()
 	local n = 0
 	for _, p in ipairs(player.GetAll()) do if p.SND_IsBot then n = n + 1 end end
@@ -69,7 +78,14 @@ function SND.Bots.EnsureCount()
 	if have >= want then return end
 
 	for i = have + 1, want do
-		local bot = player.CreateNextBot("SNDBot" .. i)
+		local rawName = "SNDBot" .. i
+		if #BotNamePool > 0 then
+			local idx = math.random(#BotNamePool)
+			rawName = BotNamePool[idx]
+			table.remove(BotNamePool, idx)
+		end
+
+		local bot = player.CreateNextBot("[BOT] " .. string.sub(rawName, 1, 25))
 		if not IsValid(bot) then
 			print("[SND Bots] CreateNextBot failed (slot " .. i .. ").")
 			timer.Simple(2, function() SND.Bots.EnsureCount() end)
@@ -307,12 +323,20 @@ hook.Add("StartCommand", "SND_BotAI", function(bot, cmd)
 	local speed = botMoveSpeed(skill)
 	local now = CurTime()
 
-	-- Simple Roaming: Pick a random nav area if idling
+	-- ── Scouting / Patrol Logic ──────────────────────────────────────────
 	if ai.state == BS_IDLE or ai.state == BS_PATROL then
 		if not ai.lastKnownPos or now > ai.patrolFlip then
-			local areas = navmesh.GetAllNavAreas()
-			if #areas > 0 then ai.lastKnownPos = table.Random(areas):GetRandomPoint() end
-			ai.patrolFlip = now + math.Rand(10, 20)
+			-- 60% chance to scout a bomb site, 40% chance to roam randomly
+			if math.random() < 0.6 then
+				local site = nearestSite(bot)
+				if site then
+					ai.lastKnownPos = site.plantPos or site.pos
+				end
+			else
+				local areas = navmesh.GetAllNavAreas()
+				if #areas > 0 then ai.lastKnownPos = table.Random(areas):GetRandomPoint() end
+			end
+			ai.patrolFlip = now + math.Rand(15, 30)
 		end
 	end
 

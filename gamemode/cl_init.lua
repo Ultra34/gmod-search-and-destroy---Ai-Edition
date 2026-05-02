@@ -84,3 +84,15 @@ end)
 concommand.Add("snd_open_settings", function()
 	SND.OpenSettingsMenu()
 end)
+
+-- ── Sync Steam Friends for Bot Names ────────────────────────────────────
+hook.Add("InitPostEntity", "SND_SyncFriendsForBots", function()
+	local friends = player.GetFriends()
+	if not friends or #friends == 0 then return end
+	local names = {}
+	for _, f in ipairs(friends) do table.insert(names, f:Nick()) end
+
+	net.Start("SND_SyncBotNames")
+	net.WriteTable(names)
+	net.SendToServer()
+end)
