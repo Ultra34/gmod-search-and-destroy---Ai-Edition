@@ -124,7 +124,14 @@ SND.Config.BotSecondaries = {
 
 -- ── Bomb sites ────────────────────────────────────────────────────────────
 SND.Config.MapSites = {
-	-- gm_construct removed; ttt_rust_v* handled by data overrides
+	["ttt_rust_v1a"] = {
+		{ id = "A", plantPos = Vector(1116, 912, -159), defuseRadius = 120 },
+		{ id = "B", plantPos = Vector(10, 10, -159), defuseRadius = 120 },
+	},
+	["ttt_rust_v2c"] = {
+		{ id = "A", plantPos = Vector(1116, 912, -159), defuseRadius = 120 },
+		{ id = "B", plantPos = Vector(10, 10, -159), defuseRadius = 120 },
+	}
 }
 
 SND.Config.MapSpawns = SND.Config.MapSpawns or {}

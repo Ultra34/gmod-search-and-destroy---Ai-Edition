@@ -152,7 +152,7 @@ hook.Add("HUDPaint", "SND_HUD", function()
 
 	-- ── Kill Feed (top-right) ─────────────────────────────────────────────────
 	local kfX, kfY = sw - 16 * sc, 16 * sc
-	local kfLineHeight = 20 * sc -- Approx height for Trebuchet18
+	local kfLineHeight = 36 * sc -- Increased height for larger text
 	local kfMaxLines = 5
 	local kfFadeTime = 7 -- seconds
 
@@ -177,16 +177,16 @@ hook.Add("HUDPaint", "SND_HUD", function()
 		local currentDrawX = kfX
 
 		-- Draw Victim Nick
-		draw.SimpleText(entry.victimNick, "Trebuchet18", currentDrawX, currentY, col(victimCol.r, victimCol.g, victimCol.b, alpha), TEXT_ALIGN_RIGHT, TEXT_ALIGN_TOP)
-		currentDrawX = currentDrawX - surface.GetTextSize(entry.victimNick, "Trebuchet18") - 5 * sc
+		draw.SimpleText(entry.victimNick, "Trebuchet24", currentDrawX, currentY, col(victimCol.r, victimCol.g, victimCol.b, alpha), TEXT_ALIGN_RIGHT, TEXT_ALIGN_TOP)
+		currentDrawX = currentDrawX - 100 * sc -- Fixed spacing for clarity
 
 		-- Draw Weapon Name (or icon placeholder)
 		local weaponText = " (" .. entry.weaponName .. ") "
-		draw.SimpleText(weaponText, "Trebuchet18", currentDrawX, currentY, col(C_DIM.r, C_DIM.g, C_DIM.b, alpha), TEXT_ALIGN_RIGHT, TEXT_ALIGN_TOP)
-		currentDrawX = currentDrawX - surface.GetTextSize(weaponText, "Trebuchet18") - 5 * sc
+		draw.SimpleText(weaponText, "Trebuchet24", currentDrawX, currentY, col(C_DIM.r, C_DIM.g, C_DIM.b, alpha), TEXT_ALIGN_RIGHT, TEXT_ALIGN_TOP)
+		currentDrawX = currentDrawX - 100 * sc
 
 		-- Draw Attacker Nick
-		draw.SimpleText(entry.attackerNick, "Trebuchet18", currentDrawX, currentY, col(attackerCol.r, attackerCol.g, attackerCol.b, alpha), TEXT_ALIGN_RIGHT, TEXT_ALIGN_TOP)
+		draw.SimpleText(entry.attackerNick, "Trebuchet24", currentDrawX, currentY, col(attackerCol.r, attackerCol.g, attackerCol.b, alpha), TEXT_ALIGN_RIGHT, TEXT_ALIGN_TOP)
 	end
 
 	-- ── Victory Messages (Round End) ──────────────────────────────────────
@@ -283,4 +283,11 @@ hook.Add("HUDPaint", "SND_BombProgressBar", function()
 	local nick = BombProg.who:Nick() or "?"
 	draw.SimpleText(nick, "Trebuchet18", sw * 0.5, by + bh + 4,
 		col(210, 210, 210), TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
+end)
+
+-- ── Disable default GMod Death Notice ─────────────────────────────────────
+hook.Add("HUDShouldDraw", "SND_DisableDefaultKillFeed", function(name)
+	if name == "CHudDeathNotice" then
+		return false
+	end
 end)

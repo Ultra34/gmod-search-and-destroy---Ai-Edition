@@ -141,9 +141,8 @@ local function weaponCheck(bot, cmd)
 
 	local max = wep:GetMaxClip1()
 	local clip = wep:Clip1()
-	if max <= 0 then return end
 
-	-- If primary is empty during a fight, switch to secondary
+	-- 1. Mid-fight emergency switch: Primary is empty, pull out secondary
 	if ai.state == BS_ENGAGE and max > 0 and clip <= 0 then
 		local isPri = false
 		for _, pClass in ipairs(SND.Config.BotPrimaries) do
@@ -161,14 +160,14 @@ local function weaponCheck(bot, cmd)
 		end
 	end
 
-	-- Proactive reloading: Refresh clip if safe and less than 60% full
-	local isSafe = (ai.state ~= BS_ENGAGE and ai.state ~= BS_IDLE)
-	if clip <= 0 or (isSafe and clip < max * 0.6) then
+	-- 2. Reloading: If empty, or safe and low on ammo
+	local isSafe = (ai.state == BS_PATROL or ai.state == BS_CHASE)
+	if max > 0 and (clip <= 0 or (isSafe and clip < max * 0.6)) then
 		cmd:SetButtons(bit.bor(cmd:GetButtons(), IN_RELOAD))
 	end
 
-	-- Switch back to primary if we have ammo and are safe
-	if isSafe and clip > 0 then
+	-- 3. Recovery: Switch back to primary once the area is clear
+	if isSafe and clip >= 0 then
 		for _, pClass in ipairs(SND.Config.BotPrimaries) do
 			local pwep = bot:GetWeapon(pClass)
 			if IsValid(pwep) and pwep ~= wep and pwep:Clip1() > 0 then
@@ -195,11 +194,11 @@ end
 
 -- ── Navigation ────────────────────────────────────────────────────────────
 local function moveToward(bot, cmd, targetPos, speed)
-	if not isvector(targetPos) or not targetPos then return 0 end
+	if not isvector(targetPos) then return 0 end
 
 	local ai = bot.SND_AI
 	local myPos = bot:GetPos()
-	local moveDest = targetPos
+	local moveDest = Vector(targetPos.x, targetPos.y, targetPos.z)
 
 	if navmesh.IsLoaded() then
 		if not ai.path then
@@ -394,9 +393,6 @@ hook.Add("StartCommand", "SND_BotAI", function(bot, cmd)
 				local ang = bot:EyeAngles()
 				ang.p = 45
 				bot:SetEyeAngles(LerpAngle(0.1, bot:EyeAngles(), ang))
-				-- Bot plant/defuse logic is handled by the PlayerButtonDown hook in snd_bomb.lua
-				-- which is triggered by IN_USE. The bot will hold IN_USE when near the objective
-				-- and in the correct team/bomb state.
 			end
 		elseif ai.lastKnownPos and (now - ai.lastKnownTime) < 15 then
 			-- Chase last known
