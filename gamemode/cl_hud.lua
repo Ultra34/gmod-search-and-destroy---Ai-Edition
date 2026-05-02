@@ -1,63 +1,197 @@
-local function col(a, d)
-	return Color(220, 230, 240, a or 255)
+--[[ HUD: scores, phase, freeze countdown bar, bomb carrier/planted info
+     REPLACES: gamemode/cl_hud.lua ]]
+
+-- ── Freeze end time (set by SND_FreezeInfo net message) ──────────────────
+local freezeEndTime  = 0
+local freezeDuration = 6
+
+net.Receive("SND_FreezeInfo", function()
+	freezeEndTime  = net.ReadFloat()   -- absolute CurTime() when freeze ends
+	freezeDuration = net.ReadFloat()   -- total freeze seconds (for bar width)
+end)
+
+-- ── Colours ───────────────────────────────────────────────────────────────
+local function col(r, g, b, a) return Color(r, g, b, a or 255) end
+
+local C_WHITE  = col(230, 235, 245)
+local C_DIM    = col(160, 170, 190)
+local C_ATTACK = col(220,  70,  50)
+local C_DEFEND = col( 60, 140, 220)
+local C_BOMB   = col(255, 200,  60)
+local C_DANGER = col(255,  60,  40)
+local C_GREEN  = col( 80, 220, 100)
+local C_BG     = col(  0,   0,   0, 160)
+local C_PILL   = col( 20,  22,  28, 210)
+
+-- ── Rounded pill helper ───────────────────────────────────────────────────
+local function pill(x, y, w, h, c)
+	draw.RoundedBox(6, x, y, w, h, c)
 end
 
+-- ── Main HUD ─────────────────────────────────────────────────────────────
 hook.Add("HUDPaint", "SND_HUD", function()
 	local lp = LocalPlayer()
 	if not IsValid(lp) then return end
 
 	local cv = GetConVar("snd_hud_scale")
 	local sc = math.Clamp(cv and cv:GetFloat() or 1, 0.75, 1.5)
-	local x, y = 24 * sc, 24 * sc
+	local sw, sh = ScrW(), ScrH()
+
+	-- ── Score bar (top-left) ───────────────────────────────────────────────
+	local scoreW, scoreH = 220 * sc, 44 * sc
+	local sx, sy = 16 * sc, 16 * sc
+
+	pill(sx, sy, scoreW, scoreH, C_PILL)
 
 	draw.SimpleText(
-		"A " .. tostring(SND.Client.AttackScore or 0) .. "  —  " .. tostring(SND.Client.DefendScore or 0) .. " D",
-		"DermaLarge",
-		x,
-		y,
-		col(255),
-		TEXT_ALIGN_LEFT,
-		TEXT_ALIGN_TOP
+		tostring(SND.Client.AttackScore or 0),
+		"DermaLarge", sx + 18 * sc, sy + scoreH * 0.5,
+		C_ATTACK, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER
+	)
+	draw.SimpleText(
+		"—",
+		"DermaLarge", sx + scoreW * 0.5, sy + scoreH * 0.5,
+		C_DIM, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER
+	)
+	draw.SimpleText(
+		tostring(SND.Client.DefendScore or 0),
+		"DermaLarge", sx + scoreW - 18 * sc, sy + scoreH * 0.5,
+		C_DEFEND, TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER
 	)
 
+	-- ── Phase label ───────────────────────────────────────────────────────
 	local phase = SND.Client.Phase or SND.PHASE_WAIT
-	local label = "WAIT"
-	if phase == SND.PHASE_FREEZE then label = "FREEZE" end
-	if phase == SND.PHASE_LIVE then label = "LIVE" end
-	if phase == SND.PHASE_POST then label = "ROUND END" end
-
-	draw.SimpleText(label, "Trebuchet24", x, y + 36 * sc, col(220), TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
-
-	-- Display round timer with flashing red warning at <10 seconds
-	if phase == SND.PHASE_FREEZE or phase == SND.PHASE_LIVE then
-		local timeRemaining = math.max(0, SND.Round.RoundTimerEnd - CurTime())
-		local mins = math.floor(timeRemaining / 60)
-		local secs = math.floor(timeRemaining % 60)
-		local timeStr = string.format("Time: %02d:%02d", mins, secs)
-
-		-- Flash red when less than 10 seconds remaining
-		local timerColor = col(220)
-		if timeRemaining < 10 and timeRemaining > 0 then
-			local flash = math.sin(CurTime() * 4) > 0 and 1 or 0.3
-			timerColor = Color(255, 100 * flash, 100 * flash, 255)
-		end
-
-		draw.SimpleText(timeStr, "Trebuchet24", x, y + 60 * sc, timerColor, TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
+	local phaseStr = "WAITING"
+	if phase == SND.PHASE_FREEZE then phaseStr = "GET READY"
+	elseif phase == SND.PHASE_LIVE  then phaseStr = "LIVE"
+	elseif phase == SND.PHASE_POST  then phaseStr = "ROUND END"
 	end
 
-	if IsValid(SND.Client.BombCarrier) then
-		local who = SND.Client.BombCarrier == lp and "You have the bomb" or (SND.Client.BombCarrier:Nick() .. " has the bomb")
-		draw.SimpleText(who, "Trebuchet24", ScrW() / 2, ScrH() - 120 * sc, Color(255, 200, 120), TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
+	draw.SimpleText(
+		phaseStr, "Trebuchet18",
+		sx + scoreW * 0.5, sy + scoreH + 6 * sc,
+		C_DIM, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP
+	)
+
+	-- ── FREEZE COUNTDOWN BAR (bottom-center) ──────────────────────────────
+	if phase == SND.PHASE_FREEZE and freezeEndTime > 0 then
+		local remaining = math.max(0, freezeEndTime - CurTime())
+		local frac      = math.Clamp(remaining / math.max(freezeDuration, 0.01), 0, 1)
+
+		local bw = 360 * sc
+		local bh = 26 * sc
+		local bx = sw * 0.5 - bw * 0.5
+		local by = sh - 140 * sc
+
+		-- Background
+		pill(bx - 2, by - 2, bw + 4, bh + 4, C_BG)
+		pill(bx, by, bw, bh, col(30, 32, 40, 220))
+
+		-- Fill (green → yellow → red as time runs out)
+		local r = math.floor(math.Lerp(frac, 220, 60))
+		local g = math.floor(math.Lerp(frac, 80, 200))
+		local fillCol = col(r, g, 60, 220)
+		if bw * frac > 4 then
+			pill(bx, by, bw * frac, bh, fillCol)
+		end
+
+		-- Text
+		draw.SimpleText(
+			string.format("STARTING IN  %.1f", remaining),
+			"Trebuchet18",
+			sw * 0.5, by + bh * 0.5,
+			C_WHITE, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER
+		)
 	end
 
-	if not lp:Alive() and (SND.Client.Phase == SND.PHASE_LIVE or SND.Client.Phase == SND.PHASE_FREEZE or SND.Client.Phase == SND.PHASE_POST) then
-		local tgt = lp:GetObserverTarget()
-		local line = "Spectating teammates only — M1: next   M2: prev"
-		if IsValid(tgt) and tgt:IsPlayer() then
-			line = "Watching: " .. tgt:Nick() .. "  (M1 next / M2 prev)"
-		elseif not IsValid(tgt) then
-			line = line .. "  |  No living teammates — free look"
+	-- ── Bomb info (bottom-center, during live) ────────────────────────────
+	if phase == SND.PHASE_LIVE then
+		local bombLine
+
+		if IsValid(SND.Client.BombCarrier) then
+			if SND.Client.BombCarrier == lp then
+				bombLine = "💣  You have the bomb — press E at a site to plant"
+			else
+				bombLine = "💣  " .. SND.Client.BombCarrier:Nick() .. " has the bomb"
+			end
 		end
-		draw.SimpleText(line, "Trebuchet18", ScrW() / 2, ScrH() - 88 * sc, Color(160, 200, 255), TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
+
+		if bombLine then
+			local tw = string.len(bombLine) * 7 * sc + 20
+			pill(sw * 0.5 - tw * 0.5, sh - 110 * sc, tw, 26 * sc, C_PILL)
+			draw.SimpleText(bombLine, "Trebuchet18", sw * 0.5, sh - 97 * sc,
+				C_BOMB, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+		end
+	end
+
+	-- ── Spectator label ───────────────────────────────────────────────────
+	if not lp:Alive() and (phase == SND.PHASE_LIVE or phase == SND.PHASE_FREEZE) then
+		local tgt  = lp:GetObserverTarget()
+		local line = IsValid(tgt) and tgt:IsPlayer()
+		            and ("Watching: " .. tgt:Nick() .. "  (M1 next / M2 prev)")
+		            or "Spectating — no living teammates — free look"
+		draw.SimpleText(line, "Trebuchet18", sw * 0.5, sh - 72 * sc,
+			col(160, 200, 255), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+	end
+end)
+
+-- ── Plant/defuse progress bar (driven by SND_BombProgress) ───────────────
+local BombProg = { kind = 0, who = nil, total = 0, started = 0 }
+
+net.Receive("SND_BombProgress", function()
+	BombProg.kind    = net.ReadUInt(2)
+	BombProg.who     = net.ReadEntity()
+	BombProg.total   = net.ReadFloat()
+	BombProg.started = CurTime()
+end)
+
+hook.Add("HUDPaint", "SND_BombProgressBar", function()
+	if BombProg.kind == 0 then return end
+	if not IsValid(BombProg.who) then BombProg.kind = 0 return end
+
+	local elapsed  = CurTime() - BombProg.started
+	local frac     = math.Clamp(elapsed / math.max(BombProg.total, 0.01), 0, 1)
+	if frac >= 1 then BombProg.kind = 0 return end
+
+	local sw, sh = ScrW(), ScrH()
+	local bw, bh = 320, 24
+	local bx = sw * 0.5 - bw * 0.5
+	local by = sh - 170
+
+	local lbl    = BombProg.kind == 1 and "PLANTING…" or "DEFUSING…"
+	local fillC  = BombProg.kind == 1 and col(220, 80, 40) or col(40, 160, 220)
+
+	-- Background + fill
+	draw.RoundedBox(5, bx - 2, by - 2, bw + 4, bh + 4, col(0, 0, 0, 160))
+	draw.RoundedBox(5, bx, by, bw, bh, col(25, 27, 35, 220))
+	if bw * frac > 4 then
+		draw.RoundedBox(5, bx, by, bw * frac, bh, fillC)
+	end
+
+	draw.SimpleText(lbl, "Trebuchet18", sw * 0.5, by + bh * 0.5,
+		col(255, 255, 255), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+
+	-- Who is doing it
+	local nick = BombProg.who:Nick() or "?"
+	draw.SimpleText(nick, "Trebuchet18", sw * 0.5, by + bh + 4,
+		col(210, 210, 210), TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
+end)
+
+-- ── Bomb carrier / planted state sync ────────────────────────────────────
+net.Receive("SND_Bomb", function()
+	SND.Client        = SND.Client or {}
+	SND.Bomb          = SND.Bomb   or {}
+	local t = net.ReadUInt(3)
+	if t == 1 then
+		SND.Client.BombCarrier   = net.ReadEntity()
+		SND.Bomb.State           = SND.BOMB_STATE_CARRIED
+		SND.Bomb.PlantedSite     = nil
+		SND.Bomb.PlantTime       = nil
+	elseif t == 2 then
+		SND.Client.BombCarrier   = nil
+		SND.Bomb.State           = SND.BOMB_STATE_PLANTED
+		SND.Bomb.PlantPos        = net.ReadVector()
+		SND.Bomb.PlantedSite     = net.ReadString()
+		SND.Bomb.PlantTime       = CurTime()
 	end
 end)

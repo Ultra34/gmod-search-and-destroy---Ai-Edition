@@ -1,4 +1,5 @@
---[[ COD-ish movement: sprint multiplier, air accel tweak — not a full engine replacement ]]
+--[[ COD-style movement: freeze lock, sprint, air accel
+     REPLACES: gamemode/snd_movement.lua ]]
 
 SND.Movement = SND.Movement or {}
 
@@ -6,16 +7,28 @@ function SND.Movement.Setup(ply)
 	ply.SND_Sprinting = false
 end
 
-hook.Add("SetupMove", "SND_Sprint", function(ply, mv, cmd)
+hook.Add("SetupMove", "SND_Movement", function(ply, mv, cmd)
 	if not IsValid(ply) or not ply:Alive() then return end
-	if SND.Round.Phase ~= SND.PHASE_LIVE and SND.Round.Phase ~= SND.PHASE_FREEZE then return end
 
-	local mult = SND.Settings.Get("sprint_mult", 1.65)
-	local onground = ply:IsOnGround()
-	local wantspeed = cmd:KeyDown(IN_SPEED)
+	-- ── FREEZE: nobody moves ───────────────────────────────────────────────
+	if SND.Round.Phase == SND.PHASE_FREEZE then
+		mv:SetForwardSpeed(0)
+		mv:SetSideSpeed(0)
+		mv:SetUpSpeed(0)
+		mv:SetVelocity(Vector(0, 0, 0))
+		ply.SND_Sprinting = false
+		return
+	end
 
-	local base = SND.Settings.GetInt("run_speed", 280)
-	if onground and wantspeed then
+	if SND.Round.Phase ~= SND.PHASE_LIVE then return end
+
+	-- ── SPRINT ────────────────────────────────────────────────────────────
+	local mult    = SND.Settings.Get("sprint_mult", 1.65)
+	local base    = SND.Settings.GetInt("run_speed", 280)
+	local onGround = ply:IsOnGround()
+	local wantSprint = cmd:KeyDown(IN_SPEED)
+
+	if onGround and wantSprint then
 		ply.SND_Sprinting = true
 		mv:SetMaxClientSpeed(base * mult)
 		mv:SetMaxSpeed(base * mult)
@@ -26,25 +39,22 @@ hook.Add("SetupMove", "SND_Sprint", function(ply, mv, cmd)
 	end
 end)
 
+-- ── Air acceleration tweak ────────────────────────────────────────────────
 hook.Add("Move", "SND_AirAccel", function(ply, mv)
 	if not IsValid(ply) or not ply:Alive() then return end
+	if SND.Round.Phase == SND.PHASE_FREEZE then return end
 	if ply:IsOnGround() then return end
 
-	local scale = SND.Settings.Get("air_accel_scale", 1.35)
-	local vel = mv:GetVelocity()
-	local aim = ply:GetAimVector()
-	aim.z = 0
-	aim:Normalize()
-
+	local scale   = SND.Settings.Get("air_accel_scale", 1.35)
 	local forward = mv:GetForwardSpeed()
-	local side = mv:GetSideSpeed()
+	local side    = mv:GetSideSpeed()
 	if forward == 0 and side == 0 then return end
 
 	local wish = (ply:GetForward() * forward + ply:GetRight() * side)
 	wish.z = 0
 	if wish:Length() > 0 then
 		wish:Normalize()
-		vel = vel + wish * (FrameTime() * 45 * scale)
+		local vel = mv:GetVelocity() + wish * (FrameTime() * 45 * scale)
 		mv:SetVelocity(vel)
 	end
 end)

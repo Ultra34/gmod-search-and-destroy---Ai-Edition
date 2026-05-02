@@ -1,26 +1,27 @@
---[[ Replicated settings (server authoritative). Client reads for UI. ]]
+--[[ Replicated settings (server authoritative). Client reads for UI.
+     REPLACES: gamemode/snd_settings.lua ]]
 
 SND.Settings = SND.Settings or {}
 
 SND.Settings.Defaults = {
-	sprint_mult = 1.65,
-	walk_speed = 190,
-	run_speed = 280,
-	ads_slow = 0.88,
-	air_accel_scale = 1.35,
-	friction_floor = 0.92,
-	plant_time = 5,
-	defuse_time = 8,
-	freeze_time = 6,
-	round_time = 120,
-	win_limit = 4,
-	bot_count = 0,
-	bot_skill = 0.65,
-	team_balance = 1,
-	mapvote_enabled = 1,
-	mapvote_time = 20,
+	sprint_mult      = 1.65,
+	walk_speed       = 190,
+	run_speed        = 280,
+	ads_slow         = 0.88,
+	air_accel_scale  = 1.35,
+	friction_floor   = 0.92,
+	plant_time       = 5,
+	defuse_time      = 8,
+	freeze_time      = 6,
+	round_time       = 120,
+	win_limit        = 4,
+	bot_count        = 0,
+	bot_skill        = 5,    -- 1 (worst) to 10 (best)
+	team_balance     = 1,
+	mapvote_enabled  = 1,
+	mapvote_time     = 20,
 	announcer_volume = 1,
-	hud_scale = 1,
+	hud_scale        = 1,
 }
 
 if SERVER then
