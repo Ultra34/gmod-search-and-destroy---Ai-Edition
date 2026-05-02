@@ -1,4 +1,4 @@
-# Search & Destroy (ARC9 MW Classic)
+# Search & Destroy (ARC9 MW2)
 
 Garry’s Mod **gamemode** inspired by Call of Duty Search & Destroy: one life per round, bomb plant/defuse, team scores, optional map voting, Lua-driven bots, **team-only spectating** (mouse **M1** / **M2** to cycle living teammates), and **ARC9 MW2 Extended** (`arc9_mw2e_*`) random primaries/secondaries from configurable pools (override via `data/snd_mwclassic/loadouts.lua` or `snd_loadout_*` ConVars).
 
@@ -37,17 +37,88 @@ Garry’s Mod **gamemode** inspired by Call of Duty Search & Destroy: one life p
 
 ---
 
-## Controls & rules
+## Controls
 
-| Action | Default |
-|--------|--------|
-| Plant bomb (attacker with bomb, in site) | Hold **E** in radius |
-| Defuse (defender, on planted bomb) | Hold **E** near bomb |
-| Sprint | **Shift** (speed uses `snd_sprint_mult`) |
-| Spectate (while dead in round) | **CHASE** on a living **teammate** only; **M1** next / **M2** prev. If none alive, free **ROAMING** cam |
+Default bindings follow standard Garry’s Mod / Source (you can rebind in **Settings → Keyboard**).
 
-- **Freeze** at round start, then **live** play. **Defenders** win if time runs out. **Attackers** win if the bomb detonates. Elimination wins if one team is wiped.
-- Bomb fuse after plant: **45 seconds** (see `gamemode/snd_bomb.lua` to change).
+### Movement
+
+| Action | Default key |
+|--------|-------------|
+| Move | **W A S D** |
+| Look | **Mouse** |
+| Jump | **Space** |
+| Crouch | **Ctrl** (if bound in GMod) |
+| **Sprint** (faster move on ground) | Hold **Shift** while moving (`snd_sprint_mult` scales speed) |
+
+### Combat & equipment
+
+| Action | Default key |
+|--------|-------------|
+| Primary / secondary fire | **Mouse 1** / **Mouse 2** (weapon-dependent) |
+| Reload | **R** (typical) |
+| **Use** (plant / defuse — see below) | **E** |
+
+### Bomb (Search & Destroy)
+
+| Situation | What to do |
+|-----------|----------------|
+| **Plant** — you are the bomb carrier (**attacker**), bomb is not planted, you stand in a site | Hold **E** until the plant timer finishes (`snd_plant_time`). Moving out of range or taking damage can cancel. |
+| **Defuse** — you are **defender**, bomb is planted, you are on the bomb | Hold **E** until defuse finishes (`snd_defuse_time`). Taking damage can cancel. |
+
+Bomb sites are map-specific (config / data overrides). If you see no prompt, you are not in site radius or not the right role.
+
+### Spectating (after you die for the round)
+
+| Action | Default key |
+|--------|-------------|
+| Watch **teammates only** (camera follows them) | Automatic when alive teammates exist |
+| **Next** teammate | **Mouse 1** (primary attack while spectating) |
+| **Previous** teammate | **Mouse 2** (secondary attack while spectating) |
+| No living teammates | **Free roam** camera until the round ends |
+
+### Menus & admin (optional)
+
+| Action | How |
+|--------|-----|
+| Spawn / context menu | **Q** (default) — **Utilities → SND** for the settings shortcut |
+| SuperAdmin settings UI | Chat **`!snd_settings`** or console **`snd_open_settings`** |
+
+### Round rules (short)
+
+- **Freeze** at round start, then **live** play. One life per player per round until the next round respawn.
+- **Defenders** win the round if time runs out. **Attackers** win if the bomb explodes. Either team can win by eliminating the other.
+- After plant, bomb detonates after **45 seconds** unless defused (timer in `gamemode/snd_bomb.lua`).
+
+---
+
+## Bots — how to enable and access them
+
+Bots are **not** a separate menu tab. They are **extra player slots** created with `player.CreateNextBot` when **`snd_bot_count`** is greater than **0**.
+
+### 1. Set how many bots you want
+
+Pick **one** of these:
+
+- **Before starting a game** — In the **Create Multiplayer** / new game screen, if your build shows **gamemode options** from `snd_mwclassic.txt`, set **Bots** there (same ConVar: `snd_bot_count`).
+- **Console (server / listen host)** — After the map loads:
+  ```
+  snd_bot_count 4
+  ```
+  Change map or reconnect so the gamemode can run its bot logic (`changelevel gm_construct` or restart).
+- **SuperAdmin in-game** — **`snd_open_settings`** or **`!snd_settings`** → adjust sliders if your build shows **Bots** there.
+- **Dedicated server** — Put `snd_bot_count 4` in `server.cfg` or your host’s startup config, then restart the map.
+
+### 2. What you should see
+
+- Bots appear as normal **player names** in the scoreboard / world (often named like **SNDBot1**).
+- They fill empty slots up to **`snd_bot_count`**. Difficulty is roughly **`snd_bot_skill`** (0.15–1).
+
+### 3. If bots never appear
+
+- **Listen server:** try `snd_bot_count 2` then `changelevel` the same map.
+- **Dedicated:** many hosts need **`bot`** / quota / permissions enabled; `player.CreateNextBot` can fail silently — check the **server console** for `[SND]` messages from `gamemode/snd_bots.lua`.
+- Set **`snd_bot_count 0`** to turn bots off.
 
 ---
 
@@ -119,14 +190,6 @@ Changes are applied on the **server** via network messages.
 ### Admin / console
 
 - **`snd_start_mapvote`** — SuperAdmin: start a map vote manually.
-
----
-
-## Bots
-
-Bots use **`player.CreateNextBot`**. Your server must allow bot creation (listen server usually does; dedicated servers may need appropriate settings). They are **Lua-assisted** (aim, fire, move toward enemies, bomb carrier sprints); they are **not** parity with AAA FPS AI.
-
----
 
 ## Map voting
 
