@@ -1,0 +1,557 @@
+================================================================================
+  SEARCH & DESTROY (ARC9 MW2) — INSTALLATION & IN-DEPTH TUTORIAL
+  Gamemode folder: snd_mwclassic
+  Repository: https://github.com/Ultra34/gmod-search-and-destroy---Ai-Edition
+================================================================================
+
+
+TABLE OF CONTENTS
+-----------------
+  1. What you are installing
+  2. Requirements (hard + soft)
+  3. Locate your Garry's Mod directory
+  4. PART A — Install the gamemode (required)
+  5. PART B — Install data files (strongly recommended)
+  6. PART C — Workshop: ARC9 and MW2 weapon packs
+  7. First launch — listen server (single PC / host)
+  8. First launch — dedicated server (short overview)
+  9. Tutorial: How a round works (bomb, teams, spectate)
+ 10. Tutorial: Configuration layers (what overrides what)
+ 11. Tutorial: Server ConVars (snd_*)
+ 12. Tutorial: garrysmod/data/snd_mwclassic/loadouts.lua
+ 13. Tutorial: garrysmod/data/snd_mwclassic/maps.txt
+ 14. Tutorial: Per-map overrides (maps/<mapname>.lua)
+ 15. Tutorial: Workshop Rust map (ttt_rust_v1a)
+ 16. Tutorial: Announcer sounds
+ 17. Tutorial: In-game settings menu (SuperAdmin)
+ 18. Tutorial: Bots (limitations)
+ 19. Troubleshooting
+ 20. Updating to a newer version from GitHub
+
+
+================================================================================
+ 1. WHAT YOU ARE INSTALLING
+================================================================================
+
+This is a Garry's Mod GAMEMODE (not a simple Workshop Lua addon). It replaces
+normal Sandbox rules with a Call of Duty-style Search & Destroy loop:
+
+  - Two teams (attackers / defenders), bomb plant/defuse, one life per round.
+  - Loadouts use ARC9 "MW2 Extended" class names (arc9_mw2e_*) from pools in
+    gamemode/snd_config.lua unless you override them.
+  - Optional map voting, team-only spectating, Lua bots, and optional Rust
+    map auto-layout (ttt_rust_v1a).
+
+You must copy the gamemode into garrysmod/gamemodes/ and (recommended) copy
+data files into garrysmod/data/snd_mwclassic/.
+
+
+================================================================================
+ 2. REQUIREMENTS
+================================================================================
+
+HARD REQUIREMENTS
+-----------------
+  - Garry's Mod (Steam), updated.
+  - Ability to start a gamemode that derives from "base" (default GMod).
+
+SOFT REQUIREMENTS (for intended gameplay)
+-----------------------------------------
+  - ARC9 base (Workshop) and an ARC9 MW2 Extended weapon collection that
+    actually registers the SWEP classes listed in snd_config.lua
+    (e.g. arc9_mw2e_m4a1). If a class is wrong for your pack, the server will
+    print a missing-weapon message when giving loadouts.
+
+OPTIONAL
+--------
+  - Microphone / speakers for announcer WAV files you place yourself.
+  - SuperAdmin on your server if you want the in-game Derma settings panel.
+
+
+================================================================================
+ 3. LOCATE YOUR GARRY'S MOD DIRECTORY
+================================================================================
+
+Typical Steam layout (Windows):
+
+  C:\Program Files (x86)\Steam\steamapps\common\GarrysMod\garrysmod\
+
+Inside that "garrysmod" folder you should see subfolders such as:
+
+  addons\          (Workshop / manual addons)
+  gamemodes\       (THIS is where snd_mwclassic goes)
+  data\            (THIS is where snd_mwclassic DATA goes)
+  lua\             (engine / autorun — do NOT paste this gamemode here)
+  sound\           (optional: announcer sounds under sound/snd_mwclassic\)
+
+If you use a different Steam library folder, search for "GarrysMod" or open
+Steam → Garry's Mod → Manage → Browse local files.
+
+
+================================================================================
+ 4. PART A — INSTALL THE GAMEMODE (REQUIRED)
+================================================================================
+
+STEP 1 — Get the files
+----------------------
+  Either:
+    A) Clone Git:
+         git clone https://github.com/Ultra34/gmod-search-and-destroy---Ai-Edition.git
+       You will get a folder (repo name). Inside it is the gamemode tree
+       with gamemode.txt at the root of snd_mwclassic.
+
+    B) Download ZIP from GitHub → Extract.
+
+STEP 2 — Folder name and placement
+----------------------------------
+  The folder you copy into Garry's Mod MUST be named exactly:
+
+    snd_mwclassic
+
+  That folder must contain at least:
+    - gamemode.txt
+    - gamemode\   (with init.lua, shared.lua, snd_*.lua, cl_*.lua, etc.)
+
+  Copy the entire "snd_mwclassic" folder into:
+
+    <GarrysMod>/garrysmod/gamemodes/snd_mwclassic
+
+  After copying, this file must exist:
+
+    <GarrysMod>/garrysmod/gamemodes/snd_mwclassic/gamemode.txt
+
+STEP 3 — Verify in-game
+-----------------------
+  Launch Garry's Mod → Find the gamemode list (depends on main menu / beta
+  UI). Select "Search & Destroy (ARC9 MW2)" or similar title from gamemode.txt.
+
+  Or from console (main menu):
+
+    gamemode snd_mwclassic
+    map gm_construct
+
+  If the map loads and you spawn with weapons (or see errors about missing
+  SWEPs), the gamemode path is correct.
+
+
+================================================================================
+ 5. PART B — INSTALL DATA FILES (STRONGLY RECOMMENDED)
+================================================================================
+
+This repo includes a folder:
+
+  copy_to_garrysmod_data/snd_mwclassic/
+
+Copy its CONTENTS so they end up under:
+
+  <GarrysMod>/garrysmod/data/snd_mwclassic/
+
+You should have (at minimum after copy):
+
+  data/snd_mwclassic/maps.txt
+
+Optional / examples shipped with the repo:
+
+  data/snd_mwclassic/loadouts.lua          (optional override — see section 12)
+  data/snd_mwclassic/maps/ttt_rust_v1a.example.lua
+                                           (rename to ttt_rust_v1a.lua to use)
+
+WHY THIS MATTERS
+-----------------
+  - maps.txt drives end-of-match map voting. Empty or missing list = no
+    useful vote rotation.
+  - loadouts.lua lets you fix weapon class names without editing Lua in
+    gamemodes/.
+
+
+================================================================================
+ 6. PART C — WORKSHOP: ARC9 AND MW2 WEAPON PACKS
+================================================================================
+
+STEP 1 — Subscribe to ARC9 (and dependencies the ARC9 page lists).
+
+STEP 2 — Subscribe to your ARC9 MW2 Extended / compatible weapon pack that
+         provides classes like arc9_mw2e_m4a1.
+
+STEP 3 — Enable addons in the GMod menu (Addons → filter enabled).
+
+STEP 4 — VERIFY CLASS NAMES (important tutorial step)
+-----------------------------------------------------
+  Wrong class names are the #1 support issue.
+
+  On a local listen server, after subscribing:
+    - Open spawn menu → Weapons → find your MW2 pack weapons.
+    - Or run (client console) something that prints the weapon class of the
+      SWEP you are holding (many packs show class in spawn icon tooltip).
+
+  Compare to the lists in:
+
+    gamemodes/snd_mwclassic/gamemode/snd_config.lua
+
+  Sections:
+    SND.Config.Mw2ePrimaries
+    SND.Config.Mw2eSecondaries
+    SND.Config.Mw2eSpecial   (launchers — not given on spawn by default)
+
+  If your pack renames a gun (e.g. typo arc9_mw2e_m4a1 vs arc9_mw2_m4a1),
+  either edit snd_config.lua on the server OR override via loadouts.lua /
+  ConVars (see sections 11–12).
+
+
+================================================================================
+ 7. FIRST LAUNCH — LISTEN SERVER (SINGLE PC / HOST)
+================================================================================
+
+  1) Start Garry's Mod.
+  2) Choose gamemode: snd_mwclassic (or console: gamemode snd_mwclassic).
+  3) Start a map: gm_construct, ttt_rust_v1a, etc.
+  4) Invite friends via Steam / local network as you normally would.
+
+You are the listen-server host. Many snd_* ConVars replicate; SuperAdmin
+settings menu can work for you if your user is flagged SuperAdmin.
+
+
+================================================================================
+ 8. FIRST LAUNCH — DEDICATED SERVER (SHORT OVERVIEW)
+================================================================================
+
+On the machine running srcds:
+
+  1) Install/update Garry's Mod dedicated server the way you already do.
+  2) Copy gamemodes/snd_mwclassic into that server's garrysmod/gamemodes/.
+  3) Copy data/snd_mwclassic/* into garrysmod/data/snd_mwclassic/.
+  4) Mount Workshop collections your server requires (ARC9 + MW2 pack).
+  5) Start map with +gamemode snd_mwclassic (exact command depends on your
+     start script — often in autoexec.cfg or command line).
+
+Example concepts (YOUR paths may differ):
+
+  +map gm_construct +gamemode snd_mwclassic
+
+Consult your host's documentation for exact launch parameters.
+
+
+================================================================================
+ 9. TUTORIAL: HOW A ROUND WORKS
+================================================================================
+
+TEAMS
+-----
+  Team 1 / 2 are set up as attackers vs defenders (names come from
+  SND.Config.Factions in snd_config.lua).
+
+ROUND FLOW (simplified)
+-----------------------
+  1) Freeze period — players spawn, bomb assigned to a random attacker.
+  2) Live — attackers try to plant at site A or B; defenders try to stop
+     them or defuse. One life per player this round.
+  3) If time runs out (defenders win the round), elimination, bomb detonation,
+     or defuse — scores update and next round begins after a short delay.
+
+BOMB
+----
+  Attacker with bomb: stand in bomb site radius, hold USE (E) to plant
+  (plant time is ConVar snd_plant_time).
+
+  Defender on planted bomb: hold USE to defuse (snd_defuse_time).
+
+  After plant, a timer runs before detonation (see gamemode/snd_bomb.lua).
+
+SPECTATING (when you are dead)
+-------------------------------
+  You only follow LIVING TEAMMATES (CHASE camera). Mouse1 cycles forward,
+  Mouse2 cycles backward among teammates. If your whole team is dead, you
+  get free roam until the round ends.
+
+MOVEMENT
+--------
+  Shift sprint and tweaked air control approximate older COD feel; it is not
+  a full engine replacement.
+
+
+================================================================================
+10. TUTORIAL: CONFIGURATION LAYERS (WHAT OVERRIDES WHAT)
+================================================================================
+
+Think of settings in this order (later layers win where applicable):
+
+  LAYER 1 — Code defaults
+    gamemode/snd_config.lua  (weapon pools, factions, default bomb sites for
+                              some maps, announcer table)
+
+  LAYER 2 — Data overrides (loaded at runtime)
+    garrysmod/data/snd_mwclassic/loadouts.lua
+      RunString'd on server start — can replace SND.Config.DefaultLoadouts.
+
+    garrysmod/data/snd_mwclassic/maps/<mapname>.lua
+      Loaded on map load — can replace bomb sites + MapSpawns for that map.
+
+  LAYER 3 — Server ConVars (snd_*)
+    Many gameplay knobs; loadout overrides:
+      snd_loadout_attack_pri, snd_loadout_attack_sec
+      snd_loadout_defend_pri, snd_loadout_defend_sec
+    If non-empty, they REPLACE random pool picks for that slot.
+
+  LAYER 4 — In-game SuperAdmin settings UI
+    Sends network messages to set certain snd_* ConVars on the server.
+
+Special case — Rust Workshop map ttt_rust_v1a:
+  If no data override defines sites/spawns, the gamemode AUTO-INFERS layout
+  from spawn entities on the map (see gamemode/snd_rust.lua).
+
+
+================================================================================
+11. TUTORIAL: SERVER CONVARS (snd_*)
+================================================================================
+
+These are created on the server (many are replicated). Set them in
+server.cfg, startup params, or the in-game settings panel (SuperAdmin).
+
+MOVEMENT / ROUND
+----------------
+  snd_walk_speed          Default walk speed.
+  snd_run_speed           Base run speed before sprint multiplier.
+  snd_sprint_mult         Multiplier while holding SHIFT on ground.
+  snd_air_accel_scale     Air control scaling.
+  snd_round_time          Seconds of live round after freeze.
+  snd_freeze_time         Pre-round freeze seconds.
+  snd_plant_time          Bomb plant duration.
+  snd_defuse_time         Bomb defuse duration.
+  snd_win_limit           Rounds to win a match.
+
+BOTS / BALANCE / MAP VOTE
+-------------------------
+  snd_bot_count           Number of player.CreateNextBot bots.
+  snd_bot_skill           0.15–1 rough aim/move skill scaler.
+  snd_team_balance        1 = try to keep team counts even between rounds.
+  snd_mapvote_enabled     1 = run vote at match end (uses maps.txt).
+  snd_mapvote_time        Seconds before server picks from candidates.
+
+AUDIO / HUD
+-----------
+  snd_announcer_volume    Scales announcer EmitSound volume.
+  snd_hud_scale           Client HUD scale (if ConVar visible client-side).
+
+RUST MAP ONLY
+-------------
+  snd_rust_swap_spawns    If attackers/defenders feel reversed on
+                          ttt_rust_v1a, set to 1.
+
+LOADOUT OVERRIDES (fixed guns instead of random pools)
+------------------------------------------------------
+  snd_loadout_attack_pri
+  snd_loadout_attack_sec
+  snd_loadout_defend_pri
+  snd_loadout_defend_sec
+
+Example server.cfg lines:
+
+  snd_round_time 150
+  snd_win_limit 6
+  snd_bot_count 2
+  snd_mapvote_enabled 1
+
+
+================================================================================
+12. TUTORIAL: garrysmod/data/snd_mwclassic/loadouts.lua
+================================================================================
+
+If this file exists, the server executes it on startup (see snd_config.lua).
+Use it to redefine SND.Config.DefaultLoadouts without editing files under
+gamemodes/.
+
+TYPICAL USE
+-----------
+  - Turn OFF random pools: set random_primary = false, random_secondary = false
+    and set primary/secondary to exact class strings that exist in YOUR pack.
+  - Change lethal from weapon_frag to an ARC9 grenade class if you know the
+    exact name.
+
+The repo's copy_to_garrysmod_data example contains commented templates.
+
+After editing loadouts.lua, RESTART THE MAP OR SERVER so it reloads.
+
+
+================================================================================
+13. TUTORIAL: garrysmod/data/snd_mwclassic/maps.txt
+================================================================================
+
+This is a plain text list used for map voting:
+
+  - One map name per line (NO .bsp extension).
+  - Lines starting with # are comments.
+
+Example:
+
+  gm_construct
+  ttt_rust_v1a
+
+If the file is missing or empty, map vote may do nothing useful — check
+server console for [SND] messages from snd_mapvote.lua.
+
+NOTE: The vote logic shipped in this gamemode is intentionally simple; read
+gamemode/snd_mapvote.lua if you want to extend it (e.g. weighted player votes).
+
+
+================================================================================
+14. TUTORIAL: PER-MAP OVERRIDES (maps/<mapname>.lua)
+================================================================================
+
+Path:
+
+  garrysmod/data/snd_mwclassic/maps/<exact_map_name>.lua
+
+Example for Rust BSP name ttt_rust_v1a:
+
+  garrysmod/data/snd_mwclassic/maps/ttt_rust_v1a.lua
+
+The file must be valid Lua that RETURNS a table:
+
+  return {
+    sites = {
+      { id = "A", plantPos = Vector(x,y,z), defuseRadius = 120 },
+      { id = "B", plantPos = Vector(x,y,z), defuseRadius = 120 },
+    },
+    spawns = {
+      attack = {
+        { pos = Vector(...), ang = Angle(p,y,r) },
+        -- more spawn points...
+      },
+      defend = {
+        { pos = Vector(...), ang = Angle(p,y,r) },
+      },
+    },
+  }
+
+HOW TO GET NUMBERS
+------------------
+  Join the map as SuperAdmin, stand where you want a spawn or bomb site, use:
+
+    snd_rust_dump_spawn_line     (prints one spawn table line — works on any
+                                  map name; still useful for Rust)
+    snd_rust_dump_site_vectors   (prints a plantPos line at your feet)
+
+Paste into your maps/<map>.lua, save, changelevel to that map again.
+
+
+================================================================================
+15. TUTORIAL: WORKSHOP RUST MAP (ttt_rust_v1a)
+================================================================================
+
+Workshop page (map name may be listed in description):
+
+  https://steamcommunity.com/sharedfiles/filedetails/?id=2922376072
+
+BSP name used by this gamemode's helpers:  ttt_rust_v1a
+
+If you have no data override, InitPostEntity runs auto-layout:
+  - Bomb sites inferred from spawn hull + ground traces.
+  - Team spawns split from existing player spawn entities.
+
+If layout feels wrong, use snd_rust_swap_spawns 1 or a full maps/ttt_rust_v1a.lua
+override (see section 14).
+
+
+================================================================================
+16. TUTORIAL: ANNOUNCER SOUNDS
+================================================================================
+
+Configured in gamemode/snd_config.lua under SND.Config.Announcer.
+
+Place sound files under your server's:
+
+  garrysmod/sound/snd_mwclassic/announcer/
+
+Filenames must match what snd_config.lua references (e.g. round_start.wav).
+
+If files are missing, you may hear nothing — that is expected until you add
+assets or change the config to valid paths.
+
+
+================================================================================
+17. TUTORIAL: IN-GAME SETTINGS MENU (SUPERADMIN)
+================================================================================
+
+  - Chat:  !snd_settings
+  - Console: snd_open_settings
+  - Spawn menu: Utilities → SND → S&D Settings (button opens the same frame)
+
+Only SuperAdmin (or listen host with that flag) should change networked
+settings on a dedicated server.
+
+
+================================================================================
+18. TUTORIAL: BOTS (LIMITATIONS)
+================================================================================
+
+Bots are created with player.CreateNextBot and driven by Lua (aim, fire,
+simple movement). They are NOT Call of Duty-level AI.
+
+Dedicated servers may need extra configuration for bots depending on host;
+if CreateNextBot fails, see server console for [SND] messages.
+
+snd_bot_count and snd_bot_skill tune how many spawn and how "tight" their aim
+noise is.
+
+
+================================================================================
+19. TROUBLESHOOTING
+================================================================================
+
+PROBLEM: "Missing weapon class" spam / no guns
+----------------------------------------------
+  - Your Workshop pack does not register the exact strings in snd_config.lua.
+  - Fix: edit Mw2ePrimaries / Mw2eSecondaries OR set snd_loadout_* ConVars OR
+    use data loadouts.lua with verified class names.
+
+PROBLEM: Map vote does nothing / wrong map
+------------------------------------------
+  - Check data/snd_mwclassic/maps.txt exists and lists valid installed maps.
+  - Remember: simple vote may pick randomly after timeout — read snd_mapvote.lua.
+
+PROBLEM: Bomb sites underground / in air on a custom map
+---------------------------------------------------------
+  - Add maps/<mapname>.lua overrides with traced positions (section 14).
+
+PROBLEM: Spectate M1/M2 does not cycle
+---------------------------------------
+  - Some binds conflict; try rebinding attack / secondary attack in GMod.
+  - If still broken on your build, the gamemode may need a client net-based
+    cycle (report as issue on GitHub).
+
+PROBLEM: Rust auto spawns feel swapped
+---------------------------------------
+  - snd_rust_swap_spawns 1
+  - Or full spawn override file.
+
+PROBLEM: Gamemode not in list
+-----------------------------
+  - Wrong folder path (must be garrysmod/gamemodes/snd_mwclassic).
+  - gamemode.txt missing or invalid.
+  - Restart GMod after copying files.
+
+
+================================================================================
+20. UPDATING FROM GITHUB
+================================================================================
+
+If you installed via git clone:
+
+  cd <your clone folder>
+  git pull origin main
+
+Then copy the updated snd_mwclassic folder over your server's
+garrysmod/gamemodes/snd_mwclassic again (or sync with your deployment method).
+
+BACK UP before overwriting:
+  - Your garrysmod/data/snd_mwclassic/ customizations (maps.txt, loadouts.lua,
+    maps/*.lua) — the repo copy_to_garrysmod_data is only a template; your
+    live data folder is the source of truth on a real server.
+
+If you edited files INSIDE gamemodes/snd_mwclassic/gamemode/*.lua directly,
+git pull may conflict — prefer data/ overrides for persistent server tweaks.
+
+
+================================================================================
+  END OF INSTALLATION.TXT — For feature overview see README.md in this folder.
+================================================================================
