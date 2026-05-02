@@ -28,6 +28,23 @@ hook.Add("HUDPaint", "SND_HUD", function()
 
 	draw.SimpleText(label, "Trebuchet24", x, y + 36 * sc, col(220), TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
 
+	-- Display round timer with flashing red warning at <10 seconds
+	if phase == SND.PHASE_FREEZE or phase == SND.PHASE_LIVE then
+		local timeRemaining = math.max(0, SND.Round.RoundTimerEnd - CurTime())
+		local mins = math.floor(timeRemaining / 60)
+		local secs = math.floor(timeRemaining % 60)
+		local timeStr = string.format("Time: %02d:%02d", mins, secs)
+
+		-- Flash red when less than 10 seconds remaining
+		local timerColor = col(220)
+		if timeRemaining < 10 and timeRemaining > 0 then
+			local flash = math.sin(CurTime() * 4) > 0 and 1 or 0.3
+			timerColor = Color(255, 100 * flash, 100 * flash, 255)
+		end
+
+		draw.SimpleText(timeStr, "Trebuchet24", x, y + 60 * sc, timerColor, TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
+	end
+
 	if IsValid(SND.Client.BombCarrier) then
 		local who = SND.Client.BombCarrier == lp and "You have the bomb" or (SND.Client.BombCarrier:Nick() .. " has the bomb")
 		draw.SimpleText(who, "Trebuchet24", ScrW() / 2, ScrH() - 120 * sc, Color(255, 200, 120), TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
