@@ -124,6 +124,31 @@ hook.Add("HUDPaint", "SND_HUD", function()
 		end
 	end
 
+	-- ── Low Ammo Warning ──────────────────────────────────────────────────
+	if phase == SND.PHASE_LIVE and lp:Alive() then
+		local wep = lp:GetActiveWeapon()
+		if IsValid(wep) then
+			local clip = wep:Clip1()
+			local max  = wep:GetMaxClip1()
+
+			-- Show warning if clip is 25% or less (and weapon uses clips)
+			if max > 0 and clip >= 0 and clip <= math.floor(max * 0.25) then
+				local isOut = clip == 0
+				local ammoStr = isOut and "OUT OF AMMO" or "LOW AMMO"
+				local ammoCol = isOut and C_DANGER or C_BOMB
+
+				-- Pulsing alpha for urgency
+				local pulse = math.abs(math.sin(CurTime() * 7))
+				local alpha = 140 + (pulse * 115)
+				
+				draw.SimpleText(ammoStr, "Trebuchet24", sw * 0.5, sh * 0.65,
+					col(ammoCol.r, ammoCol.g, ammoCol.b, alpha),
+					TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER
+				)
+			end
+		end
+	end
+
 	-- ── Victory Messages (Round End) ──────────────────────────────────────
 	if phase == SND.PHASE_POST then
 		local winLimit = SND.Settings.GetInt("win_limit", 4)

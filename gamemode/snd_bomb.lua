@@ -166,6 +166,12 @@ function SND.Bomb.AssignCarrier()
 	local carrier = table.Random(attackers)
 	SND.Bomb.Carrier = carrier
 
+	-- Clear carrier for everyone first to prevent ghost names on HUD
+	net.Start("SND_Bomb")
+		net.WriteUInt(1, 3)
+		net.WriteEntity(NULL)
+	net.Broadcast()
+
 	-- Only attackers know who has the bomb
 	net.Start("SND_Bomb")
 		net.WriteUInt(1, 3)

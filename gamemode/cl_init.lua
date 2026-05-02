@@ -14,11 +14,17 @@ SND.Bomb = SND.Bomb or {}
 SND.Round.RoundTimerEnd = 0
 
 net.Receive("SND_RoundState", function()
-	SND.Client.Phase = net.ReadUInt(3)
+	local phase = net.ReadUInt(3)
+	SND.Client.Phase = phase
 	SND.Client.Winner = net.ReadUInt(4)
 	SND.Client.AttackScore = net.ReadUInt(8)
 	SND.Client.DefendScore = net.ReadUInt(8)
 	SND.Round.RoundTimerEnd = net.ReadDouble()
+
+	-- Clear bomb carrier whenever a round resets or moves to freeze
+	if phase == SND.PHASE_FREEZE then
+		SND.Client.BombCarrier = nil
+	end
 end)
 
 net.Receive("SND_Bomb", function()

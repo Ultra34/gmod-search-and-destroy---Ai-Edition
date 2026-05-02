@@ -121,17 +121,17 @@ local function nearestEnemy(bot, requireLOS)
 	return best, bestDist2 and math.sqrt(bestDist2)
 end
 
--- ── Nearest bomb site helper ─────────────────────────────────────────────
+-- ── Helpers ──────────────────────────────────────────────────────────────
 local function nearestSite(bot)
 	local map = game.GetMap()
 	local sites = SND.Config.MapSites[map]
 	if not sites or #sites == 0 then return nil, math.huge end
 	local best, bestDist
 	for _, s in ipairs(sites) do
-		local d = bot:GetPos():Distance(s.plantPos)
+		local d = bot:GetPos():DistToSqr(s.plantPos)
 		if not best or d < bestDist then best, bestDist = s, d end
 	end
-	return best, bestDist
+	return best, math.sqrt(bestDist)
 end
 
 local function weaponCheck(bot, cmd)
@@ -141,6 +141,7 @@ local function weaponCheck(bot, cmd)
 
 	local max = wep:GetMaxClip1()
 	local clip = wep:Clip1()
+	if max <= 0 then return end
 
 	-- If primary is empty during a fight, switch to secondary
 	if ai.state == BS_ENGAGE and max > 0 and clip <= 0 then
@@ -160,12 +161,14 @@ local function weaponCheck(bot, cmd)
 		end
 	end
 
-	if max > 0 and clip <= 0 then
+	-- Reload if empty, or proactively reload if safe and clip isn't full
+	local isSafe = (ai.state ~= BS_ENGAGE)
+	if clip <= 0 or (isSafe and clip < max * 0.5) then
 		cmd:SetButtons(bit.bor(cmd:GetButtons(), IN_RELOAD))
 	end
 
 	-- Switch back to primary if we have ammo and are safe
-	if ai.state ~= BS_ENGAGE then
+	if isSafe then
 		for _, pClass in ipairs(SND.Config.BotPrimaries) do
 			local pwep = bot:GetWeapon(pClass)
 			if IsValid(pwep) and pwep ~= wep and pwep:Clip1() > 0 then
@@ -192,6 +195,9 @@ end
 
 -- ── Navigation ────────────────────────────────────────────────────────────
 local function moveToward(bot, cmd, targetPos, speed)
+	-- Fix for [ERROR]: bad argument #1 to '__sub' (Vector expected, got number)
+	if not isvector(targetPos) then return 0 end
+
 	local ai = bot.SND_AI
 	local myPos = bot:GetPos()
 	local moveDest = targetPos
@@ -374,10 +380,14 @@ hook.Add("StartCommand", "SND_BotAI", function(bot, cmd)
 		if targetObj then
 			local d = moveToward(bot, cmd, targetObj, speed)
 			if skill > 4 then cmd:SetButtons(bit.bor(cmd:GetButtons(), IN_SPEED)) end
-			
+
 			-- Interaction (Plant/Defuse)
 			if d < 100 then
-				cmd:SetButtons(bit.bor(cmd:GetButtons(), IN_USE))
+				-- Only plant/defuse if the bomb state allows it
+				if (bot:Team() == SND.TEAM_ATTACK and SND.Bomb.Carrier == bot) or
+				   (bot:Team() == SND.TEAM_DEFEND and SND.Bomb.State == SND.BOMB_STATE_PLANTED) then
+					cmd:SetButtons(bit.bor(cmd:GetButtons(), IN_USE))
+				end
 				-- Look down while planting
 				local ang = bot:EyeAngles()
 				ang.p = 45
@@ -390,7 +400,7 @@ hook.Add("StartCommand", "SND_BotAI", function(bot, cmd)
 			-- Patrol
 			if targetObj then
 				local d = moveToward(bot, cmd, targetObj, speed)
-				if d < 150 and not SND.Bomb.State == SND.BOMB_STATE_PLANTED then
+				if d < 150 and SND.Bomb.State ~= SND.BOMB_STATE_PLANTED then
 					-- Roam locally if reached objective and not planting/defusing
 					if now > ai.patrolFlip then
 						ai.patrolAngle = math.Rand(0, 360)
