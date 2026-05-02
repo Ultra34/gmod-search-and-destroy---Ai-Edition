@@ -46,6 +46,7 @@ if SERVER then
 	AddCSLuaFile("cl_hud.lua")
 	AddCSLuaFile("cl_settings.lua")
 	AddCSLuaFile("snd_bot_anim.lua")
+	AddCSLuaFile("snd_movement.lua")
 end
 
 include("snd_config.lua")

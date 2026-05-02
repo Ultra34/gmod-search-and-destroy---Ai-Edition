@@ -32,7 +32,35 @@ function SND.Spawns.Apply(ply)
 	local list = data[side]
 	if not list or #list == 0 then return end
 
-	local pick = table.Random(list)
+	-- Attempt to find a spawn point that isn't currently occupied by another player
+	local pool = table.Copy(list)
+	local pick = nil
+	local occupiedRadiusSqr = 48 * 48 -- Distance squared threshold to avoid spawning on others (approx 4ft)
+
+	while #pool > 0 do
+		local k = math.random(#pool)
+		local candidate = pool[k]
+
+		local isOccupied = false
+		for _, other in ipairs(player.GetAll()) do
+			if other ~= ply and other:Alive() and other:GetPos():DistToSqr(candidate.pos) < occupiedRadiusSqr then
+				isOccupied = true
+				break
+			end
+		end
+
+		if not isOccupied then
+			pick = candidate
+			break
+		end
+		table.remove(pool, k)
+	end
+
+	-- Fallback if all designated points are crowded, just pick one at random
+	if not pick then
+		pick = table.Random(list)
+	end
+
 	if pick.pos then
 		ply:SetPos(pick.pos)
 		if pick.ang then

@@ -11,20 +11,22 @@ hook.Add("SetupMove", "SND_Movement", function(ply, mv, cmd)
 	if not IsValid(ply) or not ply:Alive() then return end
 
 	-- ── FREEZE: nobody moves ───────────────────────────────────────────────
-	if SND.Round.Phase == SND.PHASE_FREEZE then
+	local phase = SERVER and SND.Round.Phase or SND.Client.Phase
+	if phase == SND.PHASE_FREEZE then
 		mv:SetForwardSpeed(0)
 		mv:SetSideSpeed(0)
 		mv:SetUpSpeed(0)
 		mv:SetVelocity(Vector(0, 0, 0))
 		
-		-- Block shooting
-		cmd:SetButtons(bit.band(cmd:GetButtons(), bit.bnot(bit.bor(IN_ATTACK, IN_ATTACK2))))
-		
+		-- Block all action inputs to prevent shooting, reloading, or planting
+		local blocked = bit.bor(IN_ATTACK, IN_ATTACK2, IN_RELOAD, IN_USE)
+		cmd:SetButtons(bit.band(cmd:GetButtons(), bit.bnot(blocked)))
+
 		ply.SND_Sprinting = false
 		return
 	end
 
-	if SND.Round.Phase ~= SND.PHASE_LIVE then return end
+	if phase ~= SND.PHASE_LIVE then return end
 
 	-- ── SPRINT ────────────────────────────────────────────────────────────
 	local mult    = SND.Settings.Get("sprint_mult", 1.65)
