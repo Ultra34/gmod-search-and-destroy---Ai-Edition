@@ -16,6 +16,10 @@ hook.Add("SetupMove", "SND_Movement", function(ply, mv, cmd)
 		mv:SetSideSpeed(0)
 		mv:SetUpSpeed(0)
 		mv:SetVelocity(Vector(0, 0, 0))
+		
+		-- Block shooting
+		cmd:SetButtons(bit.band(cmd:GetButtons(), bit.bnot(bit.bor(IN_ATTACK, IN_ATTACK2))))
+		
 		ply.SND_Sprinting = false
 		return
 	end

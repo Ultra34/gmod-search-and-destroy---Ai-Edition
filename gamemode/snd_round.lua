@@ -122,7 +122,8 @@ function SND.Round.StartNewRound()
 end
 
 function SND.Round.OnPlayerDeath(victim, attacker)
-	if not IsValid(victim) then return end
+	if not IsValid(victim) or not victim:IsPlayer() then return end
+	victim.SND_DeathTime = CurTime()
 
 	-- Send kill feed data to clients
 	if IsValid(attacker) and attacker:IsPlayer() and attacker ~= victim then

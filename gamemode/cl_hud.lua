@@ -196,6 +196,14 @@ hook.Add("HUDPaint", "SND_HUD", function()
 		end
 	end
 
+	-- ── Bot Tag ──────────────────────────────────────────────────────────
+	local botCount = SND.Settings.GetInt("bot_count", 0)
+	if botCount > 0 then
+		draw.SimpleText("BOTS (EXPERIMENTAL)", "Trebuchet18", 
+			sx + scoreW * 0.5, sy + scoreH + 26 * sc, 
+			Color(255, 150, 50, 150), TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
+	end
+
 	-- ── Victory Messages (Round End) ──────────────────────────────────────
 	if phase == SND.PHASE_POST then
 		local winLimit = SND.Settings.GetInt("win_limit", 4)

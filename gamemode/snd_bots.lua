@@ -242,12 +242,13 @@ local function moveToward(bot, cmd, targetPos, speed)
 		ai.stuckCheck = CurTime() + 0.5
 	end
 
-	-- Steering
-	local goalAngle = (moveDest - myPos):Angle()
-	goalAngle.p = 0
-	
+	local distToGoal = moveDest:Distance(myPos)
+
 	-- Only adjust eye angles for movement when not actively engaging an enemy
-	if ai.state ~= BS_ENGAGE then
+	if ai.state ~= BS_ENGAGE and distToGoal > 15 then
+		local goalAngle = (moveDest - myPos):Angle()
+		goalAngle.p = 0
+
 		-- Tactical Roam: Check corners while moving
 		if CurTime() > ai.nextScan then
 			-- 30% chance to scan a corner, otherwise stay focused forward
@@ -256,10 +257,15 @@ local function moveToward(bot, cmd, targetPos, speed)
 			ai.nextScan = CurTime() + math.Rand(0.5, 2.0)
 		end
 
-		local targetAngle = Angle(0, goalAngle.y + ai.scanOffset, 0)
+		local targetYaw = goalAngle.y + ai.scanOffset
 		local lerpSpeed = ai.isScanning and 0.05 or 0.15 -- Slower look-overs, faster forward focus
 		
-		bot:SetEyeAngles(LerpAngle(lerpSpeed, bot:EyeAngles(), targetAngle))
+		-- Normalize Angle for Lerp to prevent spinning at 180 degrees
+		local curAng = bot:EyeAngles()
+		local diff = math.NormalizeAngle(targetYaw - curAng.y)
+		curAng.y = curAng.y + diff * lerpSpeed
+		
+		bot:SetEyeAngles(curAng)
 	end
 
 	cmd:SetForwardMove(speed)

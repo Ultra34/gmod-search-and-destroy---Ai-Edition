@@ -8,7 +8,25 @@ function SND.Spawns.Apply(ply)
 
 	local map = game.GetMap()
 	local data = SND.Config.MapSpawns[map]
-	if not data then return end
+	
+	-- Fallback: If no map data, split all info_player_start entities by location
+	if not data then
+		local spawns = ents.FindByClass("info_player_start")
+		table.sort(spawns, function(a, b) return a:GetPos().x < b:GetPos().x end)
+		
+		local mid = math.floor(#spawns / 2)
+		local attack = {}
+		local defend = {}
+		for i, ent in ipairs(spawns) do
+			if i <= mid then table.insert(attack, { pos = ent:GetPos(), ang = ent:GetAngles() })
+			else table.insert(defend, { pos = ent:GetPos(), ang = ent:GetAngles() }) end
+		end
+		
+		data = {
+			attack = attack,
+			defend = defend
+		}
+	end
 
 	local side = (ply:Team() == SND.TEAM_ATTACK) and "attack" or "defend"
 	local list = data[side]
