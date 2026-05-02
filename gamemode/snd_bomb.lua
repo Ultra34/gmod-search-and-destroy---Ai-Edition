@@ -166,13 +166,13 @@ function SND.Bomb.AssignCarrier()
 	local carrier = table.Random(attackers)
 	SND.Bomb.Carrier = carrier
 
-	-- Send NULL to everyone to reset client state
+	-- Reset everyone's bomb HUD state first
 	net.Start("SND_Bomb")
 		net.WriteUInt(1, 3)
 		net.WriteEntity(NULL)
 	net.Broadcast()
 
-	-- SECURE: Only attackers receive the actual carrier entity
+	-- SECURE: Only the attack team receives the carrier update
 	net.Start("SND_Bomb")
 		net.WriteUInt(1, 3)
 		net.WriteEntity(carrier)

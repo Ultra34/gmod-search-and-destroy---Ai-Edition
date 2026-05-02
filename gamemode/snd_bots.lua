@@ -161,14 +161,14 @@ local function weaponCheck(bot, cmd)
 		end
 	end
 
-	-- Reload if empty, or proactively reload if safe and clip isn't full
-	local isSafe = (ai.state ~= BS_ENGAGE)
-	if clip <= 0 or (isSafe and clip < max * 0.5) then
+	-- Proactive reloading: Refresh clip if safe and less than 60% full
+	local isSafe = (ai.state ~= BS_ENGAGE and ai.state ~= BS_IDLE)
+	if clip <= 0 or (isSafe and clip < max * 0.6) then
 		cmd:SetButtons(bit.bor(cmd:GetButtons(), IN_RELOAD))
 	end
 
 	-- Switch back to primary if we have ammo and are safe
-	if isSafe then
+	if isSafe and clip > 0 then
 		for _, pClass in ipairs(SND.Config.BotPrimaries) do
 			local pwep = bot:GetWeapon(pClass)
 			if IsValid(pwep) and pwep ~= wep and pwep:Clip1() > 0 then
@@ -195,11 +195,11 @@ end
 
 -- ── Navigation ────────────────────────────────────────────────────────────
 local function moveToward(bot, cmd, targetPos, speed)
-	if not isvector(targetPos) then return 0 end
+	if not isvector(targetPos) or not targetPos then return 0 end
 
 	local ai = bot.SND_AI
 	local myPos = bot:GetPos()
-	local moveDest = Vector(targetPos.x, targetPos.y, targetPos.z)
+	local moveDest = targetPos
 
 	if navmesh.IsLoaded() then
 		if not ai.path then
@@ -212,14 +212,16 @@ local function moveToward(bot, cmd, targetPos, speed)
 		if CurTime() > ai.nextPathUpdate or ai.lastPathGoal:DistToSqr(targetPos) > 16384 then
 			ai.path:Compute(bot, targetPos)
 			ai.nextPathUpdate = CurTime() + 1.0
-			ai.lastPathGoal = Vector(targetPos.x, targetPos.y, targetPos.z)
+			ai.lastPathGoal = targetPos
 		end
 
 		if ai.path:IsValid() then
 			ai.path:Update(bot)
-			local pPos = ai.path:GetPos()
-			if isvector(pPos) then 
-				moveDest = pPos 
+			-- FIX: GetPositionOnPath converts the distance (number) into a Vector (coordinates)
+			local cursorDist = ai.path:GetCursorPosition()
+			local pathPos = ai.path:GetPositionOnPath(cursorDist)
+			if isvector(pathPos) then 
+				moveDest = pathPos 
 			end
 		end
 	end
