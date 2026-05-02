@@ -177,16 +177,23 @@ hook.Add("HUDPaint", "SND_HUD", function()
 		local currentDrawX = kfX
 
 		-- Draw Victim Nick
-		draw.SimpleText(entry.victimNick, "Trebuchet24", currentDrawX, currentY, col(victimCol.r, victimCol.g, victimCol.b, alpha), TEXT_ALIGN_RIGHT, TEXT_ALIGN_TOP)
-		currentDrawX = currentDrawX - 100 * sc -- Fixed spacing for clarity
+		local vNick = entry.victimNick
+		surface.SetFont("Trebuchet24")
+		local twV, _ = surface.GetTextSize(vNick)
+		draw.SimpleText(vNick, "Trebuchet24", currentDrawX, currentY, col(victimCol.r, victimCol.g, victimCol.b, alpha), TEXT_ALIGN_RIGHT, TEXT_ALIGN_TOP)
+		currentDrawX = currentDrawX - twV - 10 * sc
 
 		-- Draw Weapon Name (or icon placeholder)
 		local weaponText = " (" .. entry.weaponName .. ") "
+		local twW, _ = surface.GetTextSize(weaponText)
 		draw.SimpleText(weaponText, "Trebuchet24", currentDrawX, currentY, col(C_DIM.r, C_DIM.g, C_DIM.b, alpha), TEXT_ALIGN_RIGHT, TEXT_ALIGN_TOP)
-		currentDrawX = currentDrawX - 100 * sc
+		currentDrawX = currentDrawX - twW - 10 * sc
 
 		-- Draw Attacker Nick
-		draw.SimpleText(entry.attackerNick, "Trebuchet24", currentDrawX, currentY, col(attackerCol.r, attackerCol.g, attackerCol.b, alpha), TEXT_ALIGN_RIGHT, TEXT_ALIGN_TOP)
+		local aNick = entry.attackerNick
+		if aNick ~= "" then
+			draw.SimpleText(aNick, "Trebuchet24", currentDrawX, currentY, col(attackerCol.r, attackerCol.g, attackerCol.b, alpha), TEXT_ALIGN_RIGHT, TEXT_ALIGN_TOP)
+		end
 	end
 
 	-- ── Victory Messages (Round End) ──────────────────────────────────────
@@ -242,6 +249,19 @@ hook.Add("HUDPaint", "SND_HUD", function()
 		            or "Spectating — no living teammates — free look"
 		draw.SimpleText(line, "Trebuchet18", sw * 0.5, sh - 72 * sc,
 			col(160, 200, 255), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+	end
+
+	-- ── Killcam Overlay ──────────────────────────────────────────────────
+	if not lp:Alive() and SND.Client.KillCamEnd and CurTime() < SND.Client.KillCamEnd then
+		draw.RoundedBox(0, 0, 0, sw, sh, col(0, 0, 0, 150))
+		draw.SimpleText("KILLCAM", "DermaLarge", sw * 0.5, sh * 0.15, C_WHITE, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+		
+		local target = SND.Client.KillCamTarget
+		if IsValid(target) and target:IsPlayer() then
+			draw.SimpleText("Killed by: " .. target:Nick(), "Trebuchet24", sw * 0.5, sh * 0.15 + 45 * sc, C_ATTACK, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+		end
+
+		draw.SimpleText("Fading to spectate...", "Trebuchet18", sw * 0.5, sh * 0.85, C_DIM, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
 	end
 end)
 

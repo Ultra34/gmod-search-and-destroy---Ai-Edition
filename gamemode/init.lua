@@ -130,3 +130,4 @@ hook.Add("InitPostEntity", "SND_RustMapSetup", function()
 	end
 end)
 util.AddNetworkString("SND_KillFeed") -- Add network string for kill feed
+util.AddNetworkString("SND_KillCam")  -- Add network string for killcam

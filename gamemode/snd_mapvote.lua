@@ -42,6 +42,11 @@ function SND.MapVote.Start()
 end
 
 function SND.MapVote.StartMatchEnd()
+	-- Reset match state variables for the next match
+	SND.Round.MatchStarted = false
+	SND.Round.AttackScore = 0
+	SND.Round.DefendScore = 0
+	SND.Round.RoundNumber = 0
 	if SND.Settings.GetInt("mapvote_enabled", 1) then
 		SND.MapVote.Start()
 	else

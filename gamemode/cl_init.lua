@@ -64,6 +64,11 @@ net.Receive("SND_KillFeed", function()
     })
 end)
 
+net.Receive("SND_KillCam", function()
+	SND.Client.KillCamTarget = net.ReadEntity()
+	SND.Client.KillCamEnd = CurTime() + 4.5 -- 4.5 seconds of killcam
+end)
+
 net.Receive("SND_MapVote", function()
 	local n = net.ReadUInt(8)
 	local maps = {}
@@ -83,4 +88,21 @@ end)
 
 concommand.Add("snd_open_settings", function()
 	SND.OpenSettingsMenu()
+end)
+
+-- ── Killcam Camera Logic ────────────────────────────────────────────────
+hook.Add("CalcView", "SND_KillCamView", function(ply, pos, ang, fov)
+	if not ply:Alive() and SND.Client.KillCamEnd and CurTime() < SND.Client.KillCamEnd then
+		local target = SND.Client.KillCamTarget
+		if IsValid(target) and target:Alive() then
+			local view = {}
+			-- Offset the camera behind the killer
+			local back = target:GetForward() * -80 + target:GetUp() * 20
+			view.origin = target:EyePos() + back
+			view.angles = (target:EyePos() - view.origin):Angle()
+			view.fov = fov
+			view.drawviewer = true
+			return view
+		end
+	end
 end)
