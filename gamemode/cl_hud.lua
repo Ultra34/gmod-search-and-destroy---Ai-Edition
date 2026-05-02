@@ -204,6 +204,35 @@ hook.Add("HUDPaint", "SND_HUD", function()
 			Color(255, 150, 50, 150), TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
 	end
 
+	-- ── Player Nameplates (Teammates & Visible Enemies) ───────────────────
+	for _, target in ipairs(player.GetAll()) do
+		if not IsValid(target) or not target:Alive() or target == lp then continue end
+
+		local isTeammate = target:Team() == lpTeam
+		local dist = lp:GetPos():Distance(target:GetPos())
+
+		-- Enemy Visibility Check
+		if not isTeammate then
+			local tr = util.TraceLine({
+				start = lp:EyePos(),
+				endpos = target:EyePos(),
+				filter = {lp, target},
+				mask = MASK_SHOT
+			})
+			if tr.Fraction < 1 then continue end
+		end
+
+		local headPos = target:GetPos() + Vector(0, 0, 78)
+		local scr = headPos:ToScreen()
+		if not scr.visible then continue end
+
+		local alpha = math.Clamp(255 * (1 - (dist - 800) / 1200), isTeammate and 40 or 0, 220)
+		if alpha <= 0 then continue end
+
+		local teamColor = (target:Team() == SND.TEAM_ATTACK) and C_ATTACK or C_DEFEND
+		draw.SimpleText(target:Nick(), "Trebuchet18", scr.x, scr.y, Color(teamColor.r, teamColor.g, teamColor.b, alpha), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+	end
+
 	-- ── Victory Messages (Round End) ──────────────────────────────────────
 	if phase == SND.PHASE_POST then
 		local winLimit = SND.Settings.GetInt("win_limit", 4)
