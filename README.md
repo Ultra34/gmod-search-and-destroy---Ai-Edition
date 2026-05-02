@@ -4,6 +4,8 @@ Garry’s Mod **gamemode** inspired by Call of Duty Search & Destroy: one life p
 
 **Repository:** [Ultra34/gmod-search-and-destroy---Ai-Edition](https://github.com/Ultra34/gmod-search-and-destroy---Ai-Edition)
 
+**Full setup walkthrough:** see **`INSTALLATION.txt`** in this folder (paths, Workshop, `data/`, ConVars, Rust map, troubleshooting).
+
 ---
 
 ## Requirements
