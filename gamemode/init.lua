@@ -129,6 +129,14 @@ hook.Add("InitPostEntity", "SND_RustMapSetup", function()
 		SND.Rust.InitPostEntity()
 	end
 end)
+
+-- ── Disable Friendly Fire ────────────────────────────────────────────────
+hook.Add("PlayerShouldTakeDamage", "SND_NoFriendlyFire", function(ply, attacker)
+	if IsValid(attacker) and attacker:IsPlayer() and attacker:Team() == ply:Team() and attacker ~= ply then
+		return false
+	end
+end)
+
 util.AddNetworkString("SND_KillFeed") -- Add network string for kill feed
 util.AddNetworkString("SND_KillCam")  -- Add network string for killcam
 util.AddNetworkString("SND_SyncBotNames") -- Sync friend names for bots

@@ -177,10 +177,13 @@ local function weaponCheck(bot, cmd)
 		end
 	end
 
-	-- 2. Reloading: If empty, or safe and low on ammo
-	local isSafe = (ai.state == BS_PATROL or ai.state == BS_CHASE)
-	if max > 0 and (clip <= 0 or (isSafe and clip < max * 0.6)) then
-		cmd:SetButtons(bit.bor(cmd:GetButtons(), IN_RELOAD))
+	-- 2. Reloading: If empty, or safe and needs a top-off (checking reserve ammo)
+	local isSafe = (ai.state == BS_PATROL or ai.state == BS_CHASE or ai.state == BS_IDLE)
+	local hasReserve = bot:GetAmmoCount(wep:GetPrimaryAmmoType()) > 0
+	if max > 0 and hasReserve then
+		if clip <= 0 or (isSafe and clip < max) then
+			cmd:SetButtons(bit.bor(cmd:GetButtons(), IN_RELOAD))
+		end
 	end
 
 	-- 3. Recovery: Switch back to primary once the area is clear
