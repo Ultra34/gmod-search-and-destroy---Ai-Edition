@@ -118,8 +118,6 @@ hook.Add("HUDPaint", "SND_HUD", function()
 		end
 
 		if bombLine then
-			local tw = string.len(bombLine) * 10 * sc + 40
-			pill(sw * 0.5 - tw * 0.5, sh - 120 * sc, tw, 32 * sc, C_PILL)
 			draw.SimpleText("💣 " .. bombLine, "Trebuchet24", sw * 0.5, sh - 104 * sc,
 				C_BOMB, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER
 			)
@@ -163,8 +161,6 @@ hook.Add("HUDPaint", "SND_BombProgressBar", function()
 	local lbl    = BombProg.kind == 1 and "PLANTING…" or "DEFUSING…"
 	local fillC  = BombProg.kind == 1 and col(220, 80, 40) or col(40, 160, 220)
 
-	-- Background + fill
-	draw.RoundedBox(5, bx - 2, by - 2, bw + 4, bh + 4, col(0, 0, 0, 160))
 	draw.RoundedBox(5, bx, by, bw, bh, col(25, 27, 35, 220))
 	if bw * frac > 4 then
 		draw.RoundedBox(5, bx, by, bw * frac, bh, fillC)

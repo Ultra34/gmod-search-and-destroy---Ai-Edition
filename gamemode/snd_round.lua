@@ -31,9 +31,9 @@ function SND.Round.CheckElimination()
 	local a = aliveOnTeamReal(SND.TEAM_ATTACK)
 	local d = aliveOnTeamReal(SND.TEAM_DEFEND)
 
-	if a == 0 and d > 0 then
+	if a == 0 then
 		SND.Round.EndRound(SND.WIN_DEFEND_ELIM)
-	elseif d == 0 and a > 0 then
+	elseif d == 0 then
 		SND.Round.EndRound(SND.WIN_ATTACK_ELIM)
 	end
 end
@@ -153,6 +153,7 @@ end)
 
 timer.Create("SND_RoundTick", 0.25, 0, function()
 	SND.Round.CheckTime()
+	SND.Round.CheckElimination()
 	nextBalanceCheck = nextBalanceCheck + 0.25
 	if nextBalanceCheck >= 30 then
 		nextBalanceCheck = 0

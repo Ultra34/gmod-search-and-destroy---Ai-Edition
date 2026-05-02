@@ -182,9 +182,11 @@ local function moveToward(bot, cmd, targetPos, speed)
 		end
 
 		-- Standard PathFollower:Update(bot) then verify position
-		ai.path:Update(bot)
-		local pos = ai.path:GetPosition()
-		if pos then moveDest = pos end
+		if ai.path:IsValid() then
+			ai.path:Update(bot)
+			local pos = ai.path:GetCursorPosition()
+			if pos then moveDest = pos end
+		end
 	end
 
 	local diff = moveDest - myPos
