@@ -10,6 +10,7 @@ SND.Client.Phase = SND.PHASE_WAIT
 SND.Client.AttackScore = 0
 SND.Client.DefendScore = 0
 SND.Round = SND.Round or {}
+SND.Client.KillFeed = SND.Client.KillFeed or {} -- Initialize kill feed table
 SND.Bomb = SND.Bomb or {}
 SND.Round.RoundTimerEnd = 0
 
@@ -44,6 +45,23 @@ net.Receive("SND_Bomb", function()
 		SND.Bomb.PlantedSite     = net.ReadString()
 		SND.Bomb.PlantTime       = CurTime()
 	end
+end)
+
+net.Receive("SND_KillFeed", function()
+    local attackerNick = net.ReadString()
+    local attackerTeam = net.ReadUInt(2)
+    local victimNick = net.ReadString()
+    local victimTeam = net.ReadUInt(2)
+    local weaponName = net.ReadString()
+
+    table.insert(SND.Client.KillFeed, {
+        attackerNick = attackerNick,
+        attackerTeam = attackerTeam,
+        victimNick = victimNick,
+        victimTeam = victimTeam,
+        weaponName = weaponName,
+        timestamp = CurTime()
+    })
 end)
 
 net.Receive("SND_MapVote", function()

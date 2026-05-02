@@ -394,6 +394,9 @@ hook.Add("StartCommand", "SND_BotAI", function(bot, cmd)
 				local ang = bot:EyeAngles()
 				ang.p = 45
 				bot:SetEyeAngles(LerpAngle(0.1, bot:EyeAngles(), ang))
+				-- Bot plant/defuse logic is handled by the PlayerButtonDown hook in snd_bomb.lua
+				-- which is triggered by IN_USE. The bot will hold IN_USE when near the objective
+				-- and in the correct team/bomb state.
 			end
 		elseif ai.lastKnownPos and (now - ai.lastKnownTime) < 15 then
 			-- Chase last known

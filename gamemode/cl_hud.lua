@@ -18,10 +18,10 @@ local C_DIM    = col(160, 170, 190)
 local C_ATTACK = col(220,  70,  50)
 local C_DEFEND = col( 60, 140, 220)
 local C_BOMB   = col(255, 200,  60)
-local C_DANGER = col(255,  60,  40)
+local C_DANGER = col(255,  60,  40) -- Used for "OUT OF AMMO" and match defeat
 local C_GREEN  = col( 80, 220, 100)
 local C_BG     = col(  0,   0,   0, 160)
-local C_PILL   = col( 20,  22,  28, 210)
+local C_PILL   = col( 35,  38,  48, 210) -- Slightly lighter for score background
 
 -- ── Rounded pill helper ───────────────────────────────────────────────────
 local function pill(x, y, w, h, c)
@@ -148,6 +148,45 @@ hook.Add("HUDPaint", "SND_HUD", function()
 				)
 			end
 		end
+	end
+
+	-- ── Kill Feed (top-right) ─────────────────────────────────────────────────
+	local kfX, kfY = sw - 16 * sc, 16 * sc
+	local kfLineHeight = 20 * sc -- Approx height for Trebuchet18
+	local kfMaxLines = 5
+	local kfFadeTime = 7 -- seconds
+
+	-- Iterate backwards to remove old entries and draw from bottom up
+	for i = #SND.Client.KillFeed, 1, -1 do
+		local entry = SND.Client.KillFeed[i]
+		local age = CurTime() - entry.timestamp
+		if age > kfFadeTime then
+			table.remove(SND.Client.KillFeed, i)
+			continue
+		end
+
+		local alpha = math.Clamp(1 - (age / kfFadeTime), 0, 1) * 255
+		local currentY = kfY + (#SND.Client.KillFeed - i) * kfLineHeight
+
+		-- Ensure we don't draw too many lines
+		if (#SND.Client.KillFeed - i) >= kfMaxLines then continue end
+
+		local attackerCol = (entry.attackerTeam == SND.TEAM_ATTACK) and C_ATTACK or C_DEFEND
+		local victimCol = (entry.victimTeam == SND.TEAM_ATTACK) and C_ATTACK or C_DEFEND
+
+		local currentDrawX = kfX
+
+		-- Draw Victim Nick
+		draw.SimpleText(entry.victimNick, "Trebuchet18", currentDrawX, currentY, col(victimCol.r, victimCol.g, victimCol.b, alpha), TEXT_ALIGN_RIGHT, TEXT_ALIGN_TOP)
+		currentDrawX = currentDrawX - surface.GetTextSize(entry.victimNick, "Trebuchet18") - 5 * sc
+
+		-- Draw Weapon Name (or icon placeholder)
+		local weaponText = " (" .. entry.weaponName .. ") "
+		draw.SimpleText(weaponText, "Trebuchet18", currentDrawX, currentY, col(C_DIM.r, C_DIM.g, C_DIM.b, alpha), TEXT_ALIGN_RIGHT, TEXT_ALIGN_TOP)
+		currentDrawX = currentDrawX - surface.GetTextSize(weaponText, "Trebuchet18") - 5 * sc
+
+		-- Draw Attacker Nick
+		draw.SimpleText(entry.attackerNick, "Trebuchet18", currentDrawX, currentY, col(attackerCol.r, attackerCol.g, attackerCol.b, alpha), TEXT_ALIGN_RIGHT, TEXT_ALIGN_TOP)
 	end
 
 	-- ── Victory Messages (Round End) ──────────────────────────────────────
