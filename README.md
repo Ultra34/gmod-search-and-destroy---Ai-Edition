@@ -1,6 +1,6 @@
 # Search & Destroy (ARC9 MW Classic)
 
-Garry’s Mod **gamemode** inspired by Call of Duty Search & Destroy: one life per round, bomb plant/defuse, team scores, optional map voting, Lua-driven bots, **team-only spectating** (mouse **M1** / **M2** to cycle living teammates), and **ARC9 COD4 Extended** (`arc9_cod4e_*`) random primaries/secondaries from configurable pools (override via `data/snd_mwclassic/loadouts.lua` or `snd_loadout_*` ConVars).
+Garry’s Mod **gamemode** inspired by Call of Duty Search & Destroy: one life per round, bomb plant/defuse, team scores, optional map voting, Lua-driven bots, **team-only spectating** (mouse **M1** / **M2** to cycle living teammates), and **ARC9 MW2 Extended** (`arc9_mw2e_*`) random primaries/secondaries from configurable pools (override via `data/snd_mwclassic/loadouts.lua` or `snd_loadout_*` ConVars).
 
 **Repository:** [Ultra34/gmod-search-and-destroy---Ai-Edition](https://github.com/Ultra34/gmod-search-and-destroy---Ai-Edition)
 
@@ -9,8 +9,8 @@ Garry’s Mod **gamemode** inspired by Call of Duty Search & Destroy: one life p
 ## Requirements
 
 - Garry’s Mod (dedicated or listen server)
-- **ARC9** base and **COD4 Extended** (`arc9_cod4e_*`) SWEPs (or change `SND.Config.Cod4ePrimaries` / `Cod4eSecondaries` in `gamemode/snd_config.lua`).  
-  Weapon **class names** must match your pack (spawn menu / `gm_giveswep`). Optional launchers live in `SND.Config.Cod4eSpecial` (not given by default).
+- **ARC9** base and **MW2 Extended** (`arc9_mw2e_*`) SWEPs (or change `SND.Config.Mw2ePrimaries` / `Mw2eSecondaries` in `gamemode/snd_config.lua`).  
+  Weapon **class names** must match your pack (spawn menu / `gm_giveswep`). Launchers are listed in `SND.Config.Mw2eSpecial` (not given on spawn by default).
 - Custom announcer audio is optional: place files under `garrysmod/sound/snd_mwclassic/announcer/` to match paths in `gamemode/snd_config.lua`.
 
 ---

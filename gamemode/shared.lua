@@ -1,9 +1,9 @@
 --[[
 	Search & Destroy — shared definitions
-	Requires: ARC9 + COD4 Extended (arc9_cod4e_*) or override in data/snd_mwclassic/loadouts.lua / ConVars
+	Requires: ARC9 + MW2 Extended (arc9_mw2e_*) or override in data/snd_mwclassic/loadouts.lua / ConVars
 ]]
 
-GM.Name = "Search & Destroy (ARC9 MW Classic)"
+GM.Name = "Search & Destroy (ARC9 MW2)"
 GM.Author = "snd_mwclassic"
 GM.Email = ""
 GM.Website = ""

@@ -1,7 +1,7 @@
 "snd_mwclassic"
 {
 	"base"		"base"
-	"title"		"Search & Destroy (ARC9 MW Classic)"
+	"title"		"Search & Destroy (ARC9 MW2)"
 	"maps"		"^snd_|^de_|^gm_|^ttt_"
 	"menusystem"	"1"
 	"author_name"	"Custom"

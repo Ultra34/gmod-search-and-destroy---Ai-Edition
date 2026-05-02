@@ -1,63 +1,64 @@
 --[[
 	Map + loadout config. Copy to garrysmod/data/snd_mwclassic/ on server or override via ConVars.
-	ARC9 COD4 Extended (arc9_cod4e_*) — verify class names in spawn menu / gm_giveswep.
+	ARC9 MW2 Extended (arc9_mw2e_*) + one MW3 model1887 entry as provided — verify in spawn menu / gm_giveswep.
 ]]
 
 SND.Config = SND.Config or {}
 
-SND.Config.Cod4ePrimaries = {
-	"arc9_cod4e_m40a3",
-	"arc9_cod4e_rpd",
-	"arc9_cod4e_r700",
-	"arc9_cod4e_ak47",
-	"arc9_cod4e_ak74u",
-	"arc9_cod4e_g3",
-	"arc9_cod4e_g36c",
-	"arc9_cod4e_m14",
-	"arc9_cod4e_m4m16",
-	"arc9_cod4e_mp44",
-	"arc9_cod4e_m249",
-	"arc9_cod4e_m60",
-	"arc9_cod4e_m1014",
-	"arc9_cod4e_w1200",
-	"arc9_cod4e_m82",
-	"arc9_cod4e_dragunov",
-	"arc9_cod4e_uzi",
-	"arc9_cod4e_mp5",
-	"arc9_cod4e_p90",
-	"arc9_cod4e_skorpion",
+SND.Config.Mw2ePrimaries = {
+	"arc9_mw2e_acr",
+	"arc9_mw2e_ak47",
+	"arc9_mw2e_f2000",
+	"arc9_mw2e_fnfal",
+	"arc9_mw2e_famas",
+	"arc9_mw2e_m16a4",
+	"arc9_mw2e_m4a1",
+	"arc9_mw2e_scarh",
+	"arc9_mw2e_tavor",
+	"arc9_mw2e_aug",
+	"arc9_mw2e_m240",
+	"arc9_mw2e_mg4",
+	"arc9_mw2e_m1014",
+	"arc9_mw3e_m1887",
+	"arc9_mw2e_akimbo_1887",
+	"arc9_mw2e_ranger",
+	"arc9_mw2e_spas12",
+	"arc9_mw2e_cheytac",
+	"arc9_mw2e_mp5k",
+	"arc9_mw2e_pp2000",
+	"arc9_mw2e_vector",
 }
 
-SND.Config.Cod4eSecondaries = {
-	"arc9_cod4e_deagle",
-	"arc9_cod4e_m1911",
-	"arc9_cod4e_m9",
-	"arc9_cod4e_usp",
+SND.Config.Mw2eSecondaries = {
+	"arc9_mw2e_g17",
+	"arc9_mw2e_mk23",
+	"arc9_mw2e_m93r",
 }
 
--- Launchers / heavy (optional pickup rules — not in default random kit)
-SND.Config.Cod4eSpecial = {
-	"arc9_cod4e_at4",
-	"arc9_cod4e_rpg7",
+-- Launchers (not rolled into default random primary — wire pickups or data loadout if wanted)
+SND.Config.Mw2eSpecial = {
+	"arc9_mw2e_stinger",
+	"arc9_mw2e_javelin",
+	"arc9_mw2e_thumper",
 }
 
---[[ Default loadouts: random primary + random secondary from pools each spawn unless ConVars set.
-	lethal = arc9_cod4e_frag; tactical left empty (add arc9 smoke in data loadout if your pack has it). ]]
+--[[ Default loadouts: random primary + random secondary from pools unless snd_loadout_* ConVars set.
+	Lethal uses stock frag unless your MW2 pack exposes an arc9 grenade class. ]]
 SND.Config.DefaultLoadouts = {
 	attack = {
 		random_primary = true,
 		random_secondary = true,
-		primary = "arc9_cod4e_m4m16",
-		secondary = "arc9_cod4e_m9",
-		lethal = "arc9_cod4e_frag",
+		primary = "arc9_mw2e_m4a1",
+		secondary = "arc9_mw2e_g17",
+		lethal = "weapon_frag",
 		tactical = "",
 	},
 	defend = {
 		random_primary = true,
 		random_secondary = true,
-		primary = "arc9_cod4e_ak47",
-		secondary = "arc9_cod4e_usp",
-		lethal = "arc9_cod4e_frag",
+		primary = "arc9_mw2e_ak47",
+		secondary = "arc9_mw2e_mk23",
+		lethal = "weapon_frag",
 		tactical = "",
 	},
 }

@@ -1,4 +1,4 @@
---[[ ARC9 MW Classic loadouts — set real SWEP class names in ConVars or data file ]]
+--[[ ARC9 MW2 Extended loadouts — ConVars or data/snd_mwclassic/loadouts.lua ]]
 
 SND.Loadout = SND.Loadout or {}
 
@@ -22,15 +22,15 @@ function SND.Loadout.Apply(ply)
 	local sec = cvarSecondary(t) and cvarSecondary(t):GetString() or ""
 
 	if pri == "" then
-		if defaults.random_primary and SND.Config.Cod4ePrimaries and #SND.Config.Cod4ePrimaries > 0 then
-			pri = table.Random(SND.Config.Cod4ePrimaries)
+		if defaults.random_primary and SND.Config.Mw2ePrimaries and #SND.Config.Mw2ePrimaries > 0 then
+			pri = table.Random(SND.Config.Mw2ePrimaries)
 		else
 			pri = defaults.primary
 		end
 	end
 	if sec == "" then
-		if defaults.random_secondary and SND.Config.Cod4eSecondaries and #SND.Config.Cod4eSecondaries > 0 then
-			sec = table.Random(SND.Config.Cod4eSecondaries)
+		if defaults.random_secondary and SND.Config.Mw2eSecondaries and #SND.Config.Mw2eSecondaries > 0 then
+			sec = table.Random(SND.Config.Mw2eSecondaries)
 		else
 			sec = defaults.secondary
 		end
