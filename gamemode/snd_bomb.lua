@@ -388,7 +388,7 @@ local function handleInteraction(ply)
 	elseif SND.Bomb.State == SND.BOMB_STATE_PLANTED and ply:Team() == SND.TEAM_DEFEND then
 		SND.Bomb.TryDefuse(ply)
 	end
-end)
+end
 
 -- Cancel on damage
 hook.Add("EntityTakeDamage", "SND_BombCancelOnDmg", function(ent, dmg)
