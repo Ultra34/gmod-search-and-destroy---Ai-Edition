@@ -15,7 +15,7 @@ SND.Round.RoundTimerEnd = 0
 
 net.Receive("SND_RoundState", function()
 	SND.Client.Phase = net.ReadUInt(3)
-	net.ReadUInt(4)
+	SND.Client.Winner = net.ReadUInt(4)
 	SND.Client.AttackScore = net.ReadUInt(8)
 	SND.Client.DefendScore = net.ReadUInt(8)
 	SND.Round.RoundTimerEnd = net.ReadDouble()

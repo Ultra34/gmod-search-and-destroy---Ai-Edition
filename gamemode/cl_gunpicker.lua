@@ -183,11 +183,12 @@ end)
 -- Close panel when round goes live (freeze ends)
 net.Receive("SND_RoundState", function()
 	local phase = net.ReadUInt(3)
-	net.ReadUInt(4)   -- winner (unused here)
+	local winner = net.ReadUInt(4)
 	SND.Client        = SND.Client or {}
 	SND.Client.AttackScore = net.ReadUInt(8)
 	SND.Client.DefendScore = net.ReadUInt(8)
 	SND.Client.Phase  = phase
+	SND.Client.Winner = winner
 
 	if phase == SND.PHASE_LIVE then
 		SND.GunPicker.Close()

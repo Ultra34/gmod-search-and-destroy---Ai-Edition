@@ -124,6 +124,23 @@ hook.Add("HUDPaint", "SND_HUD", function()
 		end
 	end
 
+	-- ── Victory Messages (Round End) ──────────────────────────────────────
+	if phase == SND.PHASE_POST then
+		local winStr = "ROUND DRAW"
+		local winCol = C_WHITE
+		local winner = SND.Client.Winner
+
+		if winner == SND.WIN_ATTACK_ELIM or winner == SND.WIN_ATTACK_PLANT then
+			winStr = "ATTACKERS WIN"
+			winCol = C_ATTACK
+		elseif winner == SND.WIN_DEFEND_ELIM or winner == SND.WIN_DEFEND_DEFUSE or winner == SND.WIN_TIME then
+			winStr = "DEFENDERS WIN"
+			winCol = C_DEFEND
+		end
+
+		draw.SimpleText(winStr, "DermaLarge", sw * 0.5, sh * 0.3, winCol, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+	end
+
 	-- ── Spectator label ───────────────────────────────────────────────────
 	if not lp:Alive() and (phase == SND.PHASE_LIVE or phase == SND.PHASE_FREEZE) then
 		local tgt  = lp:GetObserverTarget()

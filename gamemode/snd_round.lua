@@ -31,7 +31,9 @@ function SND.Round.CheckElimination()
 	local a = aliveOnTeamReal(SND.TEAM_ATTACK)
 	local d = aliveOnTeamReal(SND.TEAM_DEFEND)
 
-	if a == 0 then
+	if a == 0 and d == 0 then
+		SND.Round.EndRound(SND.WIN_DRAW)
+	elseif a == 0 then
 		SND.Round.EndRound(SND.WIN_DEFEND_ELIM)
 	elseif d == 0 then
 		SND.Round.EndRound(SND.WIN_ATTACK_ELIM)
@@ -41,7 +43,7 @@ end
 function SND.Round.CheckTime()
 	if SND.Round.Phase ~= SND.PHASE_LIVE then return end
 	if CurTime() >= SND.Round.RoundTimerEnd then
-		SND.Round.EndRound(SND.WIN_TIME)
+		SND.Round.EndRound(SND.WIN_DRAW) -- If no one dies by the end of time, it's a draw
 	end
 end
 
