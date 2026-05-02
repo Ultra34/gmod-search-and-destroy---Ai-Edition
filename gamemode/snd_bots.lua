@@ -1,6 +1,6 @@
 --[[ Bot AI — state machine, skill 1-10, weapon reload/switch, bomb objectives
---[[ Bot AI Reworked — Goal-Oriented Action Planning
-     Focuses on pathfinding, lead-aiming, and objective priority. ]]
+--[[ Bot AI Reworked — CS:S Style Behavior Tree
+     Uses PathFollower for navigation and tactical state management. ]]
 
 SND.Bots = SND.Bots or {}
 
@@ -121,14 +121,14 @@ local function nearestEnemy(bot, requireLOS)
 	return best, bestDist2 and math.sqrt(bestDist2)
 end
 
--- ── Helpers ──────────────────────────────────────────────────────────────
+-- ── Objective Helpers ────────────────────────────────────────────────────
 local function nearestSite(bot)
 	local map = game.GetMap()
 	local sites = SND.Config.MapSites[map]
 	if not sites or #sites == 0 then return nil, math.huge end
 	local best, bestDist
 	for _, s in ipairs(sites) do
-		local d = bot:GetPos():DistToSqr(s.plantPos)
+		local d = bot:GetPos():DistToSqr(s.plantPos or s.pos)
 		if not best or d < bestDist then best, bestDist = s, d end
 	end
 	return best, math.sqrt(bestDist)
@@ -195,14 +195,12 @@ end
 
 -- ── Navigation ────────────────────────────────────────────────────────────
 local function moveToward(bot, cmd, targetPos, speed)
-	-- Fix for [ERROR]: bad argument #1 to '__sub' (Vector expected, got number)
 	if not isvector(targetPos) then return 0 end
 
 	local ai = bot.SND_AI
 	local myPos = bot:GetPos()
-	local moveDest = targetPos
+	local moveDest = Vector(targetPos.x, targetPos.y, targetPos.z)
 
-	-- Use NavMesh pathfinding if available
 	if navmesh.IsLoaded() then
 		if not ai.path then
 			ai.path = Path("Follow")
@@ -210,20 +208,24 @@ local function moveToward(bot, cmd, targetPos, speed)
 			ai.path:SetGoalTolerance(20)
 		end
 
-		-- Recompute path if goal changed significantly or every second
-		if CurTime() > ai.nextPathUpdate or ai.lastPathGoal:DistToSqr(targetPos) > 4096 then
+		-- Recompute path every 1 second or if goal moves
+		if CurTime() > ai.nextPathUpdate or ai.lastPathGoal:DistToSqr(targetPos) > 16384 then
 			ai.path:Compute(bot, targetPos)
 			ai.nextPathUpdate = CurTime() + 1.0
-			ai.lastPathGoal = targetPos
+			ai.lastPathGoal = Vector(targetPos.x, targetPos.y, targetPos.z)
 		end
 
-		-- Standard PathFollower:Update(bot) then verify position
 		if ai.path:IsValid() then
 			ai.path:Update(bot)
-			local pos = ai.path:GetCursorPosition()
-			if pos then moveDest = pos end
+			local pPos = ai.path:GetPos()
+			if isvector(pPos) then 
+				moveDest = pPos 
+			end
 		end
 	end
+
+	-- Safety: Ensure moveDest is a vector before subtraction
+	if not isvector(moveDest) then moveDest = targetPos end
 
 	local diff = moveDest - myPos
 	local dist = (targetPos - myPos):Length()
@@ -380,15 +382,13 @@ hook.Add("StartCommand", "SND_BotAI", function(bot, cmd)
 		if targetObj then
 			local d = moveToward(bot, cmd, targetObj, speed)
 			if skill > 4 then cmd:SetButtons(bit.bor(cmd:GetButtons(), IN_SPEED)) end
-
-			-- Interaction (Plant/Defuse)
-			if d < 100 then
-				-- Only plant/defuse if the bomb state allows it
+			
+			-- Interaction Logic
+			if d < 120 then
 				if (bot:Team() == SND.TEAM_ATTACK and SND.Bomb.Carrier == bot) or
 				   (bot:Team() == SND.TEAM_DEFEND and SND.Bomb.State == SND.BOMB_STATE_PLANTED) then
 					cmd:SetButtons(bit.bor(cmd:GetButtons(), IN_USE))
 				end
-				-- Look down while planting
 				local ang = bot:EyeAngles()
 				ang.p = 45
 				bot:SetEyeAngles(LerpAngle(0.1, bot:EyeAngles(), ang))
