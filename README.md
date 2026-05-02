@@ -1,4 +1,4 @@
-# Search & Destroy (ARC9 MW2)
+# GMod Search & Destroy -- Mostly Ai Edition
 
 Garry’s Mod **gamemode** inspired by Call of Duty Search & Destroy: one life per round, bomb plant/defuse, team scores, optional map voting, Lua-driven bots, **Freecam Spectating** (mouse **M1** / **M2** to cycle living teammates), and **ARC9 MW classic** (`arc9_mw2e_*`) random primaries/secondaries from configurable pools (override via `data/snd_mwclassic/loadouts.lua` or `snd_loadout_*` ConVars).
 
