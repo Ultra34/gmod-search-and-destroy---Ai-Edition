@@ -3,7 +3,6 @@
 	"base"		"base"
 	"title"		"Search & Destroy (ARC9 MW2)"
 	"maps"		"^snd_|^de_|^gm_|^ttt_"
-	"category"	"other"
 	"menusystem"	"1"
 	"author_name"	"Ultra34"
 	"author_email"	""
@@ -12,7 +11,7 @@
 
 	"settings"
 	{
-		1
+		"1"
 		{
 			"name"		"snd_round_time"
 			"text"		"Round time (sec)"
@@ -21,7 +20,7 @@
 			"default"	"120"
 		}
 
-		2
+		"2"
 		{
 			"name"		"snd_win_limit"
 			"text"		"Rounds to win"
@@ -30,7 +29,7 @@
 			"default"	"4"
 		}
 
-		3
+		"3"
 		{
 			"name"		"snd_freeze_time"
 			"text"		"Freeze time (sec)"
@@ -39,7 +38,7 @@
 			"default"	"6"
 		}
 
-		4
+		"4"
 		{
 			"name"		"snd_plant_time"
 			"text"		"Bomb plant time (sec)"
@@ -48,7 +47,7 @@
 			"default"	"5"
 		}
 
-		5
+		"5"
 		{
 			"name"		"snd_defuse_time"
 			"text"		"Bomb defuse time (sec)"
@@ -57,7 +56,7 @@
 			"default"	"8"
 		}
 
-		6
+		"6"
 		{
 			"name"		"snd_walk_speed"
 			"text"		"Walk speed"
@@ -66,7 +65,7 @@
 			"default"	"190"
 		}
 
-		7
+		"7"
 		{
 			"name"		"snd_run_speed"
 			"text"		"Run speed"
@@ -75,7 +74,7 @@
 			"default"	"280"
 		}
 
-		8
+		"8"
 		{
 			"name"		"snd_bot_count"
 			"text"		"Bots"
@@ -84,7 +83,7 @@
 			"default"	"0"
 		}
 
-		9
+		"9"
 		{
 			"name"		"snd_mapvote_time"
 			"text"		"Map vote duration (sec)"
@@ -93,7 +92,7 @@
 			"default"	"20"
 		}
 
-		10
+		"10"
 		{
 			"name"		"snd_team_balance"
 			"text"		"Team balance"
@@ -102,7 +101,7 @@
 			"default"	"1"
 		}
 
-		11
+		"11"
 		{
 			"name"		"snd_mapvote_enabled"
 			"text"		"Map vote after match"
@@ -111,11 +110,11 @@
 			"default"	"1"
 		}
 
-		12
+		"12"
 		{
 			"name"		"snd_rust_swap_spawns"
 			"text"		"Rust: swap attack/defend spawns"
-			"help"		"Only affects ttt_rust_v1a auto-layout — flip which half of the map is attackers vs defenders"
+			"help"		"Only affects ttt_rust_v1a auto-layout - flip which half of the map is attackers vs defenders"
 			"type"		"CheckBox"
 			"default"	"0"
 		}

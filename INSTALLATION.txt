@@ -524,11 +524,30 @@ PROBLEM: Rust auto spawns feel swapped
   - snd_rust_swap_spawns 1
   - Or full spawn override file.
 
-PROBLEM: Gamemode not in list
------------------------------
-  - Wrong folder path (must be garrysmod/gamemodes/snd_mwclassic).
-  - gamemode.txt missing or invalid.
-  - Restart GMod after copying files.
+PROBLEM: Gamemode does NOT appear in the Garry's Mod menu
+----------------------------------------------------------
+  This is almost always INSTALL PATH or gamemode.txt parse failure.
+
+  CORRECT FOLDER LAYOUT (Windows example):
+    ...\Steam\steamapps\common\GarrysMod\garrysmod\gamemodes\snd_mwclassic\gamemode.txt
+    ...\Steam\steamapps\common\GarrysMod\garrysmod\gamemodes\snd_mwclassic\gamemode\init.lua
+
+  WRONG (common mistakes):
+    - Putting the gamemode inside addons\ instead of gamemodes\
+    - Leaving the repo folder name as gmod-search-and-destroy---Ai-Edition
+      GMod expects the INNER folder named exactly: snd_mwclassic
+    - gamemode.txt sitting one level too deep (e.g. ...\snd_mwclassic\snd_mwclassic\)
+
+  WHERE TO CLICK IN-GAME: Start a new game (single player or listen host).
+  In the setup screen, open the GAMEMODE dropdown / list and look for
+  "Search & Destroy (ARC9 MW2)" (exact title may match gamemode.txt).
+
+  AFTER fixing the path: fully QUIT Garry's Mod and start again (not just
+  disconnect) so it rescans gamemodes.
+
+  IF STILL MISSING: open main menu console (~) and look for KeyValues / gamemode
+  parse errors. gamemode.txt must be plain ASCII in critical fields (curly
+  quotes or Unicode dashes in VDF can prevent the gamemode from loading).
 
 
 ================================================================================
