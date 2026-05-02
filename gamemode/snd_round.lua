@@ -148,13 +148,6 @@ function SND.Round.OnPlayerDeath(victim, attacker)
 		net.Broadcast()
 	end
 
-	-- Trigger Killcam for victim if killed by an enemy
-	if IsValid(attacker) and attacker:IsPlayer() and attacker ~= victim then
-		net.Start("SND_KillCam")
-			net.WriteEntity(attacker)
-		net.Send(victim)
-	end
-
 	timer.Simple(0, function()
 		SND.Round.CheckElimination()
 		local teamAlive = aliveOnTeamReal(victim:Team())

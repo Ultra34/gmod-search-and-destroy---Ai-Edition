@@ -19,12 +19,13 @@ hook.Add("TranslateActivity", "SND_CSSAnimTranslate", function(ply, act)
 		[ACT_MP_STAND_IDLE]   = ACT_IDLE,
 		[ACT_MP_WALK]         = ACT_WALK,
 		[ACT_MP_RUN]          = ACT_RUN,
-		[ACT_MP_CROUCHWALK]   = ACT_WALK,      -- CSS models have no crouchwalk anim
-		[ACT_MP_CROUCH_IDLE]  = ACT_IDLE,
+		[ACT_MP_CROUCHWALK]   = ACT_WALK,
+		[ACT_MP_CROUCH_IDLE]  = ACT_CROUCHIDLE,
 		[ACT_MP_JUMP]         = ACT_JUMP,
 		[ACT_MP_JUMP_START]   = ACT_JUMP,
 		[ACT_MP_JUMP_FLOAT]   = ACT_GLIDE,
 		[ACT_MP_JUMP_LAND]    = ACT_LAND,
+		[ACT_MP_CROUCH_DEPLOY] = ACT_CROUCHIDLE,
 		-- SWEP hold-type activities — CSS models support these through the hold system
 		[ACT_HL2MP_IDLE]                   = ACT_IDLE,
 		[ACT_HL2MP_RUN]                    = ACT_RUN,
@@ -88,8 +89,12 @@ if CLIENT then
 		if not isCSSModel then return end
 
 		local speed  = velocity:Length2D()
-		local isBot  = ply.SND_IsBot
-		local crouched = ply:Crouching()
+		
+		-- Update the move_x and move_y pose parameters for animations
+		if speed > 1 then
+			ply:SetPoseParameter("move_x", (velocity:Dot(ply:GetForward()) / speed))
+			ply:SetPoseParameter("move_y", (velocity:Dot(ply:GetRight()) / speed) * -1)
+		end
 
 		-- Resolve the hold type from the active weapon so the arms look right
 		local wep     = ply:GetActiveWeapon()
@@ -125,15 +130,18 @@ if CLIENT then
 		if not isCSSModel then return end
 
 		local speed = velocity:Length2D()
+		local onGround = ply:IsOnGround()
+
+		if not onGround then
+			return ACT_JUMP, -1
+		end
 
 		if ply:Crouching() then
-			-- GMod will use ACT_CROUCHIDLE / crouch walk automatically
-			-- returning nil defers to the base; this avoids overriding crouch
-			return nil
+			return speed < 10 and ACT_CROUCHIDLE or ACT_WALK, -1
 		end
 
 		if speed < 10 then
-			return ACT_IDLE, -1   -- -1 = don't force a sequence number, use activity lookup
+			return ACT_IDLE, -1
 		elseif speed < 140 then
 			return ACT_WALK, -1
 		else

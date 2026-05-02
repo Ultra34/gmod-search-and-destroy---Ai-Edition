@@ -258,19 +258,6 @@ hook.Add("HUDPaint", "SND_HUD", function()
 		draw.SimpleText(line, "Trebuchet18", sw * 0.5, sh - 72 * sc,
 			col(160, 200, 255), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
 	end
-
-	-- ── Killcam Overlay ──────────────────────────────────────────────────
-	if not lp:Alive() and SND.Client.KillCamEnd and CurTime() < SND.Client.KillCamEnd then
-		draw.RoundedBox(0, 0, 0, sw, sh, col(0, 0, 0, 150))
-		draw.SimpleText("KILLCAM", "DermaLarge", sw * 0.5, sh * 0.15, C_WHITE, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
-		
-		local target = SND.Client.KillCamTarget
-		if IsValid(target) and target:IsPlayer() then
-			draw.SimpleText("Killed by: " .. target:Nick(), "Trebuchet24", sw * 0.5, sh * 0.15 + 45 * sc, C_ATTACK, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
-		end
-
-		draw.SimpleText("Fading to spectate...", "Trebuchet18", sw * 0.5, sh * 0.85, C_DIM, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
-	end
 end)
 
 -- ── Plant/defuse progress bar (driven by SND_BombProgress) ───────────────

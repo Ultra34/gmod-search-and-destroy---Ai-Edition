@@ -1,5 +1,6 @@
 --[[ Bot AI — state machine, skill 1-10, weapon reload/switch, bomb objectives
---[[ Bot AI Reworked — CS:S Style Behavior Tree
+--[[ Bot AI — state machine, skill 1-10, weapon reload/switch
+--[[ Bot AI Reworked — Roam & Kill
      Uses PathFollower for navigation and tactical state management. ]]
 
 SND.Bots = SND.Bots or {}
@@ -306,32 +307,12 @@ hook.Add("StartCommand", "SND_BotAI", function(bot, cmd)
 	local speed = botMoveSpeed(skill)
 	local now = CurTime()
 
-	-- Objective: Bomb Site / Bomb
-	local targetObj = nil
-	if bot:Team() == SND.TEAM_ATTACK then
-		if SND.Bomb.Carrier == bot then
-			local site = nearestSite(bot)
-			if site then targetObj = site.plantPos end
-		else
-			-- Support the carrier or move to clear a site
-			if IsValid(SND.Bomb.Carrier) then
-				targetObj = SND.Bomb.Carrier:GetPos()
-			else
-				local site = nearestSite(bot)
-				if site then targetObj = site.plantPos end
-			end
-		end
-	elseif bot:Team() == SND.TEAM_DEFEND then
-		if SND.Bomb.State == SND.BOMB_STATE_PLANTED then
-			targetObj = SND.Bomb.PlantPos
-		else
-			-- Defenders split up to guard different sites
-			local map = game.GetMap()
-			local sites = SND.Config.MapSites[map]
-			if sites and #sites > 0 then
-				local idx = (bot:EntIndex() % #sites) + 1
-				targetObj = sites[idx].plantPos
-			end
+	-- Simple Roaming: Pick a random nav area if idling
+	if ai.state == BS_IDLE or ai.state == BS_PATROL then
+		if not ai.lastKnownPos or now > ai.patrolFlip then
+			local areas = navmesh.GetAllNavAreas()
+			if #areas > 0 then ai.lastKnownPos = table.Random(areas):GetRandomPoint() end
+			ai.patrolFlip = now + math.Rand(10, 20)
 		end
 	end
 
@@ -386,36 +367,10 @@ hook.Add("StartCommand", "SND_BotAI", function(bot, cmd)
 		ai.enemy = nil
 		ai.shootGate = 0
 		
-		if targetObj then
-			local d = moveToward(bot, cmd, targetObj, speed)
-			if skill > 4 then cmd:SetButtons(bit.bor(cmd:GetButtons(), IN_SPEED)) end
-			
-			-- Interaction Logic
-			if d < 120 then
-				if (bot:Team() == SND.TEAM_ATTACK and SND.Bomb.Carrier == bot) or
-				   (bot:Team() == SND.TEAM_DEFEND and SND.Bomb.State == SND.BOMB_STATE_PLANTED) then
-					cmd:SetButtons(bit.bor(cmd:GetButtons(), IN_USE))
-				end
-				local ang = bot:EyeAngles()
-				ang.p = 45
-				bot:SetEyeAngles(LerpAngle(0.1, bot:EyeAngles(), ang))
-			end
-		elseif ai.lastKnownPos and (now - ai.lastKnownTime) < 15 then
-			-- Chase last known
-			moveToward(bot, cmd, ai.lastKnownPos, speed)
-		else
-			-- Patrol
-			if targetObj then
-				local d = moveToward(bot, cmd, targetObj, speed)
-				if d < 150 and SND.Bomb.State ~= SND.BOMB_STATE_PLANTED then
-					-- Roam locally if reached objective and not planting/defusing
-					if now > ai.patrolFlip then
-						ai.patrolAngle = math.Rand(0, 360)
-						ai.patrolFlip = now + math.Rand(2, 5)
-					end
-					bot:SetEyeAngles(LerpAngle(0.05, bot:EyeAngles(), Angle(0, ai.patrolAngle, 0)))
-				end
-			end
+		-- Roam or Chase
+		if ai.lastKnownPos then
+			local d = moveToward(bot, cmd, ai.lastKnownPos, speed)
+			if d < 50 then ai.lastKnownPos = nil end
 		end
 	end
 
