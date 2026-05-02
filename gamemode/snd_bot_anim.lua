@@ -75,9 +75,7 @@ if SERVER then
 			bot:SetPoseParameter("body_pitch", math.Clamp(pitch, -60, 60))
 
 			-- Invalidate bone cache so the new pose params take effect
-			if ply.InvalidateBoneCache then
-    ply:InvalidateBoneCache()
-end
+			bot:InvalidateBoneCache()
 		end
 	end)
 end
