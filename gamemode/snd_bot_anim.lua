@@ -14,6 +14,8 @@
 -- same animation state machine as human players.  TranslateActivity ensures
 -- activities resolve to sequences that exist in the CSS model.
 hook.Add("TranslateActivity", "SND_CSSAnimTranslate", function(ply, act)
+	if act == nil then return end
+
 	-- Map HL2 MP activities (used by some SWEPs) to base activities CSS models have
 	local t = {
 		[ACT_MP_STAND_IDLE]   = ACT_IDLE,
@@ -25,7 +27,6 @@ hook.Add("TranslateActivity", "SND_CSSAnimTranslate", function(ply, act)
 		[ACT_MP_JUMP_START]   = ACT_JUMP,
 		[ACT_MP_JUMP_FLOAT]   = ACT_GLIDE,
 		[ACT_MP_JUMP_LAND]    = ACT_LAND,
-		[ACT_MP_CROUCH_DEPLOY] = ACT_CROUCHIDLE,
 		-- SWEP hold-type activities — CSS models support these through the hold system
 		[ACT_HL2MP_IDLE]                   = ACT_IDLE,
 		[ACT_HL2MP_RUN]                    = ACT_RUN,

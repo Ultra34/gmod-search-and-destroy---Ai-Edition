@@ -110,7 +110,7 @@ hook.Add("HUDPaint", "SND_HUD", function()
 		local bombLine
 		local carrier = SND.Client.BombCarrier
 
-		if IsValid(carrier) and carrier:IsPlayer() and carrier:Team() == SND.TEAM_ATTACK then
+		if IsValid(carrier) then
 			if carrier == lp then
 				bombLine = "YOU HAVE THE BOMB — PLANT AT SITE A OR B"
 			else

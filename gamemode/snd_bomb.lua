@@ -179,6 +179,19 @@ function SND.Bomb.AssignCarrier()
 	net.Send(team.GetPlayers(SND.TEAM_ATTACK))
 end
 
+-- ── Sync for late joiners ────────────────────────────────────────────────
+hook.Add("PlayerInitialSpawn", "SND_BombSync", function(ply)
+	timer.Simple(2, function()
+		if not IsValid(ply) or ply:Team() ~= SND.TEAM_ATTACK then return end
+		if SND.Bomb.State == SND.BOMB_STATE_CARRIED and IsValid(SND.Bomb.Carrier) then
+			net.Start("SND_Bomb")
+				net.WriteUInt(1, 3)
+				net.WriteEntity(SND.Bomb.Carrier)
+			net.Send(ply)
+		end
+	end)
+end)
+
 -- ── Plant ─────────────────────────────────────────────────────────────────
 function SND.Bomb.TryPlant(ply)
 	if SND.Round.Phase ~= SND.PHASE_LIVE       then return end
