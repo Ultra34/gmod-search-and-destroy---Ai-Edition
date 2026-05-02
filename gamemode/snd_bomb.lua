@@ -166,16 +166,16 @@ function SND.Bomb.AssignCarrier()
 	local carrier = table.Random(attackers)
 	SND.Bomb.Carrier = carrier
 
-	-- Reset everyone's bomb HUD state first
+	-- Clear carrier for everyone first
 	net.Start("SND_Bomb")
 		net.WriteUInt(1, 3)
-		net.WriteEntity(NULL)
+		net.WriteInt(-1, 16)
 	net.Broadcast()
 
-	-- SECURE: Only the attack team receives the carrier update
+	-- SECURE: Only the attack team receives the carrier EntIndex
 	net.Start("SND_Bomb")
 		net.WriteUInt(1, 3)
-		net.WriteEntity(carrier)
+		net.WriteInt(carrier:EntIndex(), 16)
 	net.Send(team.GetPlayers(SND.TEAM_ATTACK))
 end
 
@@ -186,7 +186,7 @@ hook.Add("PlayerInitialSpawn", "SND_BombSync", function(ply)
 		if SND.Bomb.State == SND.BOMB_STATE_CARRIED and IsValid(SND.Bomb.Carrier) then
 			net.Start("SND_Bomb")
 				net.WriteUInt(1, 3)
-				net.WriteEntity(SND.Bomb.Carrier)
+				net.WriteInt(SND.Bomb.Carrier:EntIndex(), 16)
 			net.Send(ply)
 		end
 	end)

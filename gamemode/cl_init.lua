@@ -34,7 +34,7 @@ net.Receive("SND_Bomb", function()
 
 	local t = net.ReadUInt(3)
 	if t == 1 then -- Carrier assigned
-		SND.Client.BombCarrier   = net.ReadEntity()
+		SND.Client.BombCarrierIdx = net.ReadInt(16)
 		SND.Bomb.State           = SND.BOMB_STATE_CARRIED
 		SND.Bomb.PlantedSite     = nil
 		SND.Bomb.PlantTime       = nil
@@ -83,16 +83,4 @@ end)
 
 concommand.Add("snd_open_settings", function()
 	SND.OpenSettingsMenu()
-end)
-
--- ── Sync Steam Friends for Bot Names ────────────────────────────────────
-hook.Add("InitPostEntity", "SND_SyncFriendsForBots", function()
-	local friends = player.GetFriends()
-	if not friends or #friends == 0 then return end
-	local names = {}
-	for _, f in ipairs(friends) do table.insert(names, f:Nick()) end
-
-	net.Start("SND_SyncBotNames")
-	net.WriteTable(names)
-	net.SendToServer()
 end)

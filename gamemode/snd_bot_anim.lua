@@ -16,34 +16,24 @@
 hook.Add("TranslateActivity", "SND_CSSAnimTranslate", function(ply, act)
 	if act == nil then return end
 
-	-- Map HL2 MP activities (used by some SWEPs) to base activities CSS models have
-	local t = {
-		[ACT_MP_STAND_IDLE]   = ACT_IDLE,
-		[ACT_MP_WALK]         = ACT_WALK,
-		[ACT_MP_RUN]          = ACT_RUN,
-		[ACT_MP_CROUCHWALK]   = ACT_WALK,
-		[ACT_MP_CROUCH_IDLE]  = ACT_CROUCHIDLE,
-		[ACT_MP_JUMP]         = ACT_JUMP,
-		[ACT_MP_JUMP_START]   = ACT_JUMP,
-		[ACT_MP_JUMP_FLOAT]   = ACT_GLIDE,
-		[ACT_MP_JUMP_LAND]    = ACT_LAND,
-		-- SWEP hold-type activities — CSS models support these through the hold system
-		[ACT_HL2MP_IDLE]                   = ACT_IDLE,
-		[ACT_HL2MP_RUN]                    = ACT_RUN,
-		[ACT_HL2MP_WALK]                   = ACT_WALK,
-		[ACT_HL2MP_IDLE_PISTOL]            = ACT_IDLE,
-		[ACT_HL2MP_RUN_PISTOL]             = ACT_RUN,
-		[ACT_HL2MP_WALK_PISTOL]            = ACT_WALK,
-		[ACT_HL2MP_IDLE_SMG1]              = ACT_IDLE,
-		[ACT_HL2MP_RUN_SMG1]               = ACT_RUN,
-		[ACT_HL2MP_WALK_SMG1]              = ACT_WALK,
-		[ACT_HL2MP_IDLE_AR2]               = ACT_IDLE,
-		[ACT_HL2MP_RUN_AR2]                = ACT_RUN,
-		[ACT_HL2MP_WALK_AR2]               = ACT_WALK,
-		[ACT_HL2MP_IDLE_SHOTGUN]           = ACT_IDLE,
-		[ACT_HL2MP_RUN_SHOTGUN]            = ACT_RUN,
-		[ACT_HL2MP_WALK_SHOTGUN]           = ACT_WALK,
-	}
+	local t = {}
+	if ACT_MP_STAND_IDLE then t[ACT_MP_STAND_IDLE] = ACT_IDLE end
+	if ACT_MP_WALK then t[ACT_MP_WALK] = ACT_WALK end
+	if ACT_MP_RUN then t[ACT_MP_RUN] = ACT_RUN end
+	if ACT_MP_CROUCHWALK then t[ACT_MP_CROUCHWALK] = ACT_WALK end
+	if ACT_MP_CROUCH_IDLE then t[ACT_MP_CROUCH_IDLE] = ACT_CROUCHIDLE end
+	if ACT_MP_JUMP then t[ACT_MP_JUMP] = ACT_JUMP end
+	if ACT_MP_JUMP_START then t[ACT_MP_JUMP_START] = ACT_JUMP end
+	if ACT_MP_JUMP_FLOAT then t[ACT_MP_JUMP_FLOAT] = ACT_GLIDE end
+	if ACT_MP_JUMP_LAND then t[ACT_MP_JUMP_LAND] = ACT_LAND end
+
+	-- Fallback for HL2MP holdtypes if the model supports standard activities
+	if not t[act] and act >= 1600 and act <= 2000 then
+		if string.find(tostring(act), "WALK") then return ACT_WALK end
+		if string.find(tostring(act), "RUN") then return ACT_RUN end
+		return ACT_IDLE
+	end
+
 	return t[act]
 end)
 

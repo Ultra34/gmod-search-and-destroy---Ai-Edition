@@ -107,12 +107,13 @@ hook.Add("HUDPaint", "SND_HUD", function()
 	-- ── Bomb info (bottom-center, hide from defenders) ────────────────────
 	local lpTeam = lp:Team()
 	if phase == SND.PHASE_LIVE and lpTeam == SND.TEAM_ATTACK then
-		local bombLine
-		local carrier = SND.Client.BombCarrier
+		local bombLine = nil
+		local carrierIdx = SND.Client.BombCarrierIdx or -1
+		local carrier = Entity(carrierIdx)
 
-		if IsValid(carrier) then
+		if IsValid(carrier) and carrierIdx ~= -1 then
 			if carrier == lp then
-				bombLine = "YOU HAVE THE BOMB — PLANT AT SITE A OR B"
+				bombLine = "YOU HAVE THE BOMB — PLANT AT A OR B"
 			else
 				bombLine = carrier:Nick():upper() .. " HAS THE BOMB"
 			end
