@@ -88,8 +88,8 @@ hook.Add("HUDPaint", "SND_HUD", function()
 		pill(bx, by, bw, bh, col(30, 32, 40, 220))
 
 		-- Fill (green → yellow → red as time runs out)
-		local r = math.floor(math.Lerp(frac, 220, 60))
-		local g = math.floor(math.Lerp(frac, 80, 200))
+		local r = math.floor(Lerp(frac, 220, 60))
+		local g = math.floor(Lerp(frac, 80, 200))
 		local fillCol = col(r, g, 60, 220)
 		if bw * frac > 4 then
 			pill(bx, by, bw * frac, bh, fillCol)
