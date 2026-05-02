@@ -222,7 +222,7 @@ hook.Add("StartCommand", "SND_BotAI", function(bot, cmd)
 	if SND.Round.Phase == SND.PHASE_FREEZE then
 		cmd:SetForwardMove(0)
 		cmd:SetSideMove(0)
-		cmd:SetUpSpeed(0)
+		cmd:SetUpMove(0)
 		return
 	end
 

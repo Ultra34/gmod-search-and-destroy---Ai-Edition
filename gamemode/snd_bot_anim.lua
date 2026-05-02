@@ -73,9 +73,6 @@ if SERVER then
 			-- body_pitch: match eye pitch (so they appear to aim up/down)
 			local pitch = math.NormalizeAngle(bot:EyeAngles().p)
 			bot:SetPoseParameter("body_pitch", math.Clamp(pitch, -60, 60))
-
-			-- Invalidate bone cache so the new pose params take effect
-			bot:InvalidateBoneCache()
 		end
 	end)
 end
