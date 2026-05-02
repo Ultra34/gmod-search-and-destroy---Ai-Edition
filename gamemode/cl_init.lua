@@ -10,6 +10,7 @@ SND.Client.Phase = SND.PHASE_WAIT
 SND.Client.AttackScore = 0
 SND.Client.DefendScore = 0
 SND.Round = SND.Round or {}
+SND.Bomb = SND.Bomb or {}
 SND.Round.RoundTimerEnd = 0
 
 net.Receive("SND_RoundState", function()
@@ -21,12 +22,21 @@ net.Receive("SND_RoundState", function()
 end)
 
 net.Receive("SND_Bomb", function()
+	SND.Client = SND.Client or {}
+	SND.Bomb = SND.Bomb or {}
+
 	local t = net.ReadUInt(3)
-	if t == 1 then
-		SND.Client.BombCarrier = net.ReadEntity()
-	elseif t == 2 then
-		SND.Client.PlantPos = net.ReadVector()
-		SND.Client.PlantId = net.ReadString()
+	if t == 1 then -- Carrier assigned
+		SND.Client.BombCarrier   = net.ReadEntity()
+		SND.Bomb.State           = SND.BOMB_STATE_CARRIED
+		SND.Bomb.PlantedSite     = nil
+		SND.Bomb.PlantTime       = nil
+	elseif t == 2 then -- Bomb planted
+		SND.Client.BombCarrier   = nil
+		SND.Bomb.State           = SND.BOMB_STATE_PLANTED
+		SND.Bomb.PlantPos        = net.ReadVector()
+		SND.Bomb.PlantedSite     = net.ReadString()
+		SND.Bomb.PlantTime       = CurTime()
 	end
 end)
 

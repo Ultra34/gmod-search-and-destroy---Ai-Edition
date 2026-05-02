@@ -166,10 +166,11 @@ function SND.Bomb.AssignCarrier()
 	local carrier = table.Random(attackers)
 	SND.Bomb.Carrier = carrier
 
+	-- Only attackers know who has the bomb
 	net.Start("SND_Bomb")
 		net.WriteUInt(1, 3)
 		net.WriteEntity(carrier)
-	net.Broadcast()
+	net.Send(team.GetPlayers(SND.TEAM_ATTACK))
 end
 
 -- ── Plant ─────────────────────────────────────────────────────────────────
@@ -326,6 +327,14 @@ function SND.Bomb.CancelAction(ply, kind)
 		net.WriteFloat(0)
 	net.Broadcast()
 end
+
+-- Reassign bomb if carrier dies (basic fix)
+hook.Add("PlayerDeath", "SND_BombCarrierDeathFix", function(victim)
+	if SND.Bomb.State == SND.BOMB_STATE_CARRIED and victim == SND.Bomb.Carrier then
+		SND.Bomb.Carrier = nil
+		timer.Simple(2, function() SND.Bomb.AssignCarrier() end)
+	end
+end)
 
 -- ── USE key ───────────────────────────────────────────────────────────────
 hook.Add("PlayerButtonDown", "SND_BombUse", function(ply, btn)

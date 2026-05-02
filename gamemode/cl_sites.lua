@@ -184,22 +184,3 @@ hook.Add("HUDPaint", "SND_SiteHUD", function()
 		end
 	end
 end)
-
--- ── Receive bomb state updates to track planted site client-side ──────────
--- (Existing SND_Bomb net message already sends PlantedSite; we just cache it locally)
-net.Receive("SND_Bomb", function()
-	SND.Bomb = SND.Bomb or {}
-	local t = net.ReadUInt(3)
-	if t == 1 then
-		SND.Bomb.State    = SND.BOMB_STATE_CARRIED
-		SND.Bomb.Carrier  = net.ReadEntity()
-		SND.Bomb.PlantedSite = nil
-		SND.Bomb.PlantTime   = nil
-	elseif t == 2 then
-		SND.Bomb.State       = SND.BOMB_STATE_PLANTED
-		SND.Bomb.PlantPos    = net.ReadVector()
-		SND.Bomb.PlantedSite = net.ReadString()
-		SND.Bomb.PlantTime   = CurTime()
-		SND.Bomb.Carrier     = nil
-	end
-end)

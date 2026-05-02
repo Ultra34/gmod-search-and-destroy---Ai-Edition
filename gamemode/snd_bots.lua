@@ -211,6 +211,19 @@ local function moveToward(bot, cmd, targetPos, speed)
 	ang.p = 0
 	bot:SetEyeAngles(ang)
 	cmd:SetForwardMove(speed)
+
+	-- Stuck detection / Obstacle jumping
+	if bot:IsOnGround() and bot:GetVelocity():Length() < (speed * 0.2) then
+		local tr = util.TraceHull({
+			start = bot:GetPos(),
+			endpos = bot:GetPos() + bot:GetForward() * 30,
+			mins = Vector(-16, -16, 0),
+			maxs = Vector(16, 16, 32),
+			filter = bot
+		})
+		if tr.Hit then cmd:SetButtons(bit.bor(cmd:GetButtons(), IN_JUMP)) end
+	end
+
 	return dist
 end
 
@@ -255,13 +268,14 @@ hook.Add("StartCommand", "SND_BotAI", function(bot, cmd)
 	if isCarrier and SND.Round.Phase == SND.PHASE_LIVE then
 		ai.state = BS_PLANT
 		local site, siteDist = nearestSite(bot)
+		local sp = botMoveSpeed(skill)
 
 		if site then
 			local radius = (site.defuseRadius or 96) + 32
 			if siteDist > radius then
 				-- Move to the site
-				local sp = botMoveSpeed(skill)
-				cmd:SetButtons(bit.bor(cmd:GetButtons(), IN_SPEED))
+				-- Real players sprint to sites
+				if skill > 3 then cmd:SetButtons(bit.bor(cmd:GetButtons(), IN_SPEED)) end
 				moveToward(bot, cmd, site.plantPos, sp)
 			else
 				-- In range: look down at ground and hold USE to plant
@@ -280,7 +294,9 @@ hook.Add("StartCommand", "SND_BotAI", function(bot, cmd)
 		local bombDist = bot:GetPos():Distance(SND.Bomb.PlantPos)
 		if bombDist > 128 then
 			ai.state = BS_DEFUSE
-			moveToward(bot, cmd, SND.Bomb.PlantPos, botMoveSpeed(skill))
+			local sp = botMoveSpeed(skill)
+			if skill > 3 then cmd:SetButtons(bit.bor(cmd:GetButtons(), IN_SPEED)) end
+			moveToward(bot, cmd, SND.Bomb.PlantPos, sp)
 		else
 			-- At bomb: look at it and defuse
 			ai.state = BS_DEFUSE
@@ -324,16 +340,19 @@ hook.Add("StartCommand", "SND_BotAI", function(bot, cmd)
 			ai.canShoot = true
 		end
 
-		-- Aim with noise proportional to (1-skill)
-		local targetPos = visEnemy:EyePos()
+		-- Aim for the chest/head instead of just EyePos
+		local targetPos = visEnemy:GetPos() + Vector(0, 0, 50)
 		local aimAng    = (targetPos - bot:EyePos()):Angle()
 		local noise     = aimNoise(skill)
 		aimAng.p = aimAng.p + (math.random() - 0.5) * noise
 		aimAng.y = aimAng.y + (math.random() - 0.5) * noise
 		bot:SetEyeAngles(aimAng)
 
+		local sp = botMoveSpeed(skill)
 		if ai.canShoot then
 			cmd:SetButtons(bit.bor(cmd:GetButtons(), IN_ATTACK))
+			-- Smart bots crouch while firing occasionally
+			if skill > 6 and visDist > 500 then cmd:SetButtons(bit.bor(cmd:GetButtons(), IN_DUCK)) end
 		end
 
 		-- Strafe while shooting (flip direction periodically)
@@ -341,7 +360,6 @@ hook.Add("StartCommand", "SND_BotAI", function(bot, cmd)
 			ai.strafeDir  = -ai.strafeDir
 			ai.strafeFlip = now + math.Rand(0.8, 2.0)
 		end
-		local sp = botMoveSpeed(skill)
 		cmd:SetSideMove(ai.strafeDir * sp * 0.7)
 
 		-- Close distance if far; hold ground if close
@@ -357,7 +375,9 @@ hook.Add("StartCommand", "SND_BotAI", function(bot, cmd)
 		ai.enemy    = nil
 		ai.canShoot = false
 
-		local dist = moveToward(bot, cmd, ai.lastKnownPos, botMoveSpeed(skill) * 0.85)
+		local sp = botMoveSpeed(skill) * 0.85
+		if skill > 4 then cmd:SetButtons(bit.bor(cmd:GetButtons(), IN_SPEED)) end
+		local dist = moveToward(bot, cmd, ai.lastKnownPos, sp)
 		if dist < 60 then
 			ai.lastKnownPos  = nil
 			ai.lastKnownTime = 0

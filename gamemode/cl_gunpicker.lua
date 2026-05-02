@@ -194,48 +194,6 @@ net.Receive("SND_RoundState", function()
 	end
 end)
 
--- ── HUD: plant / defuse progress bar ─────────────────────────────────────
--- Received from snd_bomb.lua server-side
-local BombProgress = { kind = 0, who = nil, total = 0, started = 0 }
-
-net.Receive("SND_BombProgress", function()
-	BombProgress.kind    = net.ReadUInt(2)
-	BombProgress.who     = net.ReadEntity()
-	BombProgress.total   = net.ReadFloat()
-	BombProgress.started = CurTime()
-end)
-
-hook.Add("HUDPaint", "SND_BombProgressBar", function()
-	if BombProgress.kind == 0 then return end
-	if not IsValid(BombProgress.who) then BombProgress.kind = 0 return end
-
-	local elapsed  = CurTime() - BombProgress.started
-	local fraction = math.Clamp(elapsed / math.max(BombProgress.total, 0.01), 0, 1)
-
-	if fraction >= 1 then BombProgress.kind = 0 return end
-
-	local cx  = ScrW() / 2
-	local cy  = ScrH() - 160
-	local bw  = 320
-	local bh  = 22
-	local lbl = BombProgress.kind == 1 and "PLANTING…" or "DEFUSING…"
-	local col = BombProgress.kind == 1 and Color(220, 80, 40) or Color(40, 160, 220)
-
-	-- Background bar
-	draw.RoundedBox(4, cx - bw/2 - 2, cy - 2, bw + 4, bh + 4, Color(0,0,0,160))
-	draw.RoundedBox(4, cx - bw/2,     cy,     bw,     bh,     Color(30,30,30,200))
-	-- Progress fill
-	draw.RoundedBox(4, cx - bw/2, cy, bw * fraction, bh, col)
-	-- Label
-	draw.SimpleText(lbl, "Trebuchet18", cx, cy + bh/2,
-	    Color(255,255,255), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
-
-	-- Show who is doing it (useful for spectators)
-	local nick = BombProgress.who:Nick() or "?"
-	draw.SimpleText(nick, "Trebuchet18", cx, cy + bh + 6,
-	    Color(220,220,220), TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
-end)
-
 -- ── Rebind: open picker manually ─────────────────────────────────────────
 concommand.Add("snd_gunpicker", function()
 	SND.GunPicker.Open()

@@ -104,23 +104,25 @@ hook.Add("HUDPaint", "SND_HUD", function()
 		)
 	end
 
-	-- ── Bomb info (bottom-center, during live) ────────────────────────────
-	if phase == SND.PHASE_LIVE then
+	-- ── Bomb info (bottom-center, hide from defenders) ────────────────────
+	if phase == SND.PHASE_LIVE and lp:Team() == SND.TEAM_ATTACK then
 		local bombLine
+		local carrier = SND.Client.BombCarrier
 
-		if IsValid(SND.Client.BombCarrier) then
-			if SND.Client.BombCarrier == lp then
-				bombLine = "💣  You have the bomb — press E at a site to plant"
+		if IsValid(carrier) then
+			if carrier == lp then
+				bombLine = "YOU HAVE THE BOMB — PLANT AT SITE A OR B"
 			else
-				bombLine = "💣  " .. SND.Client.BombCarrier:Nick() .. " has the bomb"
+				bombLine = carrier:Nick():upper() .. " HAS THE BOMB"
 			end
 		end
 
 		if bombLine then
-			local tw = string.len(bombLine) * 7 * sc + 20
-			pill(sw * 0.5 - tw * 0.5, sh - 110 * sc, tw, 26 * sc, C_PILL)
-			draw.SimpleText(bombLine, "Trebuchet18", sw * 0.5, sh - 97 * sc,
-				C_BOMB, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+			local tw = string.len(bombLine) * 10 * sc + 40
+			pill(sw * 0.5 - tw * 0.5, sh - 120 * sc, tw, 32 * sc, C_PILL)
+			draw.SimpleText("💣 " .. bombLine, "Trebuchet24", sw * 0.5, sh - 104 * sc,
+				C_BOMB, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER
+			)
 		end
 	end
 
@@ -175,23 +177,4 @@ hook.Add("HUDPaint", "SND_BombProgressBar", function()
 	local nick = BombProg.who:Nick() or "?"
 	draw.SimpleText(nick, "Trebuchet18", sw * 0.5, by + bh + 4,
 		col(210, 210, 210), TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
-end)
-
--- ── Bomb carrier / planted state sync ────────────────────────────────────
-net.Receive("SND_Bomb", function()
-	SND.Client        = SND.Client or {}
-	SND.Bomb          = SND.Bomb   or {}
-	local t = net.ReadUInt(3)
-	if t == 1 then
-		SND.Client.BombCarrier   = net.ReadEntity()
-		SND.Bomb.State           = SND.BOMB_STATE_CARRIED
-		SND.Bomb.PlantedSite     = nil
-		SND.Bomb.PlantTime       = nil
-	elseif t == 2 then
-		SND.Client.BombCarrier   = nil
-		SND.Bomb.State           = SND.BOMB_STATE_PLANTED
-		SND.Bomb.PlantPos        = net.ReadVector()
-		SND.Bomb.PlantedSite     = net.ReadString()
-		SND.Bomb.PlantTime       = CurTime()
-	end
 end)
