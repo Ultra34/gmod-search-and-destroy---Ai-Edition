@@ -368,10 +368,10 @@ hook.Add("PlayerDeath", "SND_BombCarrierDeathFix", function(victim)
 	end
 end)
 
--- ── USE key ───────────────────────────────────────────────────────────────
-hook.Add("PlayerButtonDown", "SND_BombUse", function(ply, btn)
-	if btn ~= KEY_E then return end
-
+-- ── Interaction Logic (Key + Bot Support) ────────────────────────────────
+local function handleInteraction(ply)
+	if not IsValid(ply) or not ply:Alive() then return end
+	
 	-- Allow cancelling by pressing E again
 	if ply.SND_Planting then
 		SND.Bomb.CancelAction(ply, "plant")
@@ -424,6 +424,22 @@ timer.Create("SND_BombExplode", 1, 0, function()
 					util.ScreenShake(ply:GetPos(), 20 * (1 - d / 2000), 10, 1.5, 500)
 				end
 			end
+
+hook.Add("PlayerButtonDown", "SND_BombUse", function(ply, btn)
+	if btn == KEY_E then handleInteraction(ply) end
+end)
+
+-- Bots use CUserCmd buttons, so we check IN_USE in a Think hook
+timer.Create("SND_BotInteractionCheck", 0.2, 0, function()
+	for _, ply in ipairs(player.GetAll()) do
+		if ply.SND_IsBot and ply:KeyDown(IN_USE) then
+			-- Prevent rapid-fire triggering
+			if not ply.SND_Planting and not ply.SND_Defusing then
+				handleInteraction(ply)
+			end
+		end
+	end
+end)
 		end
 
 		removeBombProp()

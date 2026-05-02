@@ -326,20 +326,30 @@ hook.Add("StartCommand", "SND_BotAI", function(bot, cmd)
 	local speed = botMoveSpeed(skill)
 	local now = CurTime()
 
-	-- ── Scouting / Patrol Logic ──────────────────────────────────────────
+	-- ── Objective & Role Logic ──────────────────────────────────────────
+	local targetObj = nil
 	if ai.state == BS_IDLE or ai.state == BS_PATROL then
-		if not ai.lastKnownPos or now > ai.patrolFlip then
-			-- 60% chance to scout a bomb site, 40% chance to roam randomly
-			if math.random() < 0.6 then
+		if bot:Team() == SND.TEAM_ATTACK then
+			if SND.Bomb.Carrier == bot then
+				-- Carrier goes to a site to plant
 				local site = nearestSite(bot)
-				if site then
-					ai.lastKnownPos = site.plantPos or site.pos
-				end
+				if site then targetObj = site.plantPos or site.pos end
 			else
-				local areas = navmesh.GetAllNavAreas()
-				if #areas > 0 then ai.lastKnownPos = table.Random(areas):GetRandomPoint() end
+				-- Non-carriers support the carrier or roam
+				if IsValid(SND.Bomb.Carrier) then targetObj = SND.Bomb.Carrier:GetPos() end
 			end
-			ai.patrolFlip = now + math.Rand(15, 30)
+		else
+			-- Defenders: Pick a site and stay there (Camping)
+			if SND.Bomb.State == SND.BOMB_STATE_PLANTED then
+				targetObj = SND.Bomb.PlantPos -- Retake the site
+			else
+				-- Guard a specific site based on EntIndex so they split up
+				local sites = SND.Config.MapSites[game.GetMap()]
+				if sites and #sites > 0 then
+					local siteIdx = (bot:EntIndex() % #sites) + 1
+					targetObj = sites[siteIdx].plantPos or sites[siteIdx].pos
+				end
+			end
 		end
 	end
 
@@ -394,10 +404,23 @@ hook.Add("StartCommand", "SND_BotAI", function(bot, cmd)
 		ai.enemy = nil
 		ai.shootGate = 0
 		
-		-- Roam or Chase
-		if ai.lastKnownPos then
-			local d = moveToward(bot, cmd, ai.lastKnownPos, speed)
-			if d < 50 then ai.lastKnownPos = nil end
+		-- Move to objective or last known location
+		local goal = targetObj or ai.lastKnownPos
+		if goal then
+			local d = moveToward(bot, cmd, goal, speed)
+			
+			-- Interaction: Plant/Defuse/Camp
+			if d < 120 then
+				if (bot:Team() == SND.TEAM_ATTACK and SND.Bomb.Carrier == bot) or
+				   (bot:Team() == SND.TEAM_DEFEND and SND.Bomb.State == SND.BOMB_STATE_PLANTED) then
+					cmd:SetButtons(bit.bor(cmd:GetButtons(), IN_USE))
+					-- Look at the ground while planting/defusing
+					bot:SetEyeAngles(LerpAngle(0.1, bot:EyeAngles(), Angle(45, bot:EyeAngles().y, 0)))
+				elseif bot:Team() == SND.TEAM_DEFEND then
+					-- Stop moving and guard the site
+					cmd:ClearMovement()
+				end
+			end
 		end
 	end
 
