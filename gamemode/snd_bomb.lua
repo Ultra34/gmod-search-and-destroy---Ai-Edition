@@ -424,7 +424,15 @@ timer.Create("SND_BombExplode", 1, 0, function()
 					util.ScreenShake(ply:GetPos(), 20 * (1 - d / 2000), 10, 1.5, 500)
 				end
 			end
+		end
 
+		removeBombProp()
+		SND.Bomb.PlantTime = nil
+		SND.Round.EndRound(SND.WIN_ATTACK_PLANT)
+	end
+end)
+
+-- ── Interaction Hooks ────────────────────────────────────────────────────
 hook.Add("PlayerButtonDown", "SND_BombUse", function(ply, btn)
 	if btn == KEY_E then handleInteraction(ply) end
 end)
@@ -438,12 +446,5 @@ timer.Create("SND_BotInteractionCheck", 0.2, 0, function()
 				handleInteraction(ply)
 			end
 		end
-	end
-end)
-		end
-
-		removeBombProp()
-		SND.Bomb.PlantTime = nil
-		SND.Round.EndRound(SND.WIN_ATTACK_PLANT)
 	end
 end)

@@ -11,6 +11,13 @@ GM.Website = ""
 SND = SND or {}
 
 SND.VERSION = 1
+SND.Config   = SND.Config or {}
+SND.Settings = SND.Settings or {}
+SND.Round    = SND.Round or {}
+SND.Bomb = SND.Bomb or {}
+SND.Teams    = SND.Teams or {}
+SND.Bots     = SND.Bots or {}
+if CLIENT then SND.Client = SND.Client or {} end
 
 SND.TEAM_ATTACK = 1
 SND.TEAM_DEFEND = 2
