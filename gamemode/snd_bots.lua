@@ -117,13 +117,26 @@ local function nearestEnemy(bot, requireLOS)
 	return best, bestDist2 and math.sqrt(bestDist2)
 end
 
-local function weaponCheck(bot)
+-- ── Nearest bomb site helper ─────────────────────────────────────────────
+local function nearestSite(bot)
+	local map = game.GetMap()
+	local sites = SND.Config.MapSites[map]
+	if not sites or #sites == 0 then return nil, math.huge end
+	local best, bestDist
+	for _, s in ipairs(sites) do
+		local d = bot:GetPos():Distance(s.plantPos)
+		if not best or d < bestDist then best, bestDist = s, d end
+	end
+	return best, bestDist
+end
+
+local function weaponCheck(bot, cmd)
 	local wep = bot:GetActiveWeapon()
 	if not IsValid(wep) then return end
 
 	local max = wep:GetMaxClip1()
 	if max > 0 and wep:Clip1() <= 0 then
-		bot:SetButtons(bit.bor(bot:GetButtons(), IN_RELOAD))
+		cmd:SetButtons(bit.bor(cmd:GetButtons(), IN_RELOAD))
 	end
 
 	-- Switch to primary if we have ammo and are currently using a pistol
@@ -168,10 +181,10 @@ local function moveToward(bot, cmd, targetPos, speed)
 			ai.lastPathGoal = targetPos
 		end
 
-		if ai.path:IsValid() then
-			ai.path:Update(bot)
-			moveDest = ai.path:GetPosition()
-		end
+		-- Standard PathFollower:Update(bot) then verify position
+		ai.path:Update(bot)
+		local pos = ai.path:GetPosition()
+		if pos then moveDest = pos end
 	end
 
 	local diff = moveDest - myPos
@@ -238,8 +251,8 @@ hook.Add("StartCommand", "SND_BotAI", function(bot, cmd)
 	local targetObj = nil
 	if bot:Team() == SND.TEAM_ATTACK then
 		if SND.Bomb.Carrier == bot then
-			local sites = SND.Config.MapSites[game.GetMap()]
-			if sites and sites[1] then targetObj = sites[1].plantPos end
+			local site = nearestSite(bot)
+			if site then targetObj = site.plantPos end
 		end
 	elseif bot:Team() == SND.TEAM_DEFEND then
 		if SND.Bomb.State == SND.BOMB_STATE_PLANTED then
@@ -326,7 +339,7 @@ hook.Add("StartCommand", "SND_BotAI", function(bot, cmd)
 	end
 
 	
-	weaponCheck(bot)
+	weaponCheck(bot, cmd)
 end)
 
 hook.Add("Think", "SND_BotFreezeVelocity", function()

@@ -32,14 +32,14 @@ end
 -- ── CoD Style Fall Damage ────────────────────────────────────────────────
 function GM:GetFallDamage(ply, speed)
 	-- Call of Duty typically allows falling from ~15-20ft safely.
-	-- 580 units/sec is the approximate threshold for "painful" falls.
-	if speed < 580 then return 0 end
+	-- Lowered threshold to 500 to make it feel more "CoD-like" and dangerous.
+	if speed < 500 then return 0 end
 
-	-- If falling from an extreme height, it's an instant splat (1100+ velocity)
-	if speed > 1050 then return 200 end
+	-- If falling from an extreme height, it's an instant splat (1000+ velocity)
+	if speed > 1000 then return 200 end
 
 	-- Linear scaling between minimal pain and near-death
-	return math.Remap(speed, 580, 1050, 20, 95)
+	return math.Remap(speed, 500, 1000, 30, 110)
 end
 
 function GM:PlayerInitialSpawn(ply)
