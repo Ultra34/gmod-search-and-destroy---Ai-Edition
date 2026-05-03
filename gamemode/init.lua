@@ -86,7 +86,7 @@ SND.Killcam = SND.Killcam or {}
 SND.Killcam.History = {} -- [entindex] = { {pos, ang}, ... }
 SND.Killcam.LastKillData = nil
 
-local MAX_HISTORY = 212
+local MAX_HISTORY = 212 -- Exactly 7 seconds at 30fps (0.033s interval)
 local recordInterval = 0.033
 local nextRecord = 0
 
@@ -101,6 +101,7 @@ hook.Add("Tick", "SND_KillcamRecord", function()
 		local hist = SND.Killcam.History[idx]
 
 		local wep = ply:GetActiveWeapon()
+		local hitRecently = (ply.SND_LastHitTime or 0) > CurTime() - 0.05
 		table.insert(hist, {
 			p  = ply:GetPos(),
 			a  = ply:EyeAngles(),
@@ -113,7 +114,8 @@ hook.Add("Tick", "SND_KillcamRecord", function()
 			ws = IsValid(wep) and wep:GetSequence() or 0,
 			wc = IsValid(wep) and wep:GetCycle() or 0,
 			vp = ply:GetViewPunchAngles(), -- Record recoil/kick
-			f  = ply:GetFOV() -- Record FOV for ADS transitions
+			f  = ply:GetFOV(), -- Record FOV for ADS transitions
+			h  = hitRecently  -- Record hit confirmation
 		})
 
 		if #hist > MAX_HISTORY then
@@ -176,6 +178,7 @@ function SND.Killcam.SendFinalKillcam()
 			net.WriteFloat(pt.wc or 0)
 			net.WriteAngle(pt.vp or Angle(0,0,0))
 			net.WriteFloat(pt.f or 90)
+			net.WriteBool(pt.h or false)
 		end
 		net.WriteUInt(#data.vicPoints, 16)
 		for _, pt in ipairs(data.vicPoints) do
@@ -209,6 +212,11 @@ end)
 hook.Add("EntityTakeDamage", "SND_RegenTracker", function(target, dmg)
 	if IsValid(target) and target:IsPlayer() then
 		target.SND_LastDamageTime = CurTime()
+	end
+
+	local attacker = dmg:GetAttacker()
+	if IsValid(attacker) and attacker:IsPlayer() and IsValid(target) and target:IsPlayer() and target ~= attacker then
+		attacker.SND_LastHitTime = CurTime()
 	end
 end)
 

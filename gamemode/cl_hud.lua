@@ -644,13 +644,27 @@ hook.Add("HUDPaint", "SND_HUD", function()
 		draw.SimpleText(attackerName .. "  //  " .. weaponName, "Trebuchet24", 40 * sc, sh - 40 * sc, Color(255, 120, 0), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
 
 		-- ── Killed By Info Card ──────────────────────────────────────────
-		local cardW, cardH = 300 * sc, 100 * sc
+		local cardW, cardH = 340 * sc, 110 * sc
 		local cardX, cardY = 40 * sc, sh - 180 * sc
 		
 		surface.SetDrawColor(0, 0, 0, 200)
 		surface.DrawRect(cardX, cardY, cardW, cardH)
 		surface.SetDrawColor(255, 120, 0, 255)
 		surface.DrawRect(cardX, cardY, 4 * sc, cardH)
+
+		local iconSize = 48 * sc
+		local iconX = cardX + cardW - iconSize - 15 * sc
+		local iconY = cardY + 15 * sc
+		
+		local lvl = data.attLvl or 1
+		local mat = (SND.Levels and SND.Levels.GetIcon) and SND.Levels.GetIcon(lvl) or nil
+		if mat then
+			surface.SetMaterial(mat)
+			surface.SetDrawColor(255, 255, 255, 255)
+			surface.DrawTexturedRect(iconX, iconY, iconSize, iconSize)
+		else
+			draw.SimpleText(tostring(lvl), "SND_BO3_Header", iconX + iconSize/2, iconY + iconSize/2, Color(255, 180, 0), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+		end
 
 		draw.SimpleText("KILLED BY", "Trebuchet18", cardX + 15 * sc, cardY + 15 * sc, Color(150, 150, 150), TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
 		draw.SimpleText(attackerName, "Trebuchet24", cardX + 15 * sc, cardY + 35 * sc, Color(255, 255, 255), TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
@@ -672,6 +686,23 @@ hook.Add("HUDPaint", "SND_HUD", function()
 			surface.DrawRect(0, sh - 2 * sc, sw, 2 * sc)
 			surface.SetDrawColor(255, 120, 0, 255)
 			surface.DrawRect(0, sh - 2 * sc, sw * progFrac, 2 * sc)
+		end
+
+		-- ── Hitmarker & Impact Flash ─────────────────────────────────────
+		local pt = SND.Killcam.CurrentPoint
+		if pt and pt.h then
+			local gap, len = 4 * sc, 8 * sc
+			surface.SetDrawColor(255, 255, 255, 220)
+			surface.DrawLine(sw/2 - gap, sh/2 - gap, sw/2 - gap - len, sh/2 - gap - len)
+			surface.DrawLine(sw/2 + gap, sh/2 - gap, sw/2 + gap + len, sh/2 - gap - len)
+			surface.DrawLine(sw/2 - gap, sh/2 + gap, sw/2 - gap - len, sh/2 + gap + len)
+			surface.DrawLine(sw/2 + gap, sh/2 + gap, sw/2 + gap + len, sh/2 + gap + len)
+		end
+
+		local progFrac = SND.Killcam.PlaybackTime / (#data.attPoints * 0.033)
+		if progFrac > 0.98 then
+			surface.SetDrawColor(255, 0, 0, 100 * (1 - (1 - progFrac) / 0.02))
+			surface.DrawRect(0, 0, sw, sh)
 		end
 	end
 

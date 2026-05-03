@@ -113,11 +113,13 @@ net.Receive("SND_KillCam", function()
 			ws = net.ReadUInt(16),
 			wc = net.ReadFloat(),
 			vp = net.ReadAngle(),
-			f = net.ReadFloat()
+			f = net.ReadFloat(),
+			h = net.ReadBool()
 		}
 	end
 
 	local vicCount = net.ReadUInt(16)
+	if vicCount == 0 then SND.Killcam.Active = false return end
 	local vicPoints = {}
 	for i = 1, vicCount do
 		vicPoints[i] = {
@@ -140,6 +142,7 @@ net.Receive("SND_KillCam", function()
 	SND.Killcam.Active = true
 	SND.Killcam.PlaybackTime = 0
 	SND.Killcam.LastShot = 0
+	SND.Killcam.SlowMoTriggered = false
 
 	surface.PlaySound("ambient/levels/citadel/citadel_ambient_loop1.wav")
 end)
@@ -153,7 +156,13 @@ hook.Add("CalcView", "SND_KillcamView", function(ply, pos, ang, fov)
 	
 	-- Slow motion logic: slow down near the end of the clip (impact)
 	local progress = SND.Killcam.PlaybackTime / (#attPoints * TICK_INTERVAL)
-	local timescale = (progress > 0.8) and 0.3 or 1.0
+	local timescale = (progress > 0.85) and 0.25 or 1.0
+
+	-- Play slow-mo sound once
+	if progress > 0.85 and not SND.Killcam.SlowMoTriggered then
+		SND.Killcam.SlowMoTriggered = true
+		surface.PlaySound("weapons/fx/nearmiss/bullet_hit_flesh_7.wav") -- Cinematic impact sound
+	end
 	
 	SND.Killcam.PlaybackTime = SND.Killcam.PlaybackTime + dt * timescale
 	
@@ -293,13 +302,20 @@ end)
 
 hook.Add("RenderScreenspaceEffects", "SND_KillcamFX", function()
 	if not SND.Killcam.Active then return end
+	
+	local attPoints = SND.Killcam.Data.attPoints
+	local progress = SND.Killcam.PlaybackTime / (#attPoints * TICK_INTERVAL)
+
+	-- Cinematic desaturation and flashback filter for the first 2 seconds
+	local desat = (progress < 0.3) and 0.1 or 0.5
+
 	local modify = {
 		[ "$pp_colour_addr" ] = 0,
 		[ "$pp_colour_addg" ] = 0,
 		[ "$pp_colour_addb" ] = 0,
 		[ "$pp_colour_brightness" ] = -0.02,
 		[ "$pp_colour_contrast" ] = 1.1,
-		[ "$pp_colour_colour" ] = 0.5,
+		[ "$pp_colour_colour" ] = desat,
 		[ "$pp_colour_mulr" ] = 0,
 		[ "$pp_colour_mulg" ] = 0,
 		[ "$pp_colour_mulb" ] = 0
