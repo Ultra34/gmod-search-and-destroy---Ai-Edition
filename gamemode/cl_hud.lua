@@ -267,7 +267,11 @@ hook.Add("HUDPaint", "SND_HUD", function()
 		local scr = headPos:ToScreen()
 		if not scr.visible then continue end
 
-		local alpha = math.Clamp(255 * (1 - (dist - 800) / 1200), isTeammate and 40 or 0, 220)
+		-- Teammates visible from far away; enemies fade out much closer (CoD style)
+		local startFade = isTeammate and 800 or 250
+		local endFade = isTeammate and 1200 or 500
+
+		local alpha = math.Clamp(255 * (1 - (dist - startFade) / (endFade - startFade)), isTeammate and 40 or 0, 220)
 		if alpha <= 0 then continue end
 
 		local teamColor = (target:Team() == SND.TEAM_ATTACK) and C_ATTACK or C_DEFEND

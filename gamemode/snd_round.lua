@@ -30,11 +30,15 @@ function SND.Round.CheckElimination()
 
 	local a = aliveOnTeamReal(SND.TEAM_ATTACK)
 	local d = aliveOnTeamReal(SND.TEAM_DEFEND)
+	local bombPlanted = (SND.Bomb.State == SND.BOMB_STATE_PLANTED)
 
 	if a == 0 and d == 0 then
 		SND.Round.EndRound(SND.WIN_DRAW)
 	elseif a == 0 then
-		SND.Round.EndRound(SND.WIN_DEFEND_ELIM)
+		-- If bomb is planted, Defenders must still defuse even if Attackers are dead
+		if not bombPlanted then
+			SND.Round.EndRound(SND.WIN_DEFEND_ELIM)
+		end
 	elseif d == 0 then
 		SND.Round.EndRound(SND.WIN_ATTACK_ELIM)
 	end
@@ -42,8 +46,10 @@ end
 
 function SND.Round.CheckTime()
 	if SND.Round.Phase ~= SND.PHASE_LIVE then return end
+	if SND.Bomb.State == SND.BOMB_STATE_PLANTED then return end
+
 	if CurTime() >= SND.Round.RoundTimerEnd then
-		SND.Round.EndRound(SND.WIN_DRAW) -- If no one dies by the end of time, it's a draw
+		SND.Round.EndRound(SND.WIN_TIME) -- Defenders win on timeout if bomb not planted
 	end
 end
 
