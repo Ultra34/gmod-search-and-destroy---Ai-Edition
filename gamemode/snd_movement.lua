@@ -23,7 +23,7 @@ end)
 -- ── Aggressive Fire Block (Server & Client) ──────────────────────────────
 hook.Add("Think", "SND_FreezeFireLock", function()
 	local phase = SERVER and SND.Round.Phase or (SND.Client and SND.Client.Phase)
-	if phase ~= SND.PHASE_FREEZE and phase ~= SND.PHASE_POST and phase ~= SND.PHASE_KILLCAM then end
+	if phase ~= SND.PHASE_FREEZE and phase ~= SND.PHASE_POST and phase ~= SND.PHASE_KILLCAM then return end
 
 	for _, ply in ipairs(player.GetAll()) do
 		if not ply:Alive() then continue end
