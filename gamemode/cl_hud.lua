@@ -21,7 +21,7 @@ local cv_g       = CreateClientConVar("snd_crosshair_g", "255", true, false)
 local cv_b       = CreateClientConVar("snd_crosshair_b", "255", true, false)
 
 SND.Client.XPPopups = SND.Client.XPPopups or {}
-local levelUpTime = 0
+local levelUpTime = -1
 local levelUpAlpha = 0
 local lastLevelReceived = 0
 
@@ -98,7 +98,7 @@ end
 
 -- ── Level Up Popup ───────────────────────────────────────────────────────
 local function drawLevelUpPopup(sw, sh, sc)
-	if CurTime() > levelUpTime + 4 then return end
+	if levelUpTime < 0 or CurTime() > levelUpTime + 4 then return end
 	
 	local age = CurTime() - levelUpTime
 	local alpha = age < 3 and 255 or math.max(0, 255 - (age - 3) * 255)

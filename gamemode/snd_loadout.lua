@@ -32,6 +32,7 @@ end
 function SND.Loadout.Apply(ply)
 	if not IsValid(ply) then return end
 	ply:StripWeapons()
+	ply:StripAmmo()
 
 	local t        = ply:Team()
 	local defaults = (t == SND.TEAM_ATTACK) and SND.Config.DefaultLoadouts.attack
