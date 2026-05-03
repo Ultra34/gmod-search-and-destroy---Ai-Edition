@@ -86,7 +86,7 @@ SND.Killcam = SND.Killcam or {}
 SND.Killcam.History = {} -- [entindex] = { {pos, ang}, ... }
 SND.Killcam.LastKillData = nil
 
-local MAX_HISTORY = 264 -- ~8 seconds at 33tps
+local MAX_HISTORY = 212 -- ~7 seconds at 33tps (0.033s interval)
 
 hook.Add("Tick", "SND_KillcamRecord", function()
 	if SND.Round.Phase ~= SND.PHASE_LIVE then return end

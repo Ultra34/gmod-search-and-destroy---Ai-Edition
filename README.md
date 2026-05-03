@@ -19,6 +19,7 @@ One life per round, bomb plant and defuse, team scoring, optional map voting, Lu
 - **Level & XP System** — Persistent rank system with XP earned from kills, headshots, plants, and defuses. Data is saved automatically.
 - **Crosshair Customization** — CS:GO/CS2 style crosshair menu (`!crosshair`) with real-time preview and profile support.
 - **Quick Grenade Throw** — Dedicated 'G' key for instant grenade usage that automatically switches back to your previous weapon.
+- **Final Killcam** — 7-second high-fidelity replay of the final kill, featuring first-person viewmodels, animations, and slow-motion impact.
 - **Health Regeneration** — Authentic CoD-style health regen with red damage vignettes and screen tinting.
 - **MW2 Movement** — Tactical movement including sprint stamina, jump/landing fatigue, and authentic camera sway.
 - **Gun picker UI** — during freeze time a Derma panel lets every player choose their primary and secondary from the full `iw4_*` pool before the round starts.

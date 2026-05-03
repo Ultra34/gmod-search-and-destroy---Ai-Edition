@@ -245,10 +245,13 @@ hook.Add("PostDrawTranslucentRenderables", "SND_KillcamWeaponRender", function()
 		local pos = SND.Killcam.CurrentPos
 		local ang = SND.Killcam.CurrentAng
 
-		-- Tethered offset: Adjusted for better height and weapon depth based on ADS state
+		-- Tethered offset: Refined for "First Person" accuracy
 		local isADS = bit.band(pt.b, IN_ATTACK2) ~= 0
-		local forwardOffset = isADS and 12 or 16
-		local offset = ang:Forward() * forwardOffset + ang:Right() * 9 + ang:Up() * -10
+		local forwardOffset = isADS and 10 or 14
+		local rightOffset = isADS and 0 or 8.5
+		local upOffset = isADS and -8 or -11
+
+		local offset = ang:Forward() * forwardOffset + ang:Right() * rightOffset + ang:Up() * upOffset
 		local drawPos = pos + offset
 
 		if bit.band(pt.b, IN_ATTACK) ~= 0 then
@@ -261,7 +264,7 @@ hook.Add("PostDrawTranslucentRenderables", "SND_KillcamWeaponRender", function()
 			end
 			if CurTime() > (SND.Killcam.LastShot or 0) + 0.08 then
 				SND.Killcam.LastShot = CurTime()
-				local shootSound = (wepData and wepData.Primary) and wepData.Primary.Sound or "weapons/m4a1/m4a1_unsil-1.wav"
+				local shootSound = (wepData and wepData.Primary and wepData.Primary.Sound) or "weapons/m4a1/m4a1_unsil-1.wav"
 				LocalPlayer():EmitSound(shootSound, 80, 100, 1, CHAN_WEAPON)
 				local effect = EffectData()
 				effect:SetOrigin(pos + ang:Forward() * 30 + ang:Up() * -2)
@@ -272,12 +275,14 @@ hook.Add("PostDrawTranslucentRenderables", "SND_KillcamWeaponRender", function()
 		end
 
 		SND.Killcam.WepModel:SetPos(drawPos)
-		SND.Killcam.WepModel:SetAngles(ang)
-		SND.Killcam.WepModel:SetupBones()
-		
+		local renderAng = Angle(ang.p, ang.y, ang.r)
+		SND.Killcam.WepModel:SetAngles(renderAng)
+
 		-- Apply weapon animations
 		SND.Killcam.WepModel:SetSequence(pt.ws or 0)
 		SND.Killcam.WepModel:SetCycle(pt.wc or 0)
+
+		SND.Killcam.WepModel:SetupBones()
 		SND.Killcam.WepModel:DrawModel()
 	end
 end)

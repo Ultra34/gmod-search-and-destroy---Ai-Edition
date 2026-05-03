@@ -14,45 +14,64 @@ function SND.OpenSettingsMenu()
 	f:Center()
 	f:MakePopup()
 
-	local sheet = vgui.Create("DPropertySheet", f)
-	sheet:Dock(FILL)
-
-	local pnl = vgui.Create("DPanelList")
-	pnl:EnableVerticalScrollbar(true)
-
-	local defs = {
-		{ key = "snd_walk_speed",       lbl = "Walk speed",           min = 120,  max = 320,  dec = 0 },
-		{ key = "snd_run_speed",        lbl = "Run speed",            min = 160,  max = 400,  dec = 0 },
-		{ key = "snd_sprint_mult",      lbl = "Sprint multiplier",    min = 1,    max = 2.2,  dec = 2 },
-		{ key = "snd_round_time",       lbl = "Round time (sec)",     min = 60,   max = 300,  dec = 0 },
-		{ key = "snd_freeze_time",      lbl = "Freeze time (sec)",    min = 0,    max = 20,   dec = 0 },
-		{ key = "snd_plant_time",       lbl = "Plant time (sec)",     min = 2,    max = 10,   dec = 1 },
-		{ key = "snd_defuse_time",      lbl = "Defuse time (sec)",    min = 3,    max = 12,   dec = 1 },
-		{ key = "snd_win_limit",        lbl = "Rounds to win",        min = 1,    max = 16,   dec = 0 },
-		{ key = "snd_bot_count",        lbl = "Bots",                 min = 0,    max = 16,   dec = 0 },
-		{ key = "snd_bot_skill",        lbl = "Bot skill (1-10)",     min = 1,    max = 10,   dec = 0 },
-		{ key = "snd_team_balance",     lbl = "Team balance (0/1)",   min = 0,    max = 1,    dec = 0 },
-		{ key = "snd_mapvote_enabled",  lbl = "Map vote (0/1)",       min = 0,    max = 1,    dec = 0 },
-		{ key = "snd_announcer_volume", lbl = "Announcer volume",     min = 0,    max = 1,    dec = 2 },
-		{ key = "snd_hud_scale",        lbl = "HUD scale",            min = 0.75, max = 1.5,  dec = 2 },
-	}
-
-	for _, row in ipairs(defs) do
-		local cv  = GetConVar(row.key)
-		local cur = cv and cv:GetFloat() or row.min
-		local sl  = vgui.Create("DNumSlider")
-		sl:SetText(row.lbl)
-		sl:SetMinMax(row.min, row.max)
-		sl:SetDecimals(row.dec or 0)
-		sl:SetValue(cur)
-		sl.OnValueChanged = function(_, val)
-			net.Start("SND_SetCvar")
-				net.WriteString(row.key)
-				net.WriteString(tostring(val))
-			net.SendToServer()
-		end
-		pnl:AddItem(sl)
+	-- High-tech background
+	f.Paint = function(self, w, h)
+		draw.RoundedBox(0, 0, 0, w, h, Color(20, 20, 20, 250))
+		surface.SetDrawColor(255, 120, 0, 255)
+		surface.DrawRect(0, 0, w, 2)
 	end
 
-	sheet:AddSheet("Gameplay", pnl, "icon16/wrench.png")
+	local sheet = vgui.Create("DPropertySheet", f)
+	sheet:Dock(FILL)
+	sheet:DockMargin(5, 5, 5, 5)
+
+	local categories = {
+		["Match Rules"] = {
+			{ key = "snd_round_time",       lbl = "Round duration (sec)", min = 60,   max = 300,  dec = 0 },
+			{ key = "snd_freeze_time",      lbl = "Freeze duration (sec)",min = 0,    max = 20,   dec = 0 },
+			{ key = "snd_win_limit",        lbl = "Rounds to win match",  min = 1,    max = 16,   dec = 0 },
+			{ key = "snd_mapvote_enabled",  lbl = "Enable Map Vote",      min = 0,    max = 1,    dec = 0 },
+			{ key = "snd_team_balance",     lbl = "Auto Team Balance",    min = 0,    max = 1,    dec = 0 },
+		},
+		["Combat & Movement"] = {
+			{ key = "snd_walk_speed",       lbl = "Walk Speed",           min = 120,  max = 320,  dec = 0 },
+			{ key = "snd_run_speed",        lbl = "Base Run Speed",       min = 160,  max = 400,  dec = 0 },
+			{ key = "snd_sprint_mult",      lbl = "Sprint Multiplier",    min = 1,    max = 2.2,  dec = 2 },
+			{ key = "snd_plant_time",       lbl = "Bomb Plant Time",      min = 2,    max = 10,   dec = 1 },
+			{ key = "snd_defuse_time",      lbl = "Bomb Defuse Time",     min = 3,    max = 12,   dec = 1 },
+		},
+		["Bots & AI"] = {
+			{ key = "snd_bot_count",        lbl = "Target Bot Count",     min = 0,    max = 24,   dec = 0 },
+			{ key = "snd_bot_skill",        lbl = "Global Bot Skill",     min = 1,    max = 10,   dec = 0 },
+		},
+		["Interface"] = {
+			{ key = "snd_announcer_volume", lbl = "Announcer Volume",     min = 0,    max = 1,    dec = 2 },
+			{ key = "snd_hud_scale",        lbl = "HUD Global Scale",     min = 0.75, max = 1.5,  dec = 2 },
+		}
+	}
+
+	for catName, settings in pairs(categories) do
+		local pnl = vgui.Create("DPanelList")
+		pnl:EnableVerticalScrollbar(true)
+		pnl:SetSpacing(5)
+		pnl:SetPadding(10)
+
+		for _, row in ipairs(settings) do
+			local cv  = GetConVar(row.key)
+			local cur = cv and cv:GetFloat() or row.min
+			local sl  = vgui.Create("DNumSlider")
+			sl:SetText(row.lbl)
+			sl:SetMinMax(row.min, row.max)
+			sl:SetDecimals(row.dec or 0)
+			sl:SetValue(cur)
+			sl.OnValueChanged = function(_, val)
+				net.Start("SND_SetCvar")
+					net.WriteString(row.key)
+					net.WriteString(tostring(val))
+				net.SendToServer()
+			end
+			pnl:AddItem(sl)
+		end
+		sheet:AddSheet(catName, pnl)
+	end
 end
