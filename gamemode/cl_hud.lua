@@ -648,7 +648,7 @@ end)
 
 -- ── Disable default GMod Death Notice ─────────────────────────────────────
 hook.Add("HUDShouldDraw", "SND_DisableDefaultKillFeed", function(name)
-	if name == "CHudDeathNotice" or name == "CHudWeaponSelection" or name == "CHudHistoryResource" or name == "CHudHealth" or name == "CHudBattery" or name == "CHudAmmo" then
+	if name == "CHudDeathNotice" or name == "CHudWeaponSelection" or name == "CHudHistoryResource" or name == "CHudHealth" or name == "CHudBattery" or name == "CHudAmmo" or name == "CHudTargetID" then
 		return false
 	end
 end)
