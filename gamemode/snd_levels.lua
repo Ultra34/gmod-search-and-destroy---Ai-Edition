@@ -48,9 +48,11 @@ function SND.Levels.Load(ply)
 end
 
 function SND.Levels.Sync(ply)
+	if not IsValid(ply) or ply:IsBot() or ply.SND_IsBot then return end
+
 	net.Start("SND_UpdateXP")
-		net.WriteUInt(ply.SND_XP, 32)
-		net.WriteUInt(ply.SND_Level, 16)
+		net.WriteUInt(ply.SND_XP or 0, 32)
+		net.WriteUInt(ply.SND_Level or 1, 16)
 		net.WriteUInt(0, 16) -- Amount gained (0 for sync)
 	net.Send(ply)
 end
@@ -86,7 +88,9 @@ hook.Add("PlayerInitialSpawn", "SND_LevelsInit", function(ply)
 	SND.Levels.Load(ply)
 	-- Delayed sync to ensure client-side receiver is ready
 	timer.Simple(2, function()
-		if IsValid(ply) then SND.Levels.Sync(ply) end
+		if IsValid(ply) and not (ply:IsBot() or ply.SND_IsBot) then
+			SND.Levels.Sync(ply)
+		end
 	end)
 end)
 
