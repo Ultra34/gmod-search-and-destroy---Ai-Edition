@@ -116,7 +116,7 @@ local function createScoreboard()
 		surface.SetDrawColor(0, 0, 0, 150)
 		surface.DrawRect(0, 2 * sc, w, 50 * sc)
 		
-		draw.SimpleText("SEARCH & DESTROY", "SND_BO3_Title", 20 * sc, 27 * sc, Color(255, 255, 255), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+		draw.SimpleText("GMOD SEARCH & DESTROY", "SND_BO3_Title", 20 * sc, 27 * sc, Color(255, 255, 255), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
 		draw.SimpleText(game.GetMap():upper(), "SND_BO3_Header", w - 20 * sc, 27 * sc, Color(180, 180, 180), TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)
 
 		-- Stats Header Strip

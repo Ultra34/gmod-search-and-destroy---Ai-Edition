@@ -1,4 +1,4 @@
-# GMod Search & Destroy — AI Edition
+# GMod Search & Destroy
 
 A Garry's Mod **gamemode** built around Call of Duty-style Search & Destroy rules.  
 One life per round, bomb plant and defuse, team scoring, optional map voting, Lua-driven bots with a full AI state machine, first-person legs, 3D bomb-site markers, and loadouts powered by the **[TFA][AT] Call of Duty: Modern Warfare 2 Weapons Pack** (`iw4_*`).
