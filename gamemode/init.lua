@@ -86,10 +86,14 @@ SND.Killcam = SND.Killcam or {}
 SND.Killcam.History = {} -- [entindex] = { {pos, ang}, ... }
 SND.Killcam.LastKillData = nil
 
-local MAX_HISTORY = 212 -- ~7 seconds at 33tps (0.033s interval)
+local MAX_HISTORY = 212
+local recordInterval = 0.033
+local nextRecord = 0
 
 hook.Add("Tick", "SND_KillcamRecord", function()
 	if SND.Round.Phase ~= SND.PHASE_LIVE then return end
+	if CurTime() < nextRecord then return end
+	nextRecord = CurTime() + recordInterval
 
 	for _, ply in ipairs(player.GetAll()) do
 		local idx = ply:EntIndex()
@@ -142,7 +146,9 @@ function SND.Killcam.SetFinalKill(attacker, victim, weapon)
 		weapon = weapon,
 		attPoints = finalAtt,
 		vicPoints = finalVic,
-		vicModel  = victim:GetModel()
+		vicModel  = victim:GetModel(),
+		attHP     = attacker:Health(),
+		attLvl    = attacker:GetNWInt("SND_Level", 1)
 	}
 end
 
@@ -155,6 +161,8 @@ function SND.Killcam.SendFinalKillcam()
 
 	net.Start("SND_KillCam")
 		net.WriteEntity(data.attacker)
+		net.WriteUInt(math.Clamp(data.attHP, 0, 100), 7)
+		net.WriteUInt(data.attLvl, 16)
 		net.WriteString(data.weapon)
 		net.WriteString(data.vicModel)
 		net.WriteUInt(#data.attPoints, 16)

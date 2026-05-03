@@ -96,6 +96,8 @@ end)
 
 net.Receive("SND_KillCam", function()
 	local attacker = net.ReadEntity()
+	local attHP = net.ReadUInt(7)
+	local attLvl = net.ReadUInt(16)
 	local weapon = net.ReadString()
 	local vicMdl = net.ReadString()
 	local attCount = net.ReadUInt(16)
@@ -128,6 +130,8 @@ net.Receive("SND_KillCam", function()
 
 	SND.Killcam.Data = {
 		attacker = attacker,
+		attHP = attHP,
+		attLvl = attLvl,
 		weapon = weapon,
 		attPoints = attPoints,
 		vicPoints = vicPoints,

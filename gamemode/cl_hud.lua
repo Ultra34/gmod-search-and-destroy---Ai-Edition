@@ -642,6 +642,37 @@ hook.Add("HUDPaint", "SND_HUD", function()
 		local attackerName = IsValid(data.attacker) and data.attacker:Nick():upper() or "PLAYER"
 		local weaponName = data.weapon:upper()
 		draw.SimpleText(attackerName .. "  //  " .. weaponName, "Trebuchet24", 40 * sc, sh - 40 * sc, Color(255, 120, 0), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+
+		-- ── Killed By Info Card ──────────────────────────────────────────
+		local cardW, cardH = 300 * sc, 100 * sc
+		local cardX, cardY = 40 * sc, sh - 180 * sc
+		
+		surface.SetDrawColor(0, 0, 0, 200)
+		surface.DrawRect(cardX, cardY, cardW, cardH)
+		surface.SetDrawColor(255, 120, 0, 255)
+		surface.DrawRect(cardX, cardY, 4 * sc, cardH)
+
+		draw.SimpleText("KILLED BY", "Trebuchet18", cardX + 15 * sc, cardY + 15 * sc, Color(150, 150, 150), TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
+		draw.SimpleText(attackerName, "Trebuchet24", cardX + 15 * sc, cardY + 35 * sc, Color(255, 255, 255), TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
+		
+		-- HP Bar in card
+		local hpWidth = (cardW - 30 * sc) * (data.attHP / 100)
+		surface.SetDrawColor(40, 40, 40, 255)
+		surface.DrawRect(cardX + 15 * sc, cardY + 70 * sc, cardW - 30 * sc, 8 * sc)
+		surface.SetDrawColor(220, 60, 40, 255)
+		surface.DrawRect(cardX + 15 * sc, cardY + 70 * sc, hpWidth, 8 * sc)
+		
+		draw.SimpleText(data.attHP .. " HP", "Trebuchet18", cardX + cardW - 15 * sc, cardY + 68 * sc, Color(255, 255, 255), TEXT_ALIGN_RIGHT, TEXT_ALIGN_BOTTOM)
+
+		-- ── Playback Progress Bar ────────────────────────────────────────
+		local totalPoints = #data.attPoints
+		if totalPoints > 0 then
+			local progFrac = math.Clamp(SND.Killcam.PlaybackTime / (totalPoints * 0.033), 0, 1)
+			surface.SetDrawColor(50, 50, 50, 100)
+			surface.DrawRect(0, sh - 2 * sc, sw, 2 * sc)
+			surface.SetDrawColor(255, 120, 0, 255)
+			surface.DrawRect(0, sh - 2 * sc, sw * progFrac, 2 * sc)
+		end
 	end
 
 	-- ── Spectator label ───────────────────────────────────────────────────
