@@ -83,11 +83,11 @@ hook.Add("PopulateToolMenu", "SND_SettingsMenu", function()
 end)
 
 -- ── MW2 Scoreboard Implementation ────────────────────────────────────────
-surface.CreateFont("SND_MW2_Title", { font = "Verdana", size = 24, weight = 800, italic = true })
-surface.CreateFont("SND_MW2_Team", { font = "Verdana", size = 22, weight = 700 })
+surface.CreateFont("SND_MW2_Title", { font = "Verdana", size = 28, weight = 900, italic = true })
+surface.CreateFont("SND_MW2_Team", { font = "Verdana", size = 20, weight = 800 })
 surface.CreateFont("SND_MW2_Score", { font = "Verdana", size = 32, weight = 800 })
 surface.CreateFont("SND_MW2_Header", { font = "Verdana", size = 14, weight = 600, uppercase = true })
-surface.CreateFont("SND_MW2_Player", { font = "Verdana", size = 16, weight = 500 })
+surface.CreateFont("SND_MW2_Player", { font = "Verdana", size = 18, weight = 600 })
 
 local scoreboard = nil
 
@@ -110,39 +110,39 @@ local function createScoreboard()
 		draw.SimpleText("SEARCH & DESTROY", "SND_MW2_Title", 20, 30, Color(220, 220, 220), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
 		draw.SimpleText(game.GetMap():upper(), "SND_MW2_Header", w - 20, 30, Color(150, 150, 150), TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)
 
-		-- Team Scores
-		local scoreA = SND.Client.AttackScore or 0
-		local scoreD = SND.Client.DefendScore or 0
-
-		-- Attackers (Red)
-		surface.SetDrawColor(220, 70, 50, 40)
-		surface.DrawRect(0, 60, w * 0.5, 60)
-		draw.SimpleText("ATTACKERS", "SND_MW2_Team", 20, 90, Color(220, 70, 50), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
-		draw.SimpleText(tostring(scoreA), "SND_MW2_Score", w * 0.5 - 20, 90, Color(255, 255, 255), TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)
-
-		-- Defenders (Blue)
-		surface.SetDrawColor(60, 140, 220, 40)
-		surface.DrawRect(w * 0.5, 60, w * 0.5, 60)
-		draw.SimpleText("DEFENDERS", "SND_MW2_Team", w * 0.5 + 20, 90, Color(60, 140, 220), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
-		draw.SimpleText(tostring(scoreD), "SND_MW2_Score", w - 20, 90, Color(255, 255, 255), TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)
-
 		-- Column Headers
-		surface.SetDrawColor(30, 30, 30, 255)
-		surface.DrawRect(0, 120, w, 25)
-		local cols = { {n="NAME", x=20, a=0}, {n="SCORE", x=w-230, a=1}, {n="K", x=w-160, a=1}, {n="D", x=w-100, a=1}, {n="PING", x=w-30, a=1} }
+		surface.SetDrawColor(40, 40, 40, 255)
+		surface.DrawRect(0, 60, w, 25)
+		local cols = { {n="NAME", x=40, a=0}, {n="SCORE", x=w-260, a=1}, {n="KILLS", x=w-180, a=1}, {n="DEATHS", x=w-100, a=1}, {n="PING", x=w-30, a=1} }
 		for _, c in ipairs(cols) do
-			draw.SimpleText(c.n, "SND_MW2_Header", c.x, 132, Color(180, 180, 180), c.a, TEXT_ALIGN_CENTER)
+			draw.SimpleText(c.n, "SND_MW2_Header", c.x, 72, Color(200, 200, 200), c.a, TEXT_ALIGN_CENTER)
 		end
 	end
 
 	local scroll = vgui.Create("DScrollPanel", f)
 	scroll:Dock(FILL)
-	scroll:DockMargin(0, 120 + 25, 0, 0)
+	scroll:DockMargin(0, 60 + 25, 0, 0)
+
+	local function addTeamHeader(name, score, color, list)
+		local p = list:Add("DPanel")
+		p:Dock(TOP)
+		p:SetTall(40)
+		p:DockMargin(0, 5, 0, 2)
+		p.Paint = function(self, w, h)
+			surface.SetDrawColor(color.r, color.g, color.b, 60)
+			surface.DrawRect(0, 0, w, h)
+			surface.SetDrawColor(color.r, color.g, color.b, 255)
+			surface.DrawRect(0, 0, 5, h)
+			
+			draw.SimpleText(name:upper(), "SND_MW2_Team", 15, h/2, color, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+			draw.SimpleText(tostring(score), "SND_MW2_Score", w - 15, h/2, Color(255, 255, 255), TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)
+		end
+	end
 
 	local function addPlayerRow(ply, list)
 		local p = list:Add("DPanel")
 		p:Dock(TOP)
-		p:SetTall(32)
+		p:SetTall(38)
 		p:DockMargin(0, 0, 0, 1)
 
 		p.Paint = function(self, w, h)
@@ -150,26 +150,23 @@ local function createScoreboard()
 			
 			-- Local Player Highlight
 			if ply == LocalPlayer() then
-				surface.SetDrawColor(255, 255, 255, 15)
+				surface.SetDrawColor(255, 255, 200, 25)
 				surface.DrawRect(0, 0, w, h)
 			end
 
 			local isAttacker = ply:Team() == SND.TEAM_ATTACK
-			local teamCol = isAttacker and Color(220, 70, 50) or Color(60, 140, 220)
+			local teamCol = isAttacker and Color(200, 40, 40) or Color(60, 150, 220)
 			local txtCol = ply:Alive() and Color(230, 230, 230) or Color(100, 100, 100)
 
-			-- Name with Team Color Bullet
-			surface.SetDrawColor(teamCol.r, teamCol.g, teamCol.b, 200)
-			surface.DrawRect(5, 10, 4, 12)
-			draw.SimpleText(ply:Nick(), "SND_MW2_Player", 20, h/2, txtCol, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+			draw.SimpleText(ply:Nick(), "SND_MW2_Player", 40, h/2, txtCol, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
 
 			-- Stats
-			draw.SimpleText(ply:Frags() * 100, "SND_MW2_Player", w-230, h/2, txtCol, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
-			draw.SimpleText(ply:Frags(), "SND_MW2_Player", w-160, h/2, txtCol, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+			draw.SimpleText(ply:Frags() * 100, "SND_MW2_Player", w-260, h/2, txtCol, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+			draw.SimpleText(ply:Frags(), "SND_MW2_Player", w-180, h/2, txtCol, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
 			draw.SimpleText(ply:Deaths(), "SND_MW2_Player", w-100, h/2, txtCol, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
 			
 			-- Ping Bars
-			local ping = ply:Ping()
+			local ping = math.Clamp(ply:Ping(), 0, 999)
 			local pingCol = Color(0, 255, 0, 200)
 			if ping > 150 then pingCol = Color(255, 0, 0, 200)
 			elseif ping > 75 then pingCol = Color(255, 200, 0, 200) end
@@ -191,24 +188,18 @@ local function createScoreboard()
 				return a:Frags() > b:Frags()
 			end)
 
-			-- Add Attackers
-			local hasAtt = false
+			-- Defenders (Rangers/Seals Style - Blue)
+			addTeamHeader("Defenders", SND.Client.DefendScore or 0, Color(60, 150, 220), scroll)
 			for _, p in ipairs(players) do
-				if p:Team() == SND.TEAM_ATTACK then
+				if p:Team() == SND.TEAM_DEFEND then
 					addPlayerRow(p, scroll)
-					hasAtt = true
 				end
 			end
 
-			-- Spacer
-			local spacer = scroll:Add("DPanel")
-			spacer:Dock(TOP)
-			spacer:SetTall(10)
-			spacer.Paint = nil
-
-			-- Add Defenders
+			-- Attackers (Opfor Style - Red)
+			addTeamHeader("Attackers", SND.Client.AttackScore or 0, Color(200, 40, 40), scroll)
 			for _, p in ipairs(players) do
-				if p:Team() == SND.TEAM_DEFEND then
+				if p:Team() == SND.TEAM_ATTACK then
 					addPlayerRow(p, scroll)
 				end
 			end
