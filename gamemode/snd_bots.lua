@@ -50,13 +50,34 @@ local function newAI()
 	}
 end
 
--- ── Bot Naming System ─────────────────────────────────────────────────────
-local BotNamePool = {}
-net.Receive("SND_SyncBotNames", function(_, ply)
-	-- Only trust the host or superadmins to provide name pools
-	if not ply:IsListenServerHost() and not ply:IsSuperAdmin() then return end
-	local names = net.ReadTable()
-	for _, n in ipairs(names) do table.insert(BotNamePool, n) end
+-- ── Custom Bot Naming System ─────────────────────────────────────────────
+SND.Bots.CustomNamePool = {
+	"radracerdk",
+	"Dezener",
+	"BOIDBERG",
+	"Long Long Maaaaan",
+	"TTV_LoopedVibes",
+	"Soap",
+	"Price",
+	"Ghost",
+	"Gaz",
+	"Roach",
+	"Sandman",
+	"Grinch",
+	"Frost",
+	"Yuri",
+	"Makarov",
+	"Shepherd",
+	"Kamarov",
+	"Nikolai",
+	"Alex",
+	"Farah"
+}
+
+local currentBotNames = table.Copy(SND.Bots.CustomNamePool)
+
+hook.Add("SND_RoundStart_Freeze", "SND_ResetBotNames", function()
+	currentBotNames = table.Copy(SND.Bots.CustomNamePool)
 end)
 
 function SND.Bots.CountBots()
@@ -79,10 +100,10 @@ function SND.Bots.EnsureCount()
 
 	for i = have + 1, want do
 		local rawName = "SNDBot" .. i
-		if #BotNamePool > 0 then
-			local idx = math.random(#BotNamePool)
-			rawName = BotNamePool[idx]
-			table.remove(BotNamePool, idx)
+		if #currentBotNames > 0 then
+			local idx = math.random(#currentBotNames)
+			rawName = currentBotNames[idx]
+			table.remove(currentBotNames, idx)
 		end
 
 		local bot = player.CreateNextBot("[BOT] " .. string.sub(rawName, 1, 25))

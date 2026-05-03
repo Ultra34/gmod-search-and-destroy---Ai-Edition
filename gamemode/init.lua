@@ -212,5 +212,3 @@ net.Receive("SND_QuickSwitch", function(_, ply)
 	end
 end)
 util.AddNetworkString("SND_KillFeed") -- Add network string for kill feed
-util.AddNetworkString("SND_KillCam")  -- Add network string for killcam
-util.AddNetworkString("SND_SyncBotNames") -- Sync friend names for bots
