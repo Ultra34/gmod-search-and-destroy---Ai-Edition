@@ -85,11 +85,11 @@ hook.Add("PopulateToolMenu", "SND_SettingsMenu", function()
 end)
 
 -- ── MW2 Scoreboard Implementation ────────────────────────────────────────
-surface.CreateFont("SND_BO3_Title", { font = "Verdana", size = 24, weight = 900, italic = true })
-surface.CreateFont("SND_BO3_Team", { font = "Verdana", size = 18, weight = 800 })
-surface.CreateFont("SND_BO3_Score", { font = "Verdana", size = 28, weight = 800 })
-surface.CreateFont("SND_BO3_Header", { font = "Verdana", size = 12, weight = 600, uppercase = true, antialias = true })
-surface.CreateFont("SND_BO3_Player", { font = "Verdana", size = 16, weight = 500 })
+surface.CreateFont("SND_BO3_Title", { font = "Verdana", size = 26, weight = 1000, italic = true, antialias = true })
+surface.CreateFont("SND_BO3_Team", { font = "Verdana", size = 18, weight = 900, antialias = true })
+surface.CreateFont("SND_BO3_Score", { font = "Verdana", size = 32, weight = 900, antialias = true })
+surface.CreateFont("SND_BO3_Header", { font = "Verdana", size = 13, weight = 700, uppercase = true, antialias = true })
+surface.CreateFont("SND_BO3_Player", { font = "Verdana", size = 17, weight = 400, antialias = true })
 
 local scoreboard = nil
 
@@ -105,7 +105,7 @@ local function createScoreboard()
 
 	f.Paint = function(self, w, h)
 		-- BO3 Sleek Translucent Background
-		surface.SetDrawColor(15, 15, 15, 235)
+		surface.SetDrawColor(10, 10, 10, 245)
 		surface.DrawRect(0, 0, w, h)
 		
 		-- Top Accent Bar (BO3 Orange)
@@ -128,6 +128,14 @@ local function createScoreboard()
 			{n="SCORE", x=w-280*sc, a=1}, {n="KILLS", x=w-200*sc, a=1}, 
 			{n="DEATHS", x=w-120*sc, a=1}, {n="PING", x=w-40*sc, a=1} 
 		}
+
+		-- Column Dividers (Subtle)
+		surface.SetDrawColor(255, 255, 255, 5)
+		for i = 3, #cols do
+			local cx = cols[i].x - 40 * sc
+			surface.DrawRect(cx, 52 * sc, 1, h - 52 * sc)
+		end
+
 		for _, c in ipairs(cols) do
 			draw.SimpleText(c.n, "SND_BO3_Header", c.x, (52 + 11) * sc, Color(150, 150, 150), c.a, TEXT_ALIGN_CENTER)
 		end
@@ -144,13 +152,13 @@ local function createScoreboard()
 		p:DockMargin(0, 10 * sc, 0, 2 * sc)
 		p.Paint = function(self, w, h)
 			-- BO3 Team Divider
-			surface.SetDrawColor(color.r, color.g, color.b, 40)
+			surface.SetDrawColor(color.r, color.g, color.b, 30)
 			surface.DrawRect(0, 0, w, h)
-			surface.SetDrawColor(color.r, color.g, color.b, 180)
-			surface.DrawRect(0, h-1, w, 1) -- Bottom thin line
+			surface.SetDrawColor(color.r, color.g, color.b, 200)
+			surface.DrawRect(0, 0, 4 * sc, h) -- Side bar accent
 			
-			draw.SimpleText(name:upper(), "SND_BO3_Team", 15 * sc, h/2, Color(255, 255, 255), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
-			draw.SimpleText(tostring(score), "SND_BO3_Score", w - 40 * sc, h/2, color, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+			draw.SimpleText(name:upper(), "SND_BO3_Team", 20 * sc, h/2, Color(255, 255, 255), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+			draw.SimpleText(tostring(score), "SND_BO3_Score", w - 40 * sc, h/2, Color(255, 255, 255), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
 		end
 	end
 
@@ -163,16 +171,17 @@ local function createScoreboard()
 		p.Paint = function(self, w, h)
 			if not IsValid(ply) then return end
 			
-			-- BO3-style Row Background
+			-- BO3-style Row Background & Hover
 			if ply == LocalPlayer() then
-				surface.SetDrawColor(255, 120, 0, 40)
-				surface.DrawRect(0, 0, w, h)
+				surface.SetDrawColor(255, 120, 0, 30)
+			elseif self:IsHovered() then
+				surface.SetDrawColor(255, 255, 255, 15)
 			else
 				surface.SetDrawColor(255, 255, 255, 5)
-				surface.DrawRect(0, 0, w, h)
 			end
+			surface.DrawRect(0, 0, w, h)
 
-			local txtCol = ply:Alive() and Color(255, 255, 255) or Color(120, 120, 120)
+			local txtCol = ply:Alive() and Color(240, 240, 240) or Color(100, 100, 100)
 
 			-- Level Icon / Number
 			local lvl = ply:GetNWInt("SND_Level", 1)
