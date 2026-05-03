@@ -264,6 +264,9 @@ function SND.Bomb.TryPlant(ply)
 			SND.Bomb.PlantPos    = intendedPos   -- exact crosshair point on ground
 			SND.Bomb.PlantTime   = CurTime()
 
+			-- XP for planting
+			hook.Run("SND_OnBombPlanted", ply)
+
 			-- Spawn locked prop at the exact ground position
 			spawnBombProp(intendedPos)
 
@@ -343,6 +346,9 @@ function SND.Bomb.TryDefuse(ply)
 				net.WriteEntity(ply)
 				net.WriteFloat(0)
 			net.Broadcast()
+
+			-- XP for defusing
+			hook.Run("SND_OnBombDefused", ply)
 
 			SND.Round.EndRound(SND.WIN_DEFEND_DEFUSE)
 		end

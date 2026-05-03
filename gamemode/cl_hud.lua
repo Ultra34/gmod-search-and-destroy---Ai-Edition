@@ -13,7 +13,7 @@ end)
 SND.Client.XPPopups = SND.Client.XPPopups or {}
 local levelUpTime = 0
 local levelUpAlpha = 0
-local lastLevelReceived = -1
+local lastLevelReceived = nil
 
 -- ── Colours ───────────────────────────────────────────────────────────────
 local function col(r, g, b, a) return Color(r, g, b, a or 255) end
@@ -105,12 +105,16 @@ hook.Add("HUDPaint", "SND_HUD", function()
 		
 		-- Detect Level Up for Popup
 		local curLvl = lp:GetNWInt("SND_Level", 1)
-		if lastLevelReceived != -1 and curLvl > lastLevelReceived then
+
+		-- Initialize first time without triggering popup
+		if lastLevelReceived == nil then
+			lastLevelReceived = curLvl
+		elseif curLvl > lastLevelReceived then
 			levelUpTime = CurTime()
 			surface.PlaySound("garrysmod/content_downloaded.wav")
 			print("[SND] Level Up detected on HUD: Rank " .. curLvl)
+			lastLevelReceived = curLvl
 		end
-		lastLevelReceived = curLvl
 		drawLevelUpPopup(sw, sh, sc)
 	end
 
