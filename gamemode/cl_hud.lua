@@ -608,24 +608,17 @@ hook.Add("HUDPaint", "SND_HUD", function()
 			subStr = subStr .. " — FINAL SCORE " .. (SND.Client.AttackScore or 0) .. ":" .. (SND.Client.DefendScore or 0)
 		end
 
-		-- Flashy CoD Style Victory Banner
 		local bannerH = 140 * sc
 		local bannerY = sh * 0.3 - bannerH * 0.5
 		
 		surface.SetDrawColor(0, 0, 0, 220)
 		surface.DrawRect(0, bannerY, sw, bannerH)
-		
-		-- Accent lines
 		surface.SetDrawColor(winCol.r, winCol.g, winCol.b, 255)
 		surface.DrawRect(0, bannerY, sw, 2 * sc)
 		surface.DrawRect(0, bannerY + bannerH - 2 * sc, sw, 2 * sc)
-
 		draw.SimpleText(winStr, "DermaLarge", sw * 0.5, bannerY + 45 * sc, winCol, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
-		
 		if subStr ~= "" then
 			draw.SimpleText(subStr, "Trebuchet24", sw * 0.5, bannerY + 95 * sc, Color(255, 255, 255), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
-			
-			-- Show Scoreboard-style score below
 			draw.SimpleText(SND.Client.AttackScore .. "  -  " .. SND.Client.DefendScore, "SND_BO3_Score", sw * 0.5, bannerY + 160 * sc, Color(255, 255, 255), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
 		end
 	end
@@ -633,9 +626,12 @@ hook.Add("HUDPaint", "SND_HUD", function()
 	-- ── Killcam Overlay ──────────────────────────────────────────────────
 	if SND.Killcam and SND.Killcam.Active and SND.Killcam.Data then
 		local data = SND.Killcam.Data
-		surface.SetDrawColor(0, 0, 0, 150)
-		surface.DrawRect(0, 0, sw, 80 * sc)
-		surface.DrawRect(0, sh - 80 * sc, sw, 80 * sc)
+		
+		draw.SimpleText(SND.Client.AttackScore .. "  -  " .. SND.Client.DefendScore, "SND_BO3_Score", sw - 40 * sc, 40 * sc, Color(255, 255, 255, 150), TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)
+
+		surface.SetDrawColor(0, 0, 0, 235)
+		surface.DrawRect(0, 0, sw, 80 * sc) -- Top Bar
+		surface.DrawRect(0, sh - 80 * sc, sw, 80 * sc) -- Bottom Bar
 
 		surface.SetDrawColor(255, 120, 0, 255)
 		surface.DrawRect(0, 78 * sc, sw, 2 * sc)

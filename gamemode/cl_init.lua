@@ -22,6 +22,7 @@ SND.Killcam.Active = false
 SND.Killcam.Data = nil
 SND.Killcam.StartTime = 0
 SND.Killcam.PlaybackTime = 0
+SND.Killcam.WepModel = nil
 local TICK_INTERVAL = 0.033
 
 net.Receive("SND_RoundState", function()
@@ -44,6 +45,10 @@ net.Receive("SND_RoundState", function()
 	if phase == SND.PHASE_FREEZE then
 		SND.Killcam.Active = false
 		SND.Killcam.Data = nil
+		if IsValid(SND.Killcam.WepModel) then
+			SND.Killcam.WepModel:Remove()
+			SND.Killcam.WepModel = nil
+		end
 	end
 end)
 
@@ -94,7 +99,9 @@ net.Receive("SND_KillCam", function()
 		points[i] = {
 			p = net.ReadVector(),
 			a = net.ReadAngle(),
-			o = net.ReadVector()
+			o = net.ReadVector(),
+			b = net.ReadUInt(32),
+			w = net.ReadString()
 		}
 	end
 
@@ -106,6 +113,8 @@ net.Receive("SND_KillCam", function()
 	}
 	SND.Killcam.Active = true
 	SND.Killcam.PlaybackTime = 0
+
+	surface.PlaySound("ambient/levels/citadel/citadel_ambient_loop1.wav")
 end)
 
 hook.Add("CalcView", "SND_KillcamView", function(ply, pos, ang, fov)
@@ -133,11 +142,83 @@ hook.Add("CalcView", "SND_KillcamView", function(ply, pos, ang, fov)
 	local viewPos = LerpVector(frac, p1.p, p2.p) + LerpVector(frac, p1.o, p2.o)
 	local viewAng = LerpAngle(frac, p1.a, p2.a)
 
+	SND.Killcam.CurrentPos = viewPos
+	SND.Killcam.CurrentAng = viewAng
+	SND.Killcam.CurrentPoint = p1
+
+	if i1 >= #points then
+		SND.Killcam.Active = false
+	end
+
 	return {
 		origin = viewPos,
 		angles = viewAng,
-		fov = fov
+		fov = fov,
+		drawviewmodel = false
 	}
+end)
+
+hook.Add("PrePlayerDraw", "SND_KillcamHideAttacker", function(ply)
+	if SND.Killcam.Active and SND.Killcam.Data and ply == SND.Killcam.Data.attacker then
+		return true -- Hide attacker body to prevent camera clipping
+	end
+end)
+
+hook.Add("PostDrawTranslucentRenderables", "SND_KillcamWeaponRender", function()
+	if not SND.Killcam.Active or not SND.Killcam.CurrentPoint then return end
+
+	local pt = SND.Killcam.CurrentPoint
+	local class = pt.w
+	if class == "" then return end
+
+	local wepData = weapons.Get(class)
+	local mdl = wepData and (wepData.ViewModel or wepData.WorldModel) or "models/weapons/w_rif_m4a1.mdl"
+
+	if not IsValid(SND.Killcam.WepModel) or SND.Killcam.WepModel:GetModel() ~= mdl then
+		if IsValid(SND.Killcam.WepModel) then SND.Killcam.WepModel:Remove() end
+		SND.Killcam.WepModel = ClientsideModel(mdl, RENDERGROUP_VIEWMODEL)
+		SND.Killcam.WepModel:SetNoDraw(true)
+	end
+
+	if IsValid(SND.Killcam.WepModel) then
+		local pos = SND.Killcam.CurrentPos
+		local ang = SND.Killcam.CurrentAng
+
+		local offset = ang:Forward() * 22 + ang:Right() * 10 + ang:Up() * -14
+		local drawPos = pos + offset
+
+		if bit.band(pt.b, IN_ATTACK) ~= 0 then
+			local light = DynamicLight(0)
+			if light then
+				light.pos = pos + ang:Forward() * 35
+				light.r = 255; light.g = 180; light.b = 50; light.brightness = 2
+				light.Size = 256; light.DieTime = CurTime() + 0.1
+			end
+			drawPos = drawPos + ang:Forward() * -1.5 -- Recoil jitter
+		end
+
+		SND.Killcam.WepModel:SetPos(drawPos)
+		SND.Killcam.WepModel:SetAngles(ang)
+		SND.Killcam.WepModel:SetupBones()
+		SND.Killcam.WepModel:DrawModel()
+	end
+end)
+
+hook.Add("RenderScreenspaceEffects", "SND_KillcamFX", function()
+	if not SND.Killcam.Active then return end
+	local modify = {
+		[ "$pp_colour_addr" ] = 0,
+		[ "$pp_colour_addg" ] = 0,
+		[ "$pp_colour_addb" ] = 0,
+		[ "$pp_colour_brightness" ] = -0.02,
+		[ "$pp_colour_contrast" ] = 1.1,
+		[ "$pp_colour_colour" ] = 0.5,
+		[ "$pp_colour_mulr" ] = 0,
+		[ "$pp_colour_mulg" ] = 0,
+		[ "$pp_colour_mulb" ] = 0
+	}
+	DrawColorModify(modify)
+	DrawMotionBlur(0.1, 0.4, 0.05)
 end)
 
 net.Receive("SND_MapVote", function()

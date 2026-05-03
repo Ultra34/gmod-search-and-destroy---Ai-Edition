@@ -86,7 +86,7 @@ SND.Killcam = SND.Killcam or {}
 SND.Killcam.History = {} -- [entindex] = { {pos, ang}, ... }
 SND.Killcam.LastKillData = nil
 
-local MAX_HISTORY = 160 -- ~5 seconds
+local MAX_HISTORY = 180 -- ~5.5 seconds
 
 hook.Add("Tick", "SND_KillcamRecord", function()
 	if SND.Round.Phase ~= SND.PHASE_LIVE then return end
@@ -96,11 +96,14 @@ hook.Add("Tick", "SND_KillcamRecord", function()
 		SND.Killcam.History[idx] = SND.Killcam.History[idx] or {}
 		local hist = SND.Killcam.History[idx]
 
+		local wep = ply:GetActiveWeapon()
 		table.insert(hist, {
 			p = ply:GetPos(),
 			a = ply:EyeAngles(),
 			o = ply:GetViewOffset(),
-			v = ply:GetVelocity()
+			v = ply:GetVelocity(),
+			b = ply:GetButtons(), -- Record buttons for firing state
+			w = IsValid(wep) and wep:GetClass() or ""
 		})
 
 		if #hist > MAX_HISTORY then
@@ -139,6 +142,8 @@ function SND.Killcam.SendFinalKillcam()
 			net.WriteVector(pt.p)
 			net.WriteAngle(pt.a)
 			net.WriteVector(pt.o or Vector(0,0,64))
+			net.WriteUInt(pt.b or 0, 32)
+			net.WriteString(pt.w or "")
 		end
 	net.Broadcast()
 	
