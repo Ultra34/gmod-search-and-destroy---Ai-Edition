@@ -155,11 +155,17 @@ hook.Add("CalcView", "SND_KillcamView", function(ply, pos, ang, fov)
 	local frac = totalTime - math.floor(totalTime)
 
 	local p1 = attPoints[i1] or attPoints[#attPoints]
-	local p2 = points[i2] or p1
+	local p2 = attPoints[i2] or p1
 
 	-- Interpolate for smooth playback
 	local viewPos = LerpVector(frac, p1.p, p2.p) + LerpVector(frac, p1.o, p2.o)
 	local viewAng = LerpAngle(frac, p1.a, p2.a)
+
+	-- Add procedural recoil to camera when firing to keep arms/camera in sync
+	if bit.band(p1.b, IN_ATTACK) ~= 0 then
+		viewAng.p = viewAng.p - 0.5
+		viewAng.y = viewAng.y + math.Rand(-0.2, 0.2)
+	end
 
 	SND.Killcam.CurrentPos = viewPos
 	SND.Killcam.CurrentAng = viewAng
@@ -197,6 +203,7 @@ hook.Add("PostDrawTranslucentRenderables", "SND_KillcamWeaponRender", function()
 	local pt = SND.Killcam.CurrentPoint
 	local idx = SND.Killcam.CurrentIndex
 	local frac = SND.Killcam.CurrentFrac
+	if not pt or not idx or not frac then return end
 
 	-- ── Render Victim Ghost ──────────────────────────────────────────────
 	if data.vicPoints and data.vicPoints[idx] then
@@ -235,8 +242,8 @@ hook.Add("PostDrawTranslucentRenderables", "SND_KillcamWeaponRender", function()
 		local pos = SND.Killcam.CurrentPos
 		local ang = SND.Killcam.CurrentAng
 
-		-- Tethered offset: Moves with the camera perfectly
-		local offset = ang:Forward() * 18 + ang:Right() * 8 + ang:Up() * -12
+		-- Tethered offset: Adjusted for better height and weapon depth
+		local offset = ang:Forward() * 16 + ang:Right() * 9 + ang:Up() * -10
 		local drawPos = pos + offset
 
 		if bit.band(pt.b, IN_ATTACK) ~= 0 then
@@ -255,7 +262,7 @@ hook.Add("PostDrawTranslucentRenderables", "SND_KillcamWeaponRender", function()
 				effect:SetAngles(ang)
 				util.Effect("MuzzleFlash", effect)
 			end
-			drawPos = drawPos + ang:Forward() * -2 -- Recoil
+			drawPos = drawPos + ang:Forward() * -1.5 + ang:Up() * 0.5 -- Kick back and up
 		end
 
 		SND.Killcam.WepModel:SetPos(drawPos)
