@@ -142,7 +142,7 @@ end
 
 function SND.Killcam.SendFinalKillcam()
 	local data = SND.Killcam.LastKillData
-	if not data or not IsValid(data.attacker) then return end
+	if not data or not IsValid(data.attacker) or not IsValid(data.victim) then return end
 
 	local attPoints = SND.Killcam.History[data.attacker:EntIndex()]
 	local vicPoints = SND.Killcam.History[data.victim:EntIndex()]
@@ -170,12 +170,14 @@ function SND.Killcam.SendFinalKillcam()
 			net.WriteFloat(pt.f or 90)
 			net.WriteBool(pt.h or false)
 		end
-		net.WriteUInt(#data.vicPoints, 16)
-		for _, pt in ipairs(data.vicPoints) do
-			net.WriteVector(pt.p)
-			net.WriteAngle(pt.a)
-			net.WriteUInt(pt.s or 0, 16)
-			net.WriteFloat(pt.cy or 0)
+		net.WriteUInt(vicPoints and #vicPoints or 0, 16)
+		if vicPoints then
+			for _, pt in ipairs(vicPoints) do
+				net.WriteVector(pt.p)
+				net.WriteAngle(pt.a)
+				net.WriteUInt(pt.s or 0, 16)
+				net.WriteFloat(pt.cy or 0)
+			end
 		end
 	net.Broadcast()
 	
