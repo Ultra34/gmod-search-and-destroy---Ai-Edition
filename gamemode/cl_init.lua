@@ -107,7 +107,9 @@ net.Receive("SND_KillCam", function()
 			a = net.ReadAngle(),
 			o = net.ReadVector(),
 			b = net.ReadUInt(32),
-			w = net.ReadString()
+			w = net.ReadString(),
+			ws = net.ReadUInt(16),
+			wc = net.ReadFloat()
 		}
 	end
 
@@ -268,6 +270,10 @@ hook.Add("PostDrawTranslucentRenderables", "SND_KillcamWeaponRender", function()
 		SND.Killcam.WepModel:SetPos(drawPos)
 		SND.Killcam.WepModel:SetAngles(ang)
 		SND.Killcam.WepModel:SetupBones()
+		
+		-- Apply weapon animations
+		SND.Killcam.WepModel:SetSequence(pt.ws or 0)
+		SND.Killcam.WepModel:SetCycle(pt.wc or 0)
 		SND.Killcam.WepModel:DrawModel()
 	end
 end)

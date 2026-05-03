@@ -86,7 +86,7 @@ SND.Killcam = SND.Killcam or {}
 SND.Killcam.History = {} -- [entindex] = { {pos, ang}, ... }
 SND.Killcam.LastKillData = nil
 
-local MAX_HISTORY = 180 -- ~5.5 seconds
+local MAX_HISTORY = 264 -- ~8 seconds at 33tps
 
 hook.Add("Tick", "SND_KillcamRecord", function()
 	if SND.Round.Phase ~= SND.PHASE_LIVE then return end
@@ -104,8 +104,10 @@ hook.Add("Tick", "SND_KillcamRecord", function()
 			v  = ply:GetVelocity(),
 			b  = ply:GetInternalVariable("m_nButtons") or 0,
 			w  = IsValid(wep) and wep:GetClass() or "",
-			s  = ply:GetSequence(), -- Capture animation state
-			cy = ply:GetCycle()
+			s  = ply:GetSequence(),
+			cy = ply:GetCycle(),
+			ws = IsValid(wep) and wep:GetSequence() or 0, -- Weapon sequence
+			wc = IsValid(wep) and wep:GetCycle() or 0     -- Weapon cycle
 		})
 
 		if #hist > MAX_HISTORY then
@@ -160,6 +162,8 @@ function SND.Killcam.SendFinalKillcam()
 			net.WriteVector(pt.o or Vector(0,0,64))
 			net.WriteUInt(pt.b or 0, 32)
 			net.WriteString(pt.w or "")
+			net.WriteUInt(pt.ws or 0, 16)
+			net.WriteFloat(pt.wc or 0)
 		end
 		net.WriteUInt(#data.vicPoints, 16)
 		for _, pt in ipairs(data.vicPoints) do
