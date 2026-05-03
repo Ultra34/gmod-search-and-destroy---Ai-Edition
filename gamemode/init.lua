@@ -89,7 +89,7 @@ hook.Add("Think", "SND_HealthRegen", function()
 		local lastDmg = ply.SND_LastDamageTime or 0
 		if now > lastDmg + 5 then -- 5 second delay before regen starts
 			if not ply.SND_NextRegen or now > ply.SND_NextRegen then
-				ply:SetHealth(math.min(100, ply:Health() + 2))
+				ply:SetHealth(math.min(100, ply:Health() + 5)) -- Faster heal rate (50 HP/sec)
 				ply.SND_NextRegen = now + 0.1
 			end
 		end
@@ -162,6 +162,54 @@ hook.Add("PlayerShouldTakeDamage", "SND_NoFriendlyFire", function(ply, attacker)
 	end
 end)
 
+-- ── Custom Loadout & Quick-Throw System (Server) ─────────────────────────
+local function performQuickThrow(ply)
+	if ply.SND_IsQuickThrowing then return end
+	local lethal = ply:GetNWString("SND_Lethal", "")
+	if lethal == "" then return end
+
+	local current = ply:GetActiveWeapon()
+	if not IsValid(current) or current:GetClass() == lethal then return end
+
+	ply.SND_IsQuickThrowing = true
+	local oldWep = current:GetClass()
+
+	ply:SelectWeapon(lethal)
+
+	-- Force the attack sequence
+	timer.Simple(0.1, function()
+		if IsValid(ply) and ply:Alive() then
+			ply:ConCommand("+attack")
+			timer.Simple(0.1, function() if IsValid(ply) then ply:ConCommand("-attack") end end)
+		end
+	end)
+
+	-- Switch back to previous weapon after throw animation
+	timer.Simple(1.1, function()
+		if IsValid(ply) and ply:Alive() then
+			ply:SelectWeapon(oldWep)
+		end
+		ply.SND_IsQuickThrowing = false
+	end)
+end
+
+hook.Add("PlayerButtonDown", "SND_GrenadeKey_SV", function(ply, btn)
+	if btn == KEY_G then
+		performQuickThrow(ply)
+	end
+end)
+
+net.Receive("SND_QuickSwitch", function(_, ply)
+	if not IsValid(ply) or not ply:Alive() then return end
+	local slot = net.ReadUInt(2)
+	if slot == 1 then
+		local pri = ply:GetNWString("SND_Primary", "")
+		if pri ~= "" then ply:SelectWeapon(pri) end
+	elseif slot == 2 then
+		local sec = ply:GetNWString("SND_Secondary", "")
+		if sec ~= "" then ply:SelectWeapon(sec) end
+	end
+end)
 util.AddNetworkString("SND_KillFeed") -- Add network string for kill feed
 util.AddNetworkString("SND_KillCam")  -- Add network string for killcam
 util.AddNetworkString("SND_SyncBotNames") -- Sync friend names for bots

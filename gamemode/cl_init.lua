@@ -226,6 +226,21 @@ local function createScoreboard()
 	return f
 end
 
+-- ── Custom Loadout Input Interceptor ─────────────────────────────────────
+hook.Add("PlayerBindPress", "SND_WeaponSelection", function(ply, bind, pressed)
+	if not pressed then return end
+
+	if bind == "slot1" then
+		net.Start("SND_QuickSwitch") net.WriteUInt(1, 2) net.SendToServer()
+		return true
+	elseif bind == "slot2" then
+		net.Start("SND_QuickSwitch") net.WriteUInt(2, 2) net.SendToServer()
+		return true
+	elseif string.find(bind, "slot") or string.find(bind, "invnext") or string.find(bind, "invprev") then
+		return true 
+	end
+end)
+
 hook.Add("ScoreboardShow", "SND_ScoreboardShow", function()
 	if not IsValid(scoreboard) then
 		scoreboard = createScoreboard()

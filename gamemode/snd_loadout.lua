@@ -9,6 +9,7 @@ SND.Loadout.PlayerChoices = SND.Loadout.PlayerChoices or {}
 -- ── Network strings ───────────────────────────────────────────────────────
 util.AddNetworkString("SND_GunPickerOpen")
 util.AddNetworkString("SND_GunPickerChoose")
+util.AddNetworkString("SND_QuickSwitch")
 
 -- ── ConVar helpers ────────────────────────────────────────────────────────
 local function cvarPrimary(teamId)
