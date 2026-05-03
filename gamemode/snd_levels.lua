@@ -11,10 +11,14 @@ file.CreateDir("snd_mwclassic/levels")
 
 local function getPlayerFile(ply)
 	local sid = ply:SteamID64()
+	if not sid or sid == "0" then return nil end
 	return "snd_mwclassic/players/" .. sid .. ".json"
 end
 
 function SND.Levels.Save(ply)
+	local path = getPlayerFile(ply)
+	if not path then return end
+
 	local data = {
 		xp = ply.SND_XP or 0,
 		lvl = ply.SND_Level or 1
@@ -27,14 +31,13 @@ function SND.Levels.Load(ply)
 	if ply:IsBot() or ply.SND_IsBot then return end
 
 	local path = getPlayerFile(ply)
+	if not path then return end
+
 	if file.Exists(path, "DATA") then
 		local data = util.JSONToTable(file.Read(path, "DATA"))
 		ply.SND_XP = data.xp or 0
 		ply.SND_Level = data.lvl or 1
 	else
-		-- For new human players, initialize and create their file immediately
-		ply.SND_XP = 0
-		ply.SND_Level = 1
 		SND.Levels.Save(ply)
 		print("[SND] First-time join: Created data file for player " .. ply:Nick())
 	end
