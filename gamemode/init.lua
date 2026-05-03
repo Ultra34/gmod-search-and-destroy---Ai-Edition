@@ -80,6 +80,28 @@ function GM:PlayerDeath(victim, inflictor, attacker)
 	SND.Announcer.OnDeathContext(victim, attacker)
 end
 
+-- ── Health Regeneration (CoD Style) ──────────────────────────────────────
+hook.Add("Think", "SND_HealthRegen", function()
+	local now = CurTime()
+	for _, ply in ipairs(player.GetAll()) do
+		if not ply:Alive() or ply:Health() >= 100 then continue end
+		
+		local lastDmg = ply.SND_LastDamageTime or 0
+		if now > lastDmg + 5 then -- 5 second delay before regen starts
+			if not ply.SND_NextRegen or now > ply.SND_NextRegen then
+				ply:SetHealth(math.min(100, ply:Health() + 2))
+				ply.SND_NextRegen = now + 0.1
+			end
+		end
+	end
+end)
+
+hook.Add("EntityTakeDamage", "SND_RegenTracker", function(target, dmg)
+	if IsValid(target) and target:IsPlayer() then
+		target.SND_LastDamageTime = CurTime()
+	end
+end)
+
 function GM:PlayerDeathThink(ply)
 	if SND.Round.WaitingForSpawn(ply) then
 		SND.Spectate.Ensure(ply)

@@ -12,6 +12,14 @@ end)
 
 SND.Client.XPPopups = SND.Client.XPPopups or {}
 local levelUpTime = 0
+local levelUpAlpha = 0
+local lastLevelReceived = -1
+
+-- ── Red Damage Vignette Materials ────────────────────────────────────────
+local MAT_GRAD_D = Material("vgui/gradient-d")
+local MAT_GRAD_U = Material("vgui/gradient-u")
+local MAT_GRAD_L = Material("vgui/gradient-l")
+local MAT_GRAD_R = Material("vgui/gradient-r")
 
 -- ── Colours ───────────────────────────────────────────────────────────────
 local function col(r, g, b, a) return Color(r, g, b, a or 255) end
@@ -86,6 +94,65 @@ local function drawLevelUpPopup(sw, sh, sc)
 	draw.SimpleText("YOU HAVE REACHED RANK " .. LocalPlayer():GetNWInt("SND_Level", 1), "Trebuchet24", sw * 0.5, yPos + 40 * sc, Color(255, 255, 255, alpha), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
 end
 
+-- ── Red Damage Vignette ──────────────────────────────────────────────────
+local function drawDamageVignette(sw, sh, sc, hp)
+	if hp >= 100 then return end
+	local alpha = math.Clamp((100 - hp) / 75, 0, 1) * 200
+	local size = 180 * sc
+	
+	surface.SetDrawColor(180, 0, 0, alpha)
+	surface.SetMaterial(MAT_GRAD_D)
+	surface.DrawTexturedRect(0, 0, sw, size)
+	surface.SetMaterial(MAT_GRAD_U)
+	surface.DrawTexturedRect(0, sh - size, sw, size)
+	surface.SetMaterial(MAT_GRAD_L)
+	surface.DrawTexturedRect(0, 0, size, sh)
+	surface.SetMaterial(MAT_GRAD_R)
+	surface.DrawTexturedRect(sw - size, 0, size, sh)
+end
+
+-- ── Weapon Inventory HUD ─────────────────────────────────────────────────
+local function drawWeaponInventory(sw, sh, sc, lp)
+	local pri = lp:GetNWString("SND_Primary", "")
+	local sec = lp:GetNWString("SND_Secondary", "")
+	local activeWep = lp:GetActiveWeapon()
+	local activeClass = IsValid(activeWep) and activeWep:GetClass() or ""
+
+	local x, y = sw - 20 * sc, sh - 80 * sc
+
+	local function cleanName(class)
+		if class == "" then return "---" end
+		local name = class:gsub("arc9_mw2e_", ""):gsub("iw4_", ""):upper()
+		return name
+	end
+
+	-- Helper to draw weapon icon
+	local function drawIcon(class, label, iconX, iconY, alpha)
+		local wep = lp:GetWeapon(class)
+		if IsValid(wep) and wep.WepIcon then
+			surface.SetFont("Trebuchet24")
+			local tw, _ = surface.GetTextSize(label)
+			surface.SetMaterial(wep.WepIcon)
+			surface.SetDrawColor(255, 255, 255, alpha)
+			surface.DrawTexturedRect(iconX - tw - 110 * sc, iconY - 35 * sc, 100 * sc, 50 * sc)
+		end
+	end
+
+	-- Secondary
+	local sName = "2: " .. cleanName(sec)
+	local secCol = (activeClass == sec) and C_WHITE or C_DIM
+	local secAlpha = (activeClass == sec) and 255 or 80
+	draw.SimpleText(sName, "Trebuchet24", x, y, col(secCol.r, secCol.g, secCol.b, 200), TEXT_ALIGN_RIGHT, TEXT_ALIGN_BOTTOM)
+	drawIcon(sec, sName, x, y, secAlpha)
+
+	-- Primary
+	local pName = "1: " .. cleanName(pri)
+	local priCol = (activeClass == pri) and C_WHITE or C_DIM
+	local priAlpha = (activeClass == pri) and 255 or 80
+	draw.SimpleText(pName, "Trebuchet24", x, y - 40 * sc, col(priCol.r, priCol.g, priCol.b, 200), TEXT_ALIGN_RIGHT, TEXT_ALIGN_BOTTOM)
+	drawIcon(pri, pName, x, y - 40 * sc, priAlpha)
+end
+
 -- ── Main HUD ─────────────────────────────────────────────────────────────
 hook.Add("HUDPaint", "SND_HUD", function()
 	local lp = LocalPlayer()
@@ -97,19 +164,24 @@ hook.Add("HUDPaint", "SND_HUD", function()
 
 	if lp:Alive() and lp:GetObserverMode() == OBS_MODE_NONE then drawCrosshair(sw, sh, sc) end
 
+	if lp:Alive() then drawDamageVignette(sw, sh, sc, lp:Health()) end
+
 	-- ── XP & Leveling UI ──────────────────────────────────────────────────
 	if lp:Alive() then
 		drawXPBar(sw, sh, sc, lp)
 		
-		-- Listen for level up trigger from cl_levels.lua
-		if SND.Client.LevelUpPending then
+		-- Detect Level Up for Popup
+		local curLvl = lp:GetNWInt("SND_Level", 1)
+		if lastLevelReceived != -1 and curLvl > lastLevelReceived then
 			levelUpTime = CurTime()
 			surface.PlaySound("garrysmod/content_downloaded.wav")
-			SND.Client.LevelUpPending = false
+			print("[SND] Level Up detected on HUD: Rank " .. curLvl)
 		end
-
+		lastLevelReceived = curLvl
 		drawLevelUpPopup(sw, sh, sc)
 	end
+
+	if lp:Alive() then drawWeaponInventory(sw, sh, sc, lp) end
 
 	-- ── Visual Freeze Effect ──────────────────────────────────────────────
 	local phase = SND.Client.Phase or SND.PHASE_WAIT
@@ -476,7 +548,7 @@ end)
 
 -- ── Disable default GMod Death Notice ─────────────────────────────────────
 hook.Add("HUDShouldDraw", "SND_DisableDefaultKillFeed", function(name)
-	if name == "CHudDeathNotice" then
+	if name == "CHudDeathNotice" or name == "CHudWeaponSelection" or name == "CHudHistoryResource" or name == "CHudHealth" or name == "CHudBattery" then
 		return false
 	end
 end)
@@ -494,8 +566,35 @@ local freezePP = {
 	[ "$pp_colour_mulb" ] = 0
 }
 
+-- ── Damage Post-Processing ──────────────────────────────────────────────
+local damagePP = {
+	[ "$pp_colour_addr" ] = 0,
+	[ "$pp_colour_addg" ] = 0,
+	[ "$pp_colour_addb" ] = 0,
+	[ "$pp_colour_brightness" ] = 0,
+	[ "$pp_colour_contrast" ] = 1,
+	[ "$pp_colour_colour" ] = 1,
+	[ "$pp_colour_mulr" ] = 0,
+	[ "$pp_colour_mulg" ] = 0,
+	[ "$pp_colour_mulb" ] = 0
+}
+
 hook.Add("RenderScreenspaceEffects", "SND_FreezePostProcess", function()
 	if SND.Client and SND.Client.Phase == SND.PHASE_FREEZE then
 		DrawColorModify(freezePP)
+	end
+end)
+
+hook.Add("RenderScreenspaceEffects", "SND_DamagePostProcess", function()
+	local lp = LocalPlayer()
+	if not IsValid(lp) or not lp:Alive() then return end
+	
+	local hp = lp:Health()
+	if hp < 100 then
+		local intensity = math.Clamp((100 - hp) / 100, 0, 1)
+		damagePP["$pp_colour_addr"] = 0.15 * intensity
+		damagePP["$pp_colour_mulr"] = 0.1 * intensity
+		damagePP["$pp_colour_brightness"] = -0.05 * intensity
+		DrawColorModify(damagePP)
 	end
 end)

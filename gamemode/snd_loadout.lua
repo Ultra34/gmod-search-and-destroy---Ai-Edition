@@ -43,6 +43,11 @@ function SND.Loadout.Apply(ply)
 		giveSafe(ply, "iw4_cheytac")
 		giveSafe(ply, "iw4_glock")
 		giveSafe(ply, defaults.lethal)
+
+		ply:SetNWString("SND_Primary", "iw4_cheytac")
+		ply:SetNWString("SND_Secondary", "iw4_glock")
+		ply:SetNWString("SND_Lethal", defaults.lethal)
+
 		if defaults.tactical and defaults.tactical ~= "" then
 			giveSafe(ply, defaults.tactical)
 		end
@@ -84,6 +89,11 @@ function SND.Loadout.Apply(ply)
 	giveSafe(ply, pri)
 	giveSafe(ply, sec)
 	giveSafe(ply, defaults.lethal)
+
+	ply:SetNWString("SND_Primary", pri)
+	ply:SetNWString("SND_Secondary", sec)
+	ply:SetNWString("SND_Lethal", defaults.lethal)
+
 	if defaults.tactical and defaults.tactical ~= "" then
 		giveSafe(ply, defaults.tactical)
 	end
