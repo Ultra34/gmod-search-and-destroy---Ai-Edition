@@ -52,20 +52,38 @@ hook.Add("SetupMove", "SND_Movement", function(ply, mv, cmd)
 	if phase ~= SND.PHASE_LIVE then return end
 
 	-- ── SPRINT ────────────────────────────────────────────────────────────
-	local mult    = SND.Settings.Get("sprint_mult", 1.65)
-	local base    = SND.Settings.GetInt("run_speed", 280)
-	local onGround = ply:IsOnGround()
-	local wantSprint = cmd:KeyDown(IN_SPEED)
+    local mult        = SND.Settings.Get("sprint_mult", 1.5)
+    local base        = SND.Settings.GetInt("run_speed", 280)
+    local onGround    = ply:IsOnGround()
+    local wantSprint  = cmd:KeyDown(IN_SPEED)
+    local stamina     = ply:GetNWFloat("SND_Stamina", 1.0)
+    local isMoving    = mv:GetForwardSpeed() > 0
 
-	if onGround and wantSprint then
-		ply.SND_Sprinting = true
-		mv:SetMaxClientSpeed(base * mult)
-		mv:SetMaxSpeed(base * mult)
-	else
-		ply.SND_Sprinting = false
-		mv:SetMaxClientSpeed(base)
-		mv:SetMaxSpeed(base)
-	end
+    -- Sprint Stamina Logic (MW2 had limited sprint duration)
+    if onGround and wantSprint and isMoving and stamina > 0 and not ply:Crouching() then
+        ply.SND_Sprinting = true
+        local sprintSpeed = base * mult
+        
+        -- Apply Jump Penalty (prevents bunny hopping)
+        if ply.SND_JumpPenaltyTimer and CurTime() < ply.SND_JumpPenaltyTimer then
+            sprintSpeed = sprintSpeed * 0.7
+        end
+
+        mv:SetMaxClientSpeed(sprintSpeed)
+        mv:SetMaxSpeed(sprintSpeed)
+
+        if SERVER then
+            ply:SetNWFloat("SND_Stamina", math.max(0, stamina - (FrameTime() * 0.25))) -- ~4 seconds of sprint
+        end
+    else
+        ply.SND_Sprinting = false
+        mv:SetMaxClientSpeed(base)
+        mv:SetMaxSpeed(base)
+
+        if SERVER and stamina < 1.0 then
+            ply:SetNWFloat("SND_Stamina", math.min(1.0, stamina + (FrameTime() * 0.4))) -- Recovery
+        end
+    end
 end)
 
 -- ── Air acceleration tweak ────────────────────────────────────────────────
@@ -93,6 +111,10 @@ if SERVER then
 	hook.Add("OnPlayerHitGround", "SND_FallLandingEffects", function(ply, inWater, onFloater, speed)
 		if inWater or speed < 300 then return end
 
+        -- Jump/Fall Fatigue: Slow player down briefly upon landing
+        ply.SND_JumpPenaltyTimer = CurTime() + 0.5
+        ply:SetVelocity(ply:GetVelocity() * 0.8)
+
 		-- Always apply a slight view dip on landing
 		local punchIntensity = math.Clamp(speed * 0.02, 2, 15)
 		ply:ViewPunch(Angle(punchIntensity, 0, math.random(-2, 2)))
@@ -107,4 +129,24 @@ if SERVER then
 			ply:EmitSound("physics/flesh/flesh_bloody_break.wav", 70, 110, 0.4)
 		end
 	end)
+end
+
+-- ── Sprint View Bobbing (Client Only) ─────────────────────────────────────
+if CLIENT then
+    hook.Add("CalcView", "SND_SprintViewBob", function(ply, pos, ang, fov)
+        if not ply:Alive() or ply:GetObserverMode() ~= OBS_MODE_NONE then return end
+        
+        if ply.SND_Sprinting and ply:IsOnGround() and ply:GetVelocity():Length2D() > 100 then
+            local t = CurTime() * 10
+            local intensity = 0.5
+            
+            -- MW2-style camera sway/roll during sprint
+            ang.roll = ang.roll + math.sin(t * 0.5) * intensity
+            ang.pitch = ang.pitch + math.cos(t) * (intensity * 0.5)
+            
+            return {
+                angles = ang
+            }
+        end
+    end)
 end

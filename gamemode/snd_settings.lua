@@ -4,7 +4,7 @@
 SND.Settings = SND.Settings or {}
 
 SND.Settings.Defaults = {
-	sprint_mult      = 1.65,
+	sprint_mult      = 1.5,
 	walk_speed       = 190,
 	run_speed        = 280,
 	ads_slow         = 0.88,

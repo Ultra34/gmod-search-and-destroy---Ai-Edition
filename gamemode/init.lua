@@ -63,6 +63,7 @@ function GM:PlayerSpawn(ply)
 	ply:SetWalkSpeed(walk)
 	ply:SetRunSpeed(run)
 	ply:SetJumpPower(160)
+	ply:SetNWFloat("SND_Stamina", 1.0)
 
 	SND.Teams.ApplyFactionModel(ply)
 	SND.Movement.Setup(ply)
