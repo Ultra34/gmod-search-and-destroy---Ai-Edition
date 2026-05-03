@@ -25,6 +25,21 @@ local levelUpTime = -1
 local levelUpAlpha = 0
 local lastLevelReceived = 0
 
+-- ── Crosshair Toggle Logic (Right-Click) ─────────────────────────────────
+local crosshairVisible = true
+hook.Add("PlayerButtonDown", "SND_CrosshairToggle", function(ply, btn)
+	-- Prevent toggling while in menus, console, or if the cursor is visible
+	if gui.IsGameUIVisible() or gui.IsConsoleVisible() or vgui.CursorVisible() then return end
+
+	if btn == MOUSE_RIGHT then
+		crosshairVisible = not crosshairVisible
+	end
+end)
+
+hook.Add("PlayerSpawn", "SND_ResetCrosshair", function(ply)
+	if ply == LocalPlayer() then crosshairVisible = true end
+end)
+
 -- ── Red Damage Vignette Materials ────────────────────────────────────────
 local MAT_GRAD_D = Material("vgui/gradient-d")
 local MAT_GRAD_U = Material("vgui/gradient-u")
@@ -228,7 +243,7 @@ hook.Add("HUDPaint", "SND_HUD", function()
 	local sc = math.Clamp(cv and cv:GetFloat() or 1, 0.75, 1.5)
 	local sw, sh = ScrW(), ScrH()
 
-	if lp:Alive() and lp:GetObserverMode() == OBS_MODE_NONE and not lp:KeyDown(IN_ATTACK2) then drawCrosshair(sw, sh, sc) end
+	if lp:Alive() and lp:GetObserverMode() == OBS_MODE_NONE and crosshairVisible then drawCrosshair(sw, sh, sc) end
 
 	if lp:Alive() then drawDamageVignette(sw, sh, sc, lp:Health()) end
 
