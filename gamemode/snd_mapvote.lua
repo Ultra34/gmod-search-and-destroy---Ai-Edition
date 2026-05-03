@@ -20,7 +20,10 @@ function SND.MapVote.Start()
 	if not SND.Settings.GetInt("mapvote_enabled", 1) then return end
 	local maps = readMapList()
 	if #maps == 0 then
-		print("[SND] No maps in data/snd_mwclassic/maps.txt — add one map name per line.")
+		print("[SND] No maps in data/snd_mwclassic/maps.txt — restarting current map in 5s.")
+		timer.Simple(5, function()
+			RunConsoleCommand("changelevel", game.GetMap())
+		end)
 		return
 	end
 
@@ -35,7 +38,7 @@ function SND.MapVote.Start()
 	timer.Simple(t, function()
 		-- Server picks random if no votes implemented — extend with net votes as needed
 		local pick = table.Random(maps)
-		if pick and pick ~= game.GetMap() then
+		if pick then
 			RunConsoleCommand("changelevel", pick)
 		end
 	end)
