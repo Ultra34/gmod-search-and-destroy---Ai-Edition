@@ -111,6 +111,11 @@ hook.Add("HUDPaint", "SND_HUD", function()
 		
 		pill(sw * 0.5 - boxW * 0.5, 12 * sc, boxW, boxH, C_PILL)
 		draw.SimpleText(timerText, "DermaLarge", sw * 0.5, 12 * sc + boxH * 0.5, timerCol, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+
+		-- Team indicator below the clock
+		local teamStr = (lp:Team() == SND.TEAM_ATTACK) and "ATTACKER" or "DEFENDER"
+		local teamCol = (lp:Team() == SND.TEAM_ATTACK) and C_ATTACK or C_DEFEND
+		draw.SimpleText(teamStr, "Trebuchet18", sw * 0.5, 12 * sc + boxH + 4 * sc, teamCol, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
 	end
 
 	-- ── FREEZE COUNTDOWN BAR (bottom-center) ──────────────────────────────
