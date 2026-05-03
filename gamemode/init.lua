@@ -86,12 +86,12 @@ SND.Killcam = SND.Killcam or {}
 SND.Killcam.History = {} -- [entindex] = { {pos, ang}, ... }
 SND.Killcam.LastKillData = nil
 
-local MAX_HISTORY = 212 -- Exactly 7 seconds at 30fps (0.033s interval)
+local MAX_HISTORY = 280 -- ~9.2 seconds total (7s buildup + 2s aftermath)
 local recordInterval = 0.033
 local nextRecord = 0
 
 hook.Add("Tick", "SND_KillcamRecord", function()
-	if SND.Round.Phase ~= SND.PHASE_LIVE then return end
+	if SND.Round.Phase ~= SND.PHASE_LIVE and SND.Round.Phase ~= SND.PHASE_POST then return end
 	if CurTime() < nextRecord then return end
 	nextRecord = CurTime() + recordInterval
 
@@ -128,35 +128,25 @@ function SND.Killcam.SetFinalKill(attacker, victim, weapon)
 	if not IsValid(attacker) or not attacker:IsPlayer() then return end
 	if not IsValid(victim) or not victim:IsPlayer() then return end
 	
-	local attHist = SND.Killcam.History[attacker:EntIndex()]
-	local vicHist = SND.Killcam.History[victim:EntIndex()]
-	if not attHist or #attHist < 10 then return end
-
-	-- Sync history lengths to prevent index mismatch
-	local count = math.min(#attHist, vicHist and #vicHist or math.huge)
-	local finalAtt = {}
-	local finalVic = {}
-
-	for i = 1, count do
-		table.insert(finalAtt, attHist[i])
-		if vicHist then table.insert(finalVic, vicHist[i]) end
-	end
-
+	-- Just store the metadata. We harvest the history buffer later in SendFinalKillcam 
+	-- to include the extra seconds after the kill occurs.
 	SND.Killcam.LastKillData = {
 		attacker = attacker,
 		victim = victim,
 		weapon = weapon,
-		attPoints = finalAtt,
-		vicPoints = finalVic,
-		vicModel  = victim:GetModel(),
-		attHP     = attacker:Health(),
-		attLvl    = attacker:GetNWInt("SND_Level", 1)
+		attHP    = attacker:Health(),
+		attLvl   = attacker:GetNWInt("SND_Level", 1),
+		vicModel = victim:GetModel()
 	}
 end
 
 function SND.Killcam.SendFinalKillcam()
 	local data = SND.Killcam.LastKillData
-	if not data then return end
+	if not data or not IsValid(data.attacker) then return end
+
+	local attPoints = SND.Killcam.History[data.attacker:EntIndex()]
+	local vicPoints = SND.Killcam.History[data.victim:EntIndex()]
+	if not attPoints or #attPoints < 10 then return end
 
 	SND.Round.Phase = SND.PHASE_KILLCAM
 	SND.Round.Sync()
@@ -167,8 +157,8 @@ function SND.Killcam.SendFinalKillcam()
 		net.WriteUInt(data.attLvl, 16)
 		net.WriteString(data.weapon)
 		net.WriteString(data.vicModel)
-		net.WriteUInt(#data.attPoints, 16)
-		for _, pt in ipairs(data.attPoints) do
+		net.WriteUInt(#attPoints, 16)
+		for _, pt in ipairs(attPoints) do
 			net.WriteVector(pt.p)
 			net.WriteAngle(pt.a)
 			net.WriteVector(pt.o or Vector(0,0,64))

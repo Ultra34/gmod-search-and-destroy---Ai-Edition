@@ -180,6 +180,11 @@ hook.Add("CalcView", "SND_KillcamView", function(ply, pos, ang, fov)
 	local viewPunch = LerpAngle(frac, p1.vp, p2.vp)
 	local fovVal = Lerp(frac, p1.f, p2.f)
 
+	-- ADS/Scoping Override Logic: Force FOV to 90 if the player was not holding the scope button
+	if bit.band(p1.b, IN_ATTACK2) == 0 then
+		fovVal = 90
+	end
+
 	-- Reconstruct exact client view angles by combining recorded eye angles and recoil
 	local finalAng = viewAng + viewPunch
 
