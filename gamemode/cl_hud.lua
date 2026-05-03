@@ -11,6 +11,9 @@ net.Receive("SND_FreezeInfo", function()
 end)
 
 SND.Client.XPPopups = SND.Client.XPPopups or {}
+local levelUpTime = 0
+local levelUpAlpha = 0
+local lastLevelReceived = -1
 
 -- ── Colours ───────────────────────────────────────────────────────────────
 local function col(r, g, b, a) return Color(r, g, b, a or 255) end
@@ -50,6 +53,41 @@ local function drawCrosshair(sw, sh, sc)
 	surface.DrawRect(sw * 0.5 - 1, sh * 0.5 - 1, 2, 2)
 end
 
+-- ── XP Progress Bar ──────────────────────────────────────────────────────
+local function drawXPBar(sw, sh, sc, lp)
+	local currentXP = lp.SND_XP or 0
+	local level = lp:GetNWInt("SND_Level", 1)
+	local xpInLevel = currentXP % 2000 -- Matches XP_PER_LEVEL in snd_levels.lua
+	local progress = xpInLevel / 2000
+
+	local w, h = 400 * sc, 10 * sc
+	local x, y = sw * 0.5 - w * 0.5, sh - 20 * sc
+
+	-- Background
+	surface.SetDrawColor(0, 0, 0, 200)
+	surface.DrawRect(x, y, w, h)
+
+	-- Fill
+	surface.SetDrawColor(255, 210, 50, 255)
+	surface.DrawRect(x, y, w * progress, h)
+
+	-- Label
+	draw.SimpleText("RANK " .. level .. " PROGRESS", "Trebuchet18", x, y - 15 * sc, Color(255, 210, 50, 200), TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
+end
+
+-- ── Level Up Popup ───────────────────────────────────────────────────────
+local function drawLevelUpPopup(sw, sh, sc)
+	if CurTime() > levelUpTime + 4 then return end
+	
+	local age = CurTime() - levelUpTime
+	local alpha = age < 3 and 255 or math.max(0, 255 - (age - 3) * 255)
+	
+	local yPos = sh * 0.4 - (math.sin(age * 2) * 10) -- Subtle bounce
+	
+	draw.SimpleText("LEVEL UP", "DermaLarge", sw * 0.5, yPos, Color(255, 210, 50, alpha), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+	draw.SimpleText("YOU HAVE REACHED RANK " .. LocalPlayer():GetNWInt("SND_Level", 1), "Trebuchet24", sw * 0.5, yPos + 40 * sc, Color(255, 255, 255, alpha), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+end
+
 -- ── Main HUD ─────────────────────────────────────────────────────────────
 hook.Add("HUDPaint", "SND_HUD", function()
 	local lp = LocalPlayer()
@@ -60,6 +98,21 @@ hook.Add("HUDPaint", "SND_HUD", function()
 	local sw, sh = ScrW(), ScrH()
 
 	if lp:Alive() and lp:GetObserverMode() == OBS_MODE_NONE then drawCrosshair(sw, sh, sc) end
+
+	-- ── XP & Leveling UI ──────────────────────────────────────────────────
+	if lp:Alive() then
+		drawXPBar(sw, sh, sc, lp)
+		
+		-- Detect Level Up for Popup
+		local curLvl = lp:GetNWInt("SND_Level", 1)
+		if lastLevelReceived != -1 and curLvl > lastLevelReceived then
+			levelUpTime = CurTime()
+			surface.PlaySound("garrysmod/content_downloaded.wav")
+			print("[SND] Level Up detected on HUD: Rank " .. curLvl)
+		end
+		lastLevelReceived = curLvl
+		drawLevelUpPopup(sw, sh, sc)
+	end
 
 	-- ── Visual Freeze Effect ──────────────────────────────────────────────
 	local phase = SND.Client.Phase or SND.PHASE_WAIT

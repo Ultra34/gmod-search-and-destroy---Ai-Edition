@@ -26,3 +26,5 @@ net.Receive("SND_UpdateXP", function()
 		table.insert(SND.Client.XPPopups, { amount = gained, time = CurTime() })
 	end
 end)
+
+print("[SND] Levels System Loaded (Client)")

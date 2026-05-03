@@ -44,6 +44,8 @@ end
 function SND.Levels.AddXP(ply, amount)
 	if not IsValid(ply) or ply.SND_IsBot then return end
 	
+	print("[SND] Adding " .. amount .. " XP to " .. ply:Nick())
+	
 	ply.SND_XP = (ply.SND_XP or 0) + amount
 	
 	-- Level up logic
@@ -52,7 +54,8 @@ function SND.Levels.AddXP(ply, amount)
 	
 	if newLvl > oldLvl then
 		ply.SND_Level = newLvl
-		ply:SetNWInt("SND_Level", newLvl)
+		ply:SetNWInt("SND_Level", newLvl) -- Immediate update for nameplates/HUD
+		print("[SND] Player " .. ply:Nick() .. " LEVELED UP to " .. newLvl .. "!")
 		ply:ChatPrint("[SND] LEVEL UP! You are now level " .. newLvl)
 	end
 
@@ -74,3 +77,5 @@ hook.Add("PlayerDeath", "SND_XPOnKill", function(victim, inflictor, attacker)
 		SND.Levels.AddXP(attacker, 100)
 	end
 end)
+
+print("[SND] Levels System Loaded (Server)")
