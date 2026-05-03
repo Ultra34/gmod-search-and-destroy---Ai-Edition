@@ -102,7 +102,7 @@ hook.Add("Tick", "SND_KillcamRecord", function()
 			a = ply:EyeAngles(),
 			o = ply:GetViewOffset(),
 			v = ply:GetVelocity(),
-			b = ply:GetButtons(), -- Record buttons for firing state
+			b = ply:GetInternalVariable("m_nButtons") or 0, -- Record buttons for firing state
 			w = IsValid(wep) and wep:GetClass() or ""
 		})
 
