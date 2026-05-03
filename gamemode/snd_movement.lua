@@ -11,7 +11,7 @@ hook.Add("StartCommand", "SND_FreezeInput", function(ply, cmd)
 	if not IsValid(ply) or not ply:Alive() then return end
 
 	local phase = SERVER and SND.Round.Phase or SND.Client.Phase
-	if phase == SND.PHASE_FREEZE or phase == SND.PHASE_POST or phase == SND.PHASE_KILLCAM then
+	if phase == SND.PHASE_FREEZE or phase == SND.PHASE_POST then
 		-- Block all action inputs to prevent shooting, reloading, or planting
 		-- Intercepting buttons in StartCommand is more reliable for blocking weapon fire
 		local blocked = bit.bor(IN_ATTACK, IN_ATTACK2, IN_RELOAD, IN_USE)
@@ -23,7 +23,7 @@ end)
 -- ── Aggressive Fire Block (Server & Client) ──────────────────────────────
 hook.Add("Think", "SND_FreezeFireLock", function()
 	local phase = SERVER and SND.Round.Phase or (SND.Client and SND.Client.Phase)
-	if phase ~= SND.PHASE_FREEZE and phase ~= SND.PHASE_POST and phase ~= SND.PHASE_KILLCAM then return end
+	if phase ~= SND.PHASE_FREEZE and phase ~= SND.PHASE_POST then return end
 
 	for _, ply in ipairs(player.GetAll()) do
 		if not ply:Alive() then continue end
@@ -40,7 +40,7 @@ hook.Add("SetupMove", "SND_Movement", function(ply, mv, cmd)
 
 	-- ── FREEZE: nobody moves ───────────────────────────────────────────────
 	local phase = SERVER and SND.Round.Phase or SND.Client.Phase
-	if phase == SND.PHASE_FREEZE or phase == SND.PHASE_POST or phase == SND.PHASE_KILLCAM then
+	if phase == SND.PHASE_FREEZE or phase == SND.PHASE_POST then
 		mv:SetForwardSpeed(0)
 		mv:SetSideSpeed(0)
 		mv:SetUpSpeed(0)
