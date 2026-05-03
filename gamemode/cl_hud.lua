@@ -40,8 +40,8 @@ hook.Add("HUDPaint", "SND_HUD", function()
 	-- ── Visual Freeze Effect ──────────────────────────────────────────────
 	local phase = SND.Client.Phase or SND.PHASE_WAIT
 	if phase == SND.PHASE_FREEZE then
-		-- Simple cold blue color overlay (replaces broken texture vignette)
-		surface.SetDrawColor(60, 140, 255, 50)
+		-- Subtle dark grey overlay for better text legibility
+		surface.SetDrawColor(0, 0, 0, 40)
 		surface.DrawRect(0, 0, sw, sh)
 	end
 
@@ -111,11 +111,13 @@ hook.Add("HUDPaint", "SND_HUD", function()
 		
 		pill(sw * 0.5 - boxW * 0.5, 12 * sc, boxW, boxH, C_PILL)
 		draw.SimpleText(timerText, "DermaLarge", sw * 0.5, 12 * sc + boxH * 0.5, timerCol, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+	end
 
-		-- Team indicator below the clock
+	-- ── Central Team Indicator (Freeze Only) ──────────────────────────────
+	if phase == SND.PHASE_FREEZE then
 		local teamStr = (lp:Team() == SND.TEAM_ATTACK) and "ATTACKER" or "DEFENDER"
 		local teamCol = (lp:Team() == SND.TEAM_ATTACK) and C_ATTACK or C_DEFEND
-		draw.SimpleText(teamStr, "Trebuchet18", sw * 0.5, 12 * sc + boxH + 4 * sc, teamCol, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
+		draw.SimpleText(teamStr, "DermaLarge", sw * 0.5, sh * 0.5, teamCol, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
 	end
 
 	-- ── FREEZE COUNTDOWN BAR (bottom-center) ──────────────────────────────
@@ -389,11 +391,11 @@ end)
 -- ── Post-Processing Freeze Effect ────────────────────────────────────────
 local freezePP = {
 	[ "$pp_colour_addr" ] = 0,
-	[ "$pp_colour_addg" ] = 0.02,
-	[ "$pp_colour_addb" ] = 0.15,
+	[ "$pp_colour_addg" ] = 0,
+	[ "$pp_colour_addb" ] = 0,
 	[ "$pp_colour_brightness" ] = -0.05,
-	[ "$pp_colour_contrast" ] = 1.2,
-	[ "$pp_colour_colour" ] = 0.9,
+	[ "$pp_colour_contrast" ] = 1.1,
+	[ "$pp_colour_colour" ] = 0, -- Full greyscale desaturation
 	[ "$pp_colour_mulr" ] = 0,
 	[ "$pp_colour_mulg" ] = 0,
 	[ "$pp_colour_mulb" ] = 0
