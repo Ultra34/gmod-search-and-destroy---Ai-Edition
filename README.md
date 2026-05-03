@@ -170,7 +170,6 @@ SND.Config.DefaultLoadouts = {
 |---|---|
 | Settings panel | Chat `!snd_settings` or console `snd_open_settings` |
 | Start map vote manually | Console `snd_start_mapvote` |
-| Toggle first-person legs | Console `snd_legs_toggle` |
 | Reopen gun picker | Console `snd_gunpicker` |
 
 ---
