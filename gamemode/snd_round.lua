@@ -66,31 +66,26 @@ function SND.Round.EndRound(reason)
 	SND.Announcer.OnRoundEnd(reason)
 	SND.Bomb.ResetForRound()
 
+	-- Sync phase to clients immediately
+	SND.Round.Sync()
+
 	-- Play Final Killcam if applicable
 	if reason ~= SND.WIN_DRAW and reason ~= SND.WIN_TIME then
-		timer.Simple(0.5, function()
+		timer.Simple(2.5, function() -- Show victory banner first
 			SND.Killcam.SendFinalKillcam()
 		end)
 	end
 
 	local lim = SND.Settings.GetInt("win_limit", 4)
 	if SND.Round.AttackScore >= lim or SND.Round.DefendScore >= lim then
-		timer.Simple(4, function()
+		timer.Simple(8, function()
 			SND.MapVote.StartMatchEnd()
 		end)
 	else
-		timer.Simple(5, function()
+		timer.Simple(8, function()
 			SND.Round.StartNewRound()
 		end)
 	end
-
-	net.Start("SND_RoundState")
-	net.WriteUInt(SND.Round.Phase, 3)
-	net.WriteUInt(reason, 4)
-	net.WriteUInt(SND.Round.AttackScore, 8)
-	net.WriteUInt(SND.Round.DefendScore, 8)
-	net.WriteDouble(SND.Round.RoundTimerEnd)
-	net.Broadcast()
 end
 
 function SND.Round.StartNewRound()
@@ -206,15 +201,14 @@ end)
 
 util.AddNetworkString("SND_RoundState")
 
-function SND.Round.Sync(ply)
-	if not IsValid(ply) then return end
-	net.Start("SND_RoundState")
-	net.WriteUInt(SND.Round.Phase, 3)
-	net.WriteUInt(SND.Round.Winner or 0, 4)
-	net.WriteUInt(SND.Round.AttackScore, 8)
-	net.WriteUInt(SND.Round.DefendScore, 8)
-	net.WriteDouble(SND.Round.RoundTimerEnd)
-	net.Send(ply)
+function SND.Round.Sync(target)
+    net.Start("SND_RoundState")
+    net.WriteUInt(SND.Round.Phase, 3)
+    net.WriteUInt(SND.Round.Winner or 0, 4)
+    net.WriteUInt(SND.Round.AttackScore, 8)
+    net.WriteUInt(SND.Round.DefendScore, 8)
+    net.WriteDouble(SND.Round.RoundTimerEnd)
+    if target then net.Send(target) else net.Broadcast() end
 end
 
 hook.Add("PlayerInitialSpawn", "SND_SyncState", function(ply)

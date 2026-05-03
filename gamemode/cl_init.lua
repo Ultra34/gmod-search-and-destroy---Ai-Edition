@@ -21,7 +21,7 @@ SND.Killcam = SND.Killcam or {}
 SND.Killcam.Active = false
 SND.Killcam.Data = nil
 SND.Killcam.StartTime = 0
-SND.Killcam.PlaybackIndex = 1
+SND.Killcam.PlaybackTime = 0
 local TICK_INTERVAL = 0.033
 
 net.Receive("SND_RoundState", function()
@@ -93,7 +93,8 @@ net.Receive("SND_KillCam", function()
 	for i = 1, count do
 		points[i] = {
 			p = net.ReadVector(),
-			a = net.ReadAngle()
+			a = net.ReadAngle(),
+			o = net.ReadVector()
 		}
 	end
 
@@ -104,20 +105,37 @@ net.Receive("SND_KillCam", function()
 		points = points
 	}
 	SND.Killcam.Active = true
-	SND.Killcam.StartTime = CurTime()
-	SND.Killcam.PlaybackIndex = 1
+	SND.Killcam.PlaybackTime = 0
 end)
 
 hook.Add("CalcView", "SND_KillcamView", function(ply, pos, ang, fov)
 	if not SND.Killcam.Active or not SND.Killcam.Data then return end
 
+	local dt = FrameTime()
 	local data = SND.Killcam.Data
-	local index = math.floor((CurTime() - SND.Killcam.StartTime) / TICK_INTERVAL) + 1
-	local point = data.points[index] or data.points[#data.points]
+	local points = data.points
+	
+	-- Slow motion logic: slow down near the end of the clip (impact)
+	local progress = SND.Killcam.PlaybackTime / (#points * TICK_INTERVAL)
+	local timescale = (progress > 0.8) and 0.3 or 1.0
+	
+	SND.Killcam.PlaybackTime = SND.Killcam.PlaybackTime + dt * timescale
+	
+	local totalTime = SND.Killcam.PlaybackTime / TICK_INTERVAL
+	local i1 = math.floor(totalTime) + 1
+	local i2 = i1 + 1
+	local frac = totalTime - math.floor(totalTime)
+
+	local p1 = points[i1] or points[#points]
+	local p2 = points[i2] or p1
+
+	-- Interpolate for smooth playback
+	local viewPos = LerpVector(frac, p1.p, p2.p) + LerpVector(frac, p1.o, p2.o)
+	local viewAng = LerpAngle(frac, p1.a, p2.a)
 
 	return {
-		origin = point.p + Vector(0,0,64), -- Eye height offset
-		angles = point.a,
+		origin = viewPos,
+		angles = viewAng,
 		fov = fov
 	}
 end)

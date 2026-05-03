@@ -86,7 +86,7 @@ SND.Killcam = SND.Killcam or {}
 SND.Killcam.History = {} -- [entindex] = { {pos, ang}, ... }
 SND.Killcam.LastKillData = nil
 
-local MAX_HISTORY = 132 -- ~4 seconds at 33tps
+local MAX_HISTORY = 160 -- ~5 seconds
 
 hook.Add("Tick", "SND_KillcamRecord", function()
 	if SND.Round.Phase ~= SND.PHASE_LIVE then return end
@@ -99,6 +99,7 @@ hook.Add("Tick", "SND_KillcamRecord", function()
 		table.insert(hist, {
 			p = ply:GetPos(),
 			a = ply:EyeAngles(),
+			o = ply:GetViewOffset(),
 			v = ply:GetVelocity()
 		})
 
@@ -126,6 +127,9 @@ function SND.Killcam.SendFinalKillcam()
 	local data = SND.Killcam.LastKillData
 	if not data then return end
 
+	SND.Round.Phase = SND.PHASE_KILLCAM
+	SND.Round.Sync()
+
 	net.Start("SND_KillCam")
 		net.WriteEntity(data.attacker)
 		net.WriteEntity(data.victim)
@@ -134,6 +138,7 @@ function SND.Killcam.SendFinalKillcam()
 		for _, pt in ipairs(data.points) do
 			net.WriteVector(pt.p)
 			net.WriteAngle(pt.a)
+			net.WriteVector(pt.o or Vector(0,0,64))
 		end
 	net.Broadcast()
 	
