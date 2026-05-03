@@ -10,6 +10,16 @@ net.Receive("SND_FreezeInfo", function()
 	freezeDuration = net.ReadFloat()   -- total freeze seconds (for bar width)
 end)
 
+-- ── Crosshair Settings (CS:GO Style) ─────────────────────────────────────
+local cv_enabled = CreateClientConVar("snd_crosshair_enabled", "1", true, false)
+local cv_gap     = CreateClientConVar("snd_crosshair_gap", "4", true, false)
+local cv_length  = CreateClientConVar("snd_crosshair_length", "8", true, false)
+local cv_thick   = CreateClientConVar("snd_crosshair_thickness", "2", true, false)
+local cv_dot     = CreateClientConVar("snd_crosshair_dot", "1", true, false)
+local cv_r       = CreateClientConVar("snd_crosshair_r", "255", true, false)
+local cv_g       = CreateClientConVar("snd_crosshair_g", "255", true, false)
+local cv_b       = CreateClientConVar("snd_crosshair_b", "255", true, false)
+
 SND.Client.XPPopups = SND.Client.XPPopups or {}
 local levelUpTime = 0
 local levelUpAlpha = 0
@@ -41,11 +51,14 @@ end
 
 -- ── Crosshair ────────────────────────────────────────────────────────────
 local function drawCrosshair(sw, sh, sc)
-	local gap = 4 * sc
-	local length = 8 * sc
-	local thickness = 2 * sc
+	if not cv_enabled:GetBool() then return end
+
+	local gap       = cv_gap:GetFloat() * sc
+	local length    = cv_length:GetFloat() * sc
+	local thickness = cv_thick:GetFloat() * sc
 	
-	surface.SetDrawColor(255, 255, 255, 200)
+	surface.SetDrawColor(cv_r:GetInt(), cv_g:GetInt(), cv_b:GetInt(), 220)
+
 	-- Left
 	surface.DrawRect(sw * 0.5 - gap - length, sh * 0.5 - thickness * 0.5, length, thickness)
 	-- Right
@@ -56,7 +69,9 @@ local function drawCrosshair(sw, sh, sc)
 	surface.DrawRect(sw * 0.5 - thickness * 0.5, sh * 0.5 + gap, thickness, length)
 
 	-- Center dot
-	surface.DrawRect(sw * 0.5 - 1, sh * 0.5 - 1, 2, 2)
+	if cv_dot:GetBool() then
+		surface.DrawRect(sw * 0.5 - thickness * 0.5, sh * 0.5 - thickness * 0.5, thickness, thickness)
+	end
 end
 
 -- ── XP Progress Bar ──────────────────────────────────────────────────────
@@ -213,7 +228,7 @@ hook.Add("HUDPaint", "SND_HUD", function()
 	local sc = math.Clamp(cv and cv:GetFloat() or 1, 0.75, 1.5)
 	local sw, sh = ScrW(), ScrH()
 
-	if lp:Alive() and lp:GetObserverMode() == OBS_MODE_NONE then drawCrosshair(sw, sh, sc) end
+	if lp:Alive() and lp:GetObserverMode() == OBS_MODE_NONE and not lp:KeyDown(IN_ATTACK2) then drawCrosshair(sw, sh, sc) end
 
 	if lp:Alive() then drawDamageVignette(sw, sh, sc, lp:Health()) end
 
@@ -316,9 +331,37 @@ hook.Add("HUDPaint", "SND_HUD", function()
 
 	-- ── Central Team Indicator (Freeze Only) ──────────────────────────────
 	if phase == SND.PHASE_FREEZE then
-		local teamStr = (lp:Team() == SND.TEAM_ATTACK) and "ATTACKER" or "DEFENDER"
-		local teamCol = (lp:Team() == SND.TEAM_ATTACK) and C_ATTACK or C_DEFEND
-		draw.SimpleText(teamStr, "DermaLarge", sw * 0.5, sh * 0.5, teamCol, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+		local isAttack = (lp:Team() == SND.TEAM_ATTACK)
+		local teamStr  = isAttack and "ATTACK" or "DEFEND"
+		local subStr   = isAttack and "ELIMINATE ENEMIES OR PLANT THE BOMB" or "ELIMINATE ENEMIES OR DEFUSE THE BOMB"
+		local teamCol  = isAttack and C_ATTACK or C_DEFEND
+
+		-- Match Point Logic
+		local winLimit = SND.Settings.GetInt("win_limit", 4)
+		local attMatchPoint = (SND.Client.AttackScore == winLimit - 1)
+		local defMatchPoint = (SND.Client.DefendScore == winLimit - 1)
+		local isMatchPoint = attMatchPoint or defMatchPoint
+
+		-- Valorant-style banner background
+		local barH = isMatchPoint and 125 * sc or 100 * sc
+		local barY = sh * 0.45 - barH * 0.5
+		
+		surface.SetDrawColor(0, 0, 0, 180)
+		surface.DrawRect(0, barY, sw, barH)
+		
+		-- Side accent lines
+		surface.SetDrawColor(teamCol.r, teamCol.g, teamCol.b, 255)
+		surface.DrawRect(0, barY, 4 * sc, barH)
+		surface.DrawRect(sw - 4 * sc, barY, 4 * sc, barH)
+
+		local offset = isMatchPoint and 25 * sc or 0
+		if isMatchPoint then
+			local mpCol = Color(255, 210, 50, 255)
+			draw.SimpleText("MATCH POINT", "Trebuchet24", sw * 0.5, barY + 20 * sc, mpCol, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+		end
+
+		draw.SimpleText(teamStr, "DermaLarge", sw * 0.5, barY + 35 * sc + offset, teamCol, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+		draw.SimpleText(subStr, "Trebuchet18", sw * 0.5, barY + 70 * sc + offset, C_WHITE, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
 	end
 
 	-- ── FREEZE COUNTDOWN BAR (bottom-center) ──────────────────────────────

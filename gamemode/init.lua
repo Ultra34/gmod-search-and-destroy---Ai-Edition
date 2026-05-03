@@ -4,6 +4,7 @@ AddCSLuaFile("cl_init.lua")
 AddCSLuaFile("cl_hud.lua")
 AddCSLuaFile("cl_settings.lua")
 AddCSLuaFile("snd_bot_anim.lua")
+AddCSLuaFile("cl_crosshair_menu.lua")
 AddCSLuaFile("cl_levels.lua")
 
 include("shared.lua")
