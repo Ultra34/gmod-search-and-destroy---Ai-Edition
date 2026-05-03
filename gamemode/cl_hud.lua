@@ -153,6 +153,57 @@ local function drawWeaponInventory(sw, sh, sc, lp)
 	drawIcon(pri, pName, x, y - 40 * sc, priAlpha)
 end
 
+-- ── Ammo Counter HUD ─────────────────────────────────────────────────────
+local function drawAmmoCounter(sw, sh, sc, lp)
+	local wep = lp:GetActiveWeapon()
+	if not IsValid(wep) then return end
+
+	local clip = wep:Clip1()
+	local reserve = lp:GetAmmoCount(wep:GetPrimaryAmmoType())
+	if clip < 0 then return end -- Don't draw for melee
+
+	local x, y = sw - 20 * sc, sh - 20 * sc
+
+	-- Ammo counts
+	draw.SimpleText(tostring(reserve), "Trebuchet24", x, y, C_DIM, TEXT_ALIGN_RIGHT, TEXT_ALIGN_BOTTOM)
+	surface.SetFont("Trebuchet24")
+	local tw, _ = surface.GetTextSize(tostring(reserve))
+	
+	draw.SimpleText(tostring(clip), "DermaLarge", x - tw - 10 * sc, y + 5 * sc, C_WHITE, TEXT_ALIGN_RIGHT, TEXT_ALIGN_BOTTOM)
+end
+
+-- ── Bomb Plant Prompt ─────────────────────────────────────────────────────
+local function drawPlantPrompt(sw, sh, sc, lp)
+	if lp:Team() ~= SND.TEAM_ATTACK then return end
+	if lp:EntIndex() ~= (SND.Client.BombCarrierIdx or -1) then return end
+	if SND.Client.Phase ~= SND.PHASE_LIVE then return end
+
+	-- Check if looking at a site
+	local tr = lp:GetEyeTrace()
+	if not tr.Hit or tr.StartPos:Distance(tr.HitPos) > 120 then return end
+
+	-- Verify if the hit position is within a site radius
+	local inSite = false
+	local siteName = ""
+	if SND.Client.Sites then
+		for _, s in ipairs(SND.Client.Sites) do
+			if tr.HitPos:Distance(s.pos) < s.radius then
+				inSite = true
+				siteName = s.id
+				break
+			end
+		end
+	end
+
+	if inSite then
+		-- Verify surface angle (mostly flat ground)
+		if tr.HitNormal:Dot(Vector(0, 0, 1)) > 0.65 then
+			local alpha = 180 + math.sin(CurTime() * 10) * 75
+			draw.SimpleText("HOLD [E] TO PLANT AT SITE " .. siteName, "Trebuchet24", sw * 0.5, sh * 0.6, Color(255, 200, 50, alpha), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+		end
+	end
+end
+
 -- ── Main HUD ─────────────────────────────────────────────────────────────
 hook.Add("HUDPaint", "SND_HUD", function()
 	local lp = LocalPlayer()
@@ -181,7 +232,11 @@ hook.Add("HUDPaint", "SND_HUD", function()
 		drawLevelUpPopup(sw, sh, sc)
 	end
 
-	if lp:Alive() then drawWeaponInventory(sw, sh, sc, lp) end
+	if lp:Alive() then
+		drawWeaponInventory(sw, sh, sc, lp)
+		drawAmmoCounter(sw, sh, sc, lp)
+		drawPlantPrompt(sw, sh, sc, lp)
+	end
 
 	-- ── Visual Freeze Effect ──────────────────────────────────────────────
 	local phase = SND.Client.Phase or SND.PHASE_WAIT
@@ -548,7 +603,7 @@ end)
 
 -- ── Disable default GMod Death Notice ─────────────────────────────────────
 hook.Add("HUDShouldDraw", "SND_DisableDefaultKillFeed", function(name)
-	if name == "CHudDeathNotice" or name == "CHudWeaponSelection" or name == "CHudHistoryResource" or name == "CHudHealth" or name == "CHudBattery" then
+	if name == "CHudDeathNotice" or name == "CHudWeaponSelection" or name == "CHudHistoryResource" or name == "CHudHealth" or name == "CHudBattery" or name == "CHudAmmo" then
 		return false
 	end
 end)

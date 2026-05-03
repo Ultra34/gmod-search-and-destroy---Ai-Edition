@@ -5,14 +5,14 @@
 ]]
 
 -- ── Site data sent from server ────────────────────────────────────────────
-local Sites = {}   -- { { id="A", pos=Vector, radius=120 }, ... }
+SND.Client.Sites = {}   -- Global for HUD prompt
 
 -- Server sends site positions when the round state changes
 net.Receive("SND_SiteData", function()
 	local n = net.ReadUInt(8)
-	Sites = {}
+	SND.Client.Sites = {}
 	for i = 1, n do
-		Sites[i] = {
+		SND.Client.Sites[i] = {
 			id     = net.ReadString(),
 			pos    = net.ReadVector(),
 			radius = net.ReadFloat(),
@@ -84,7 +84,7 @@ end
 
 -- ── Main render hook ──────────────────────────────────────────────────────
 hook.Add("PostDrawTranslucentRenderables", "SND_SiteMarkers", function()
-	if #Sites == 0 then return end
+	if not SND.Client.Sites or #SND.Client.Sites == 0 then return end
 	local lp = LocalPlayer()
 	if not IsValid(lp) then return end
 
@@ -95,7 +95,7 @@ hook.Add("PostDrawTranslucentRenderables", "SND_SiteMarkers", function()
 	local bombPlanted = SND.Bomb and SND.Bomb.State == SND.BOMB_STATE_PLANTED
 	local plantedId   = SND.Bomb and SND.Bomb.PlantedSite
 
-	for _, site in ipairs(Sites) do
+	for _, site in ipairs(SND.Client.Sites) do
 		local col     = siteColor(site)
 		local isThisBombSite = bombPlanted and plantedId == site.id
 
@@ -118,7 +118,7 @@ end)
 
 -- ── 2D overlay: floating letters + countdown ──────────────────────────────
 hook.Add("HUDPaint", "SND_SiteHUD", function()
-	if #Sites == 0 then return end
+	if not SND.Client.Sites or #SND.Client.Sites == 0 then return end
 	local lp = LocalPlayer()
 	if not IsValid(lp) then return end
 
@@ -129,7 +129,7 @@ hook.Add("HUDPaint", "SND_SiteHUD", function()
 	local plantedId   = SND.Bomb and SND.Bomb.PlantedSite
 	local plantTime   = SND.Bomb and SND.Bomb.PlantTime
 
-	for _, site in ipairs(Sites) do
+	for _, site in ipairs(SND.Client.Sites) do
 		local col         = siteColor(site)
 		local isPlanted   = bombPlanted and plantedId == site.id
 		local labelPos    = site.pos + Vector(0, 0, 90)
