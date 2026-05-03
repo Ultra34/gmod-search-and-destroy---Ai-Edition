@@ -1,7 +1,7 @@
 "snd_mwclassic"
 {
 	"base"		"base"
-	"title"		"Search and Destroy ARC9 MW2"
+	"title"		" GMod - Search & Destroy"
 	"maps"		"^snd_|^de_|^gm_|^ttt_"
 	"category"	"pvp"
 	"menusystem"	"1"
