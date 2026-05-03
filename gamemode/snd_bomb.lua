@@ -374,6 +374,16 @@ hook.Add("PlayerDeath", "SND_BombCarrierDeathFix", function(victim)
 	end
 end)
 
+-- Ensure only attackers can carry the bomb (reassign if team changes)
+hook.Add("OnPlayerChangedTeam", "SND_BombTeamChangeFix", function(ply, oldTeam, newTeam)
+	if SND.Bomb.State == SND.BOMB_STATE_CARRIED and ply == SND.Bomb.Carrier then
+		if newTeam ~= SND.TEAM_ATTACK then
+			SND.Bomb.Carrier = nil
+			timer.Simple(1, function() SND.Bomb.AssignCarrier() end)
+		end
+	end
+end)
+
 -- ── Interaction Logic (Key + Bot Support) ────────────────────────────────
 local function handleInteraction(ply)
 	if not IsValid(ply) or not ply:Alive() then return end

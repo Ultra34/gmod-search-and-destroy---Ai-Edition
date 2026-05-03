@@ -268,14 +268,14 @@ hook.Add("HUDPaint", "SND_HUD", function()
 		if not scr.visible then continue end
 
 		-- Teammates visible from far away; enemies fade out much closer (CoD style)
-		local startFade = isTeammate and 800 or 250
-		local endFade = isTeammate and 1200 or 500
+		local startFade = isTeammate and 800 or 100
+		local endFade = isTeammate and 1200 or 300
 
 		local alpha = math.Clamp(255 * (1 - (dist - startFade) / (endFade - startFade)), isTeammate and 40 or 0, 220)
 		if alpha <= 0 then continue end
 
 		local teamColor = (target:Team() == SND.TEAM_ATTACK) and C_ATTACK or C_DEFEND
-		draw.SimpleText(target:Nick(), "Trebuchet18", scr.x, scr.y, Color(teamColor.r, teamColor.g, teamColor.b, alpha), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+		draw.SimpleText(target:Nick(), "Trebuchet24", scr.x, scr.y, Color(teamColor.r, teamColor.g, teamColor.b, alpha), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
 	end
 
 	-- ── Victory Messages (Round End) ──────────────────────────────────────
