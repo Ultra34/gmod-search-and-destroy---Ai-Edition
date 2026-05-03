@@ -15,6 +15,7 @@ SND.Config   = SND.Config or {}
 SND.Settings = SND.Settings or {}
 SND.Round    = SND.Round or {}
 SND.Bomb = SND.Bomb or {}
+SND.Levels   = SND.Levels or {}
 SND.Teams    = SND.Teams or {}
 SND.Bots     = SND.Bots or {}
 if CLIENT then SND.Client = SND.Client or {} end

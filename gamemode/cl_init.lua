@@ -164,7 +164,7 @@ local function createScoreboard()
 
 			-- Level Icon / Number
 			local lvl = ply:GetNWInt("SND_Level", 1)
-			local mat = SND.Levels.GetIcon(lvl)
+			local mat = (SND.Levels and SND.Levels.GetIcon) and SND.Levels.GetIcon(lvl) or nil
 			if mat then
 				surface.SetMaterial(mat)
 				surface.SetDrawColor(255, 255, 255, 255)
