@@ -10,6 +10,8 @@ net.Receive("SND_FreezeInfo", function()
 	freezeDuration = net.ReadFloat()   -- total freeze seconds (for bar width)
 end)
 
+SND.Client.XPPopups = SND.Client.XPPopups or {}
+
 -- ── Colours ───────────────────────────────────────────────────────────────
 local function col(r, g, b, a) return Color(r, g, b, a or 255) end
 
@@ -28,6 +30,26 @@ local function pill(x, y, w, h, c)
 	draw.RoundedBox(6, x, y, w, h, c)
 end
 
+-- ── Crosshair ────────────────────────────────────────────────────────────
+local function drawCrosshair(sw, sh, sc)
+	local gap = 4 * sc
+	local length = 8 * sc
+	local thickness = 2 * sc
+	
+	surface.SetDrawColor(255, 255, 255, 200)
+	-- Left
+	surface.DrawRect(sw * 0.5 - gap - length, sh * 0.5 - thickness * 0.5, length, thickness)
+	-- Right
+	surface.DrawRect(sw * 0.5 + gap, sh * 0.5 - thickness * 0.5, length, thickness)
+	-- Top
+	surface.DrawRect(sw * 0.5 - thickness * 0.5, sh * 0.5 - gap - length, thickness, length)
+	-- Bottom
+	surface.DrawRect(sw * 0.5 - thickness * 0.5, sh * 0.5 + gap, thickness, length)
+
+	-- Center dot
+	surface.DrawRect(sw * 0.5 - 1, sh * 0.5 - 1, 2, 2)
+end
+
 -- ── Main HUD ─────────────────────────────────────────────────────────────
 hook.Add("HUDPaint", "SND_HUD", function()
 	local lp = LocalPlayer()
@@ -36,6 +58,8 @@ hook.Add("HUDPaint", "SND_HUD", function()
 	local cv = GetConVar("snd_hud_scale")
 	local sc = math.Clamp(cv and cv:GetFloat() or 1, 0.75, 1.5)
 	local sw, sh = ScrW(), ScrH()
+
+	if lp:Alive() and lp:GetObserverMode() == OBS_MODE_NONE then drawCrosshair(sw, sh, sc) end
 
 	-- ── Visual Freeze Effect ──────────────────────────────────────────────
 	local phase = SND.Client.Phase or SND.PHASE_WAIT
@@ -283,6 +307,25 @@ hook.Add("HUDPaint", "SND_HUD", function()
 
 		local teamColor = (target:Team() == SND.TEAM_ATTACK) and C_ATTACK or C_DEFEND
 		draw.SimpleText(target:Nick(), "Trebuchet24", scr.x, scr.y, Color(teamColor.r, teamColor.g, teamColor.b, alpha), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+	end
+
+	-- ── XP Popups ────────────────────────────────────────────────────────
+	for i = #SND.Client.XPPopups, 1, -1 do
+		local p = SND.Client.XPPopups[i]
+		local age = CurTime() - p.time
+		if age > 2 then table.remove(SND.Client.XPPopups, i) continue end
+
+		local alpha = math.Clamp(1 - (age / 2), 0, 1) * 255
+		local yOffset = age * 40 * sc
+		
+		draw.SimpleText(
+			"+" .. p.amount,
+			"Trebuchet24",
+			sw * 0.5 + 40 * sc,
+			sh * 0.5 - 20 * sc - yOffset,
+			Color(255, 255, 255, alpha),
+			TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER
+		)
 	end
 
 	-- ── Victory Messages (Round End) ──────────────────────────────────────

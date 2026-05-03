@@ -4,6 +4,7 @@ include("snd_bot_anim.lua")
 include("cl_hud.lua")
 include("snd_movement.lua")
 include("cl_settings.lua")
+include("cl_levels.lua")
 
 SND = SND or {}
 SND.Client = SND.Client or {}
@@ -93,7 +94,10 @@ local scoreboard = nil
 
 local function createScoreboard()
 	local f = vgui.Create("EditablePanel")
-	f:SetSize(math.min(ScrW() * 0.8, 800), ScrH() * 0.7)
+	local cv = GetConVar("snd_hud_scale")
+	local sc = math.Clamp(cv and cv:GetFloat() or 1, 0.75, 1.5)
+
+	f:SetSize(900 * sc, 700 * sc)
 	f:Center()
 	f:MakePopup()
 	f:SetKeyboardInputEnabled(false)
@@ -105,44 +109,44 @@ local function createScoreboard()
 		surface.DrawOutlinedRect(0, 0, w, h)
 
 		-- Top Bar (Match Info)
-		surface.SetDrawColor(0, 0, 0, 200)
-		surface.DrawRect(0, 0, w, 60)
-		draw.SimpleText("SEARCH & DESTROY", "SND_MW2_Title", 20, 30, Color(220, 220, 220), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
-		draw.SimpleText(game.GetMap():upper(), "SND_MW2_Header", w - 20, 30, Color(150, 150, 150), TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)
+		surface.SetDrawColor(0, 0, 0, 220)
+		surface.DrawRect(0, 0, w, 60 * sc)
+		draw.SimpleText("SEARCH & DESTROY", "SND_MW2_Title", 20 * sc, 30 * sc, Color(220, 220, 220), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+		draw.SimpleText(game.GetMap():upper(), "SND_MW2_Header", w - 20 * sc, 30 * sc, Color(150, 150, 150), TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)
 
 		-- Column Headers
 		surface.SetDrawColor(40, 40, 40, 255)
-		surface.DrawRect(0, 60, w, 25)
-		local cols = { {n="NAME", x=40, a=0}, {n="SCORE", x=w-260, a=1}, {n="KILLS", x=w-180, a=1}, {n="DEATHS", x=w-100, a=1}, {n="PING", x=w-30, a=1} }
+		surface.DrawRect(0, 60 * sc, w, 25 * sc)
+		local cols = { {n="LVL", x=30*sc, a=1}, {n="NAME", x=80*sc, a=0}, {n="SCORE", x=w-260*sc, a=1}, {n="KILLS", x=w-180*sc, a=1}, {n="DEATHS", x=w-100*sc, a=1}, {n="PING", x=w-30*sc, a=1} }
 		for _, c in ipairs(cols) do
-			draw.SimpleText(c.n, "SND_MW2_Header", c.x, 72, Color(200, 200, 200), c.a, TEXT_ALIGN_CENTER)
+			draw.SimpleText(c.n, "SND_MW2_Header", c.x, (60 + 12.5) * sc, Color(200, 200, 200), c.a, TEXT_ALIGN_CENTER)
 		end
 	end
 
 	local scroll = vgui.Create("DScrollPanel", f)
 	scroll:Dock(FILL)
-	scroll:DockMargin(0, 60 + 25, 0, 0)
+	scroll:DockMargin(0, (60 + 25) * sc, 0, 0)
 
 	local function addTeamHeader(name, score, color, list)
 		local p = list:Add("DPanel")
 		p:Dock(TOP)
-		p:SetTall(40)
+		p:SetTall(40 * sc)
 		p:DockMargin(0, 5, 0, 2)
 		p.Paint = function(self, w, h)
 			surface.SetDrawColor(color.r, color.g, color.b, 60)
 			surface.DrawRect(0, 0, w, h)
 			surface.SetDrawColor(color.r, color.g, color.b, 255)
-			surface.DrawRect(0, 0, 5, h)
+			surface.DrawRect(0, 0, 5 * sc, h)
 			
-			draw.SimpleText(name:upper(), "SND_MW2_Team", 15, h/2, color, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
-			draw.SimpleText(tostring(score), "SND_MW2_Score", w - 15, h/2, Color(255, 255, 255), TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)
+			draw.SimpleText(name:upper(), "SND_MW2_Team", 15 * sc, h/2, color, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+			draw.SimpleText(tostring(score), "SND_MW2_Score", w - 15 * sc, h/2, Color(255, 255, 255), TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)
 		end
 	end
 
 	local function addPlayerRow(ply, list)
 		local p = list:Add("DPanel")
 		p:Dock(TOP)
-		p:SetTall(38)
+		p:SetTall(38 * sc)
 		p:DockMargin(0, 0, 0, 1)
 
 		p.Paint = function(self, w, h)
@@ -158,20 +162,31 @@ local function createScoreboard()
 			local teamCol = isAttacker and Color(200, 40, 40) or Color(60, 150, 220)
 			local txtCol = ply:Alive() and Color(230, 230, 230) or Color(100, 100, 100)
 
-			draw.SimpleText(ply:Nick(), "SND_MW2_Player", 40, h/2, txtCol, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+			-- Level Icon / Number
+			local lvl = ply:GetNWInt("SND_Level", 1)
+			local mat = SND.Levels.GetIcon(lvl)
+			if mat then
+				surface.SetMaterial(mat)
+				surface.SetDrawColor(255, 255, 255, 255)
+				surface.DrawTexturedRect(15 * sc, h/2 - 12 * sc, 24 * sc, 24 * sc)
+			else
+				draw.SimpleText(tostring(lvl), "SND_MW2_Header", 30 * sc, h/2, Color(255, 210, 50), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+			end
+
+			draw.SimpleText(ply:Nick(), "SND_MW2_Player", 80 * sc, h/2, txtCol, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
 
 			-- Stats
-			draw.SimpleText(ply:Frags() * 100, "SND_MW2_Player", w-260, h/2, txtCol, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
-			draw.SimpleText(ply:Frags(), "SND_MW2_Player", w-180, h/2, txtCol, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
-			draw.SimpleText(ply:Deaths(), "SND_MW2_Player", w-100, h/2, txtCol, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+			draw.SimpleText(ply:Frags() * 100, "SND_MW2_Player", w-260 * sc, h/2, txtCol, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+			draw.SimpleText(ply:Frags(), "SND_MW2_Player", w-180 * sc, h/2, txtCol, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+			draw.SimpleText(ply:Deaths(), "SND_MW2_Player", w-100 * sc, h/2, txtCol, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
 			
 			-- Ping Bars
-			local ping = math.Clamp(ply:Ping(), 0, 999)
+			local ping = ply:Ping()
 			local pingCol = Color(0, 255, 0, 200)
 			if ping > 150 then pingCol = Color(255, 0, 0, 200)
 			elseif ping > 75 then pingCol = Color(255, 200, 0, 200) end
 			
-			draw.SimpleText(tostring(ping), "SND_MW2_Player", w-30, h/2, pingCol, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+			draw.SimpleText(tostring(ping), "SND_MW2_Player", w-30 * sc, h/2, pingCol, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
 		end
 	end
 
