@@ -85,11 +85,11 @@ hook.Add("PopulateToolMenu", "SND_SettingsMenu", function()
 end)
 
 -- ── MW2 Scoreboard Implementation ────────────────────────────────────────
-surface.CreateFont("SND_MW2_Title", { font = "Verdana", size = 28, weight = 900, italic = true })
-surface.CreateFont("SND_MW2_Team", { font = "Verdana", size = 20, weight = 800 })
-surface.CreateFont("SND_MW2_Score", { font = "Verdana", size = 32, weight = 800 })
-surface.CreateFont("SND_MW2_Header", { font = "Verdana", size = 14, weight = 600, uppercase = true })
-surface.CreateFont("SND_MW2_Player", { font = "Verdana", size = 18, weight = 600 })
+surface.CreateFont("SND_BO3_Title", { font = "Verdana", size = 24, weight = 900, italic = true })
+surface.CreateFont("SND_BO3_Team", { font = "Verdana", size = 18, weight = 800 })
+surface.CreateFont("SND_BO3_Score", { font = "Verdana", size = 28, weight = 800 })
+surface.CreateFont("SND_BO3_Header", { font = "Verdana", size = 12, weight = 600, uppercase = true, antialias = true })
+surface.CreateFont("SND_BO3_Player", { font = "Verdana", size = 16, weight = 500 })
 
 local scoreboard = nil
 
@@ -104,23 +104,32 @@ local function createScoreboard()
 	f:SetKeyboardInputEnabled(false)
 
 	f.Paint = function(self, w, h)
-		-- Main Dark Background
-		draw.RoundedBox(0, 0, 0, w, h, Color(10, 10, 10, 230))
-		surface.SetDrawColor(60, 60, 60, 100)
-		surface.DrawOutlinedRect(0, 0, w, h)
+		-- BO3 Sleek Translucent Background
+		surface.SetDrawColor(15, 15, 15, 235)
+		surface.DrawRect(0, 0, w, h)
+		
+		-- Top Accent Bar (BO3 Orange)
+		surface.SetDrawColor(255, 120, 0, 255)
+		surface.DrawRect(0, 0, w, 2 * sc)
 
-		-- Top Bar (Match Info)
-		surface.SetDrawColor(0, 0, 0, 220)
-		surface.DrawRect(0, 0, w, 60 * sc)
-		draw.SimpleText("SEARCH & DESTROY", "SND_MW2_Title", 20 * sc, 30 * sc, Color(220, 220, 220), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
-		draw.SimpleText(game.GetMap():upper(), "SND_MW2_Header", w - 20 * sc, 30 * sc, Color(150, 150, 150), TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)
+		-- Top Header Area
+		surface.SetDrawColor(0, 0, 0, 150)
+		surface.DrawRect(0, 2 * sc, w, 50 * sc)
+		
+		draw.SimpleText("SEARCH & DESTROY", "SND_BO3_Title", 20 * sc, 27 * sc, Color(255, 255, 255), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+		draw.SimpleText(game.GetMap():upper(), "SND_BO3_Header", w - 20 * sc, 27 * sc, Color(180, 180, 180), TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)
 
-		-- Column Headers
-		surface.SetDrawColor(40, 40, 40, 255)
-		surface.DrawRect(0, 60 * sc, w, 25 * sc)
-		local cols = { {n="LVL", x=30*sc, a=1}, {n="NAME", x=80*sc, a=0}, {n="SCORE", x=w-260*sc, a=1}, {n="KILLS", x=w-180*sc, a=1}, {n="DEATHS", x=w-100*sc, a=1}, {n="PING", x=w-30*sc, a=1} }
+		-- Stats Header Strip
+		surface.SetDrawColor(30, 30, 30, 255)
+		surface.DrawRect(0, 52 * sc, w, 22 * sc)
+		
+		local cols = { 
+			{n="RANK", x=30*sc, a=1}, {n="PLAYER", x=80*sc, a=0}, 
+			{n="SCORE", x=w-280*sc, a=1}, {n="KILLS", x=w-200*sc, a=1}, 
+			{n="DEATHS", x=w-120*sc, a=1}, {n="PING", x=w-40*sc, a=1} 
+		}
 		for _, c in ipairs(cols) do
-			draw.SimpleText(c.n, "SND_MW2_Header", c.x, (60 + 12.5) * sc, Color(200, 200, 200), c.a, TEXT_ALIGN_CENTER)
+			draw.SimpleText(c.n, "SND_BO3_Header", c.x, (52 + 11) * sc, Color(150, 150, 150), c.a, TEXT_ALIGN_CENTER)
 		end
 	end
 
@@ -131,37 +140,39 @@ local function createScoreboard()
 	local function addTeamHeader(name, score, color, list)
 		local p = list:Add("DPanel")
 		p:Dock(TOP)
-		p:SetTall(40 * sc)
-		p:DockMargin(0, 5, 0, 2)
+		p:SetTall(32 * sc)
+		p:DockMargin(0, 10 * sc, 0, 2 * sc)
 		p.Paint = function(self, w, h)
-			surface.SetDrawColor(color.r, color.g, color.b, 60)
+			-- BO3 Team Divider
+			surface.SetDrawColor(color.r, color.g, color.b, 40)
 			surface.DrawRect(0, 0, w, h)
-			surface.SetDrawColor(color.r, color.g, color.b, 255)
-			surface.DrawRect(0, 0, 5 * sc, h)
+			surface.SetDrawColor(color.r, color.g, color.b, 180)
+			surface.DrawRect(0, h-1, w, 1) -- Bottom thin line
 			
-			draw.SimpleText(name:upper(), "SND_MW2_Team", 15 * sc, h/2, color, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
-			draw.SimpleText(tostring(score), "SND_MW2_Score", w - 15 * sc, h/2, Color(255, 255, 255), TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)
+			draw.SimpleText(name:upper(), "SND_BO3_Team", 15 * sc, h/2, Color(255, 255, 255), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+			draw.SimpleText(tostring(score), "SND_BO3_Score", w - 40 * sc, h/2, color, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
 		end
 	end
 
 	local function addPlayerRow(ply, list)
 		local p = list:Add("DPanel")
 		p:Dock(TOP)
-		p:SetTall(38 * sc)
-		p:DockMargin(0, 0, 0, 1)
+		p:SetTall(34 * sc)
+		p:DockMargin(0, 0, 0, 1 * sc)
 
 		p.Paint = function(self, w, h)
 			if not IsValid(ply) then return end
 			
-			-- Local Player Highlight
+			-- BO3-style Row Background
 			if ply == LocalPlayer() then
-				surface.SetDrawColor(255, 255, 200, 25)
+				surface.SetDrawColor(255, 120, 0, 40)
+				surface.DrawRect(0, 0, w, h)
+			else
+				surface.SetDrawColor(255, 255, 255, 5)
 				surface.DrawRect(0, 0, w, h)
 			end
 
-			local isAttacker = ply:Team() == SND.TEAM_ATTACK
-			local teamCol = isAttacker and Color(200, 40, 40) or Color(60, 150, 220)
-			local txtCol = ply:Alive() and Color(230, 230, 230) or Color(100, 100, 100)
+			local txtCol = ply:Alive() and Color(255, 255, 255) or Color(120, 120, 120)
 
 			-- Level Icon / Number
 			local lvl = ply:GetNWInt("SND_Level", 1)
@@ -171,23 +182,28 @@ local function createScoreboard()
 				surface.SetDrawColor(255, 255, 255, 255)
 				surface.DrawTexturedRect(15 * sc, h/2 - 12 * sc, 24 * sc, 24 * sc)
 			else
-				draw.SimpleText(tostring(lvl), "SND_MW2_Header", 30 * sc, h/2, Color(255, 210, 50), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+				draw.SimpleText(tostring(lvl), "SND_BO3_Header", 30 * sc, h/2, Color(255, 180, 0), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
 			end
 
-			draw.SimpleText(ply:Nick(), "SND_MW2_Player", 80 * sc, h/2, txtCol, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+			-- Specialist / Team Color Accent
+			local isAttacker = ply:Team() == SND.TEAM_ATTACK
+			surface.SetDrawColor(isAttacker and 220 or 60, isAttacker and 70 or 140, isAttacker and 50 or 220, 200)
+			surface.DrawRect(70 * sc, 8 * sc, 3 * sc, h - 16 * sc)
 
-			-- Stats
-			draw.SimpleText(ply:Frags() * 100, "SND_MW2_Player", w-260 * sc, h/2, txtCol, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
-			draw.SimpleText(ply:Frags(), "SND_MW2_Player", w-180 * sc, h/2, txtCol, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
-			draw.SimpleText(ply:Deaths(), "SND_MW2_Player", w-100 * sc, h/2, txtCol, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+			draw.SimpleText(ply:Nick():upper(), "SND_BO3_Player", 80 * sc, h/2, txtCol, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+
+			-- Stats (BO3 justified alignment)
+			draw.SimpleText(ply:Frags() * 100, "SND_BO3_Player", w-280 * sc, h/2, txtCol, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+			draw.SimpleText(ply:Frags(), "SND_BO3_Player", w-200 * sc, h/2, txtCol, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+			draw.SimpleText(ply:Deaths(), "SND_BO3_Player", w-120 * sc, h/2, txtCol, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
 			
 			-- Ping Bars
 			local ping = ply:Ping()
-			local pingCol = Color(0, 255, 0, 200)
-			if ping > 150 then pingCol = Color(255, 0, 0, 200)
-			elseif ping > 75 then pingCol = Color(255, 200, 0, 200) end
+			local pingCol = Color(0, 255, 100, 150)
+			if ping > 150 then pingCol = Color(255, 50, 50, 150)
+			elseif ping > 75 then pingCol = Color(255, 200, 0, 150) end
 			
-			draw.SimpleText(tostring(ping), "SND_MW2_Player", w-30 * sc, h/2, pingCol, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+			draw.SimpleText(tostring(ping), "SND_BO3_Player", w-40 * sc, h/2, pingCol, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
 		end
 	end
 
