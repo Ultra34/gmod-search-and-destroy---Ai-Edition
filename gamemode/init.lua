@@ -81,6 +81,66 @@ function GM:PlayerDeath(victim, inflictor, attacker)
 	SND.Announcer.OnDeathContext(victim, attacker)
 end
 
+-- ── Killcam Recording System ─────────────────────────────────────────────
+SND.Killcam = SND.Killcam or {}
+SND.Killcam.History = {} -- [entindex] = { {pos, ang}, ... }
+SND.Killcam.LastKillData = nil
+
+local MAX_HISTORY = 132 -- ~4 seconds at 33tps
+
+hook.Add("Tick", "SND_KillcamRecord", function()
+	if SND.Round.Phase ~= SND.PHASE_LIVE then return end
+
+	for _, ply in ipairs(player.GetAll()) do
+		local idx = ply:EntIndex()
+		SND.Killcam.History[idx] = SND.Killcam.History[idx] or {}
+		local hist = SND.Killcam.History[idx]
+
+		table.insert(hist, {
+			p = ply:GetPos(),
+			a = ply:EyeAngles(),
+			v = ply:GetVelocity()
+		})
+
+		if #hist > MAX_HISTORY then
+			table.remove(hist, 1)
+		end
+	end
+end)
+
+function SND.Killcam.SetFinalKill(attacker, victim, weapon)
+	if not IsValid(attacker) or not attacker:IsPlayer() then return end
+	
+	local hist = SND.Killcam.History[attacker:EntIndex()]
+	if not hist or #hist < 10 then return end
+
+	SND.Killcam.LastKillData = {
+		attacker = attacker,
+		victim = victim,
+		weapon = weapon,
+		points = table.Copy(hist)
+	}
+end
+
+function SND.Killcam.SendFinalKillcam()
+	local data = SND.Killcam.LastKillData
+	if not data then return end
+
+	net.Start("SND_KillCam")
+		net.WriteEntity(data.attacker)
+		net.WriteEntity(data.victim)
+		net.WriteString(data.weapon)
+		net.WriteUInt(#data.points, 16)
+		for _, pt in ipairs(data.points) do
+			net.WriteVector(pt.p)
+			net.WriteAngle(pt.a)
+		end
+	net.Broadcast()
+	
+	-- Reset for next round
+	SND.Killcam.LastKillData = nil
+end
+
 -- ── Health Regeneration (CoD Style) ──────────────────────────────────────
 hook.Add("Think", "SND_HealthRegen", function()
 	local now = CurTime()

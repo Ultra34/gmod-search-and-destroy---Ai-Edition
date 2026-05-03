@@ -17,6 +17,13 @@ SND.Client.KillFeed = SND.Client.KillFeed or {} -- Initialize kill feed table
 SND.Bomb = SND.Bomb or {}
 SND.Round.RoundTimerEnd = 0
 
+SND.Killcam = SND.Killcam or {}
+SND.Killcam.Active = false
+SND.Killcam.Data = nil
+SND.Killcam.StartTime = 0
+SND.Killcam.PlaybackIndex = 1
+local TICK_INTERVAL = 0.033
+
 net.Receive("SND_RoundState", function()
 	local phase = net.ReadUInt(3)
 	SND.Client.Phase = phase
@@ -28,6 +35,15 @@ net.Receive("SND_RoundState", function()
 	-- Clear bomb carrier whenever a round resets or moves to freeze
 	if phase == SND.PHASE_FREEZE then
 		SND.Client.BombCarrier = nil
+	end
+
+	-- Force the crosshair toggle state to reset on phase changes
+	-- This prevents it being stuck hidden if the round ends while scoped.
+	hook.Run("SND_ResetCrosshairState")
+
+	if phase == SND.PHASE_FREEZE then
+		SND.Killcam.Active = false
+		SND.Killcam.Data = nil
 	end
 end)
 
@@ -65,6 +81,45 @@ net.Receive("SND_KillFeed", function()
         weaponName = weaponName,
         timestamp = CurTime()
     })
+end)
+
+net.Receive("SND_KillCam", function()
+	local attacker = net.ReadEntity()
+	local victim = net.ReadEntity()
+	local weapon = net.ReadString()
+	local count = net.ReadUInt(16)
+	local points = {}
+
+	for i = 1, count do
+		points[i] = {
+			p = net.ReadVector(),
+			a = net.ReadAngle()
+		}
+	end
+
+	SND.Killcam.Data = {
+		attacker = attacker,
+		victim = victim,
+		weapon = weapon,
+		points = points
+	}
+	SND.Killcam.Active = true
+	SND.Killcam.StartTime = CurTime()
+	SND.Killcam.PlaybackIndex = 1
+end)
+
+hook.Add("CalcView", "SND_KillcamView", function(ply, pos, ang, fov)
+	if not SND.Killcam.Active or not SND.Killcam.Data then return end
+
+	local data = SND.Killcam.Data
+	local index = math.floor((CurTime() - SND.Killcam.StartTime) / TICK_INTERVAL) + 1
+	local point = data.points[index] or data.points[#data.points]
+
+	return {
+		origin = point.p + Vector(0,0,64), -- Eye height offset
+		angles = point.a,
+		fov = fov
+	}
 end)
 
 net.Receive("SND_MapVote", function()

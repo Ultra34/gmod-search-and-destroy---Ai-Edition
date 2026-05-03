@@ -36,7 +36,11 @@ hook.Add("PlayerButtonDown", "SND_CrosshairToggle", function(ply, btn)
 	end
 end)
 
-hook.Add("PlayerSpawn", "SND_ResetCrosshair", function(ply)
+hook.Add("SND_ResetCrosshairState", "SND_ResetCrosshair", function()
+	crosshairVisible = true
+end)
+
+hook.Add("PlayerSpawn", "SND_ResetCrosshairOnSpawn", function(ply)
 	if ply == LocalPlayer() then crosshairVisible = true end
 end)
 
@@ -608,6 +612,24 @@ hook.Add("HUDPaint", "SND_HUD", function()
 		if subStr ~= "" then
 			draw.SimpleText(subStr, "Trebuchet24", sw * 0.5, sh * 0.3 + 40 * sc, C_DIM, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
 		end
+	end
+
+	-- ── Killcam Overlay ──────────────────────────────────────────────────
+	if SND.Killcam and SND.Killcam.Active and SND.Killcam.Data then
+		local data = SND.Killcam.Data
+		surface.SetDrawColor(0, 0, 0, 150)
+		surface.DrawRect(0, 0, sw, 80 * sc)
+		surface.DrawRect(0, sh - 80 * sc, sw, 80 * sc)
+
+		surface.SetDrawColor(255, 120, 0, 255)
+		surface.DrawRect(0, 78 * sc, sw, 2 * sc)
+		surface.DrawRect(0, sh - 80 * sc, sw, 2 * sc)
+
+		draw.SimpleText("FINAL KILLCAM", "SND_BO3_Title", sw * 0.5, 40 * sc, Color(255, 255, 255), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+		
+		local attackerName = IsValid(data.attacker) and data.attacker:Nick():upper() or "PLAYER"
+		local weaponName = data.weapon:upper()
+		draw.SimpleText(attackerName .. "  //  " .. weaponName, "Trebuchet24", 40 * sc, sh - 40 * sc, Color(255, 120, 0), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
 	end
 
 	-- ── Spectator label ───────────────────────────────────────────────────

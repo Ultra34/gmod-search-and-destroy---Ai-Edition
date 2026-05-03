@@ -66,6 +66,13 @@ function SND.Round.EndRound(reason)
 	SND.Announcer.OnRoundEnd(reason)
 	SND.Bomb.ResetForRound()
 
+	-- Play Final Killcam if applicable
+	if reason ~= SND.WIN_DRAW and reason ~= SND.WIN_TIME then
+		timer.Simple(0.5, function()
+			SND.Killcam.SendFinalKillcam()
+		end)
+	end
+
 	local lim = SND.Settings.GetInt("win_limit", 4)
 	if SND.Round.AttackScore >= lim or SND.Round.DefendScore >= lim then
 		timer.Simple(4, function()
@@ -130,6 +137,9 @@ end
 function SND.Round.OnPlayerDeath(victim, attacker)
 	if not IsValid(victim) or not victim:IsPlayer() then return end
 	victim.SND_DeathTime = CurTime()
+
+	-- Record this as the potentially final kill
+	SND.Killcam.SetFinalKill(attacker, victim, IsValid(attacker) and IsValid(attacker:GetActiveWeapon()) and attacker:GetActiveWeapon():GetPrintName() or "Weapon")
 
 	-- Send kill feed data to clients
 	if IsValid(attacker) and attacker:IsPlayer() and attacker ~= victim then
