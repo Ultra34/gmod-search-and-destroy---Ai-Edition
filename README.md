@@ -1,3 +1,5 @@
+> **Disclaimer:** This project is a collaborative development effort between a human developer and Artificial Intelligence (Gemini). While AI was utilized for code generation, logic structuring, and documentation, all features have been reviewed, refined, and integrated by the human maintainer to ensure gameplay quality and technical stability.
+
 # GMod Search & Destroy
 
 A Garry's Mod **gamemode** built around Call of Duty-style Search & Destroy rules.  
