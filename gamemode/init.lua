@@ -106,8 +106,10 @@ hook.Add("Tick", "SND_KillcamRecord", function()
 			w  = IsValid(wep) and wep:GetClass() or "",
 			s  = ply:GetSequence(),
 			cy = ply:GetCycle(),
-			ws = IsValid(wep) and wep:GetSequence() or 0, -- Weapon sequence
-			wc = IsValid(wep) and wep:GetCycle() or 0     -- Weapon cycle
+			ws = IsValid(wep) and wep:GetSequence() or 0,
+			wc = IsValid(wep) and wep:GetCycle() or 0,
+			vp = ply:GetViewPunchAngles(), -- Record recoil/kick
+			f  = ply:GetFOV() -- Record FOV for ADS transitions
 		})
 
 		if #hist > MAX_HISTORY then
@@ -164,6 +166,8 @@ function SND.Killcam.SendFinalKillcam()
 			net.WriteString(pt.w or "")
 			net.WriteUInt(pt.ws or 0, 16)
 			net.WriteFloat(pt.wc or 0)
+			net.WriteAngle(pt.vp or Angle(0,0,0))
+			net.WriteFloat(pt.f or 90)
 		end
 		net.WriteUInt(#data.vicPoints, 16)
 		for _, pt in ipairs(data.vicPoints) do

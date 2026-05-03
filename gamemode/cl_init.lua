@@ -109,7 +109,9 @@ net.Receive("SND_KillCam", function()
 			b = net.ReadUInt(32),
 			w = net.ReadString(),
 			ws = net.ReadUInt(16),
-			wc = net.ReadFloat()
+			wc = net.ReadFloat(),
+			vp = net.ReadAngle(),
+			f = net.ReadFloat()
 		}
 	end
 
@@ -162,15 +164,14 @@ hook.Add("CalcView", "SND_KillcamView", function(ply, pos, ang, fov)
 	-- Interpolate for smooth playback
 	local viewPos = LerpVector(frac, p1.p, p2.p) + LerpVector(frac, p1.o, p2.o)
 	local viewAng = LerpAngle(frac, p1.a, p2.a)
+	local viewPunch = LerpAngle(frac, p1.vp, p2.vp)
+	local fovVal = Lerp(frac, p1.f, p2.f)
 
-	-- Add procedural recoil to camera when firing to keep arms/camera in sync
-	if bit.band(p1.b, IN_ATTACK) ~= 0 then
-		viewAng.p = viewAng.p - 0.5
-		viewAng.y = viewAng.y + math.Rand(-0.2, 0.2)
-	end
+	-- Reconstruct exact client view angles by combining recorded eye angles and recoil
+	local finalAng = viewAng + viewPunch
 
 	SND.Killcam.CurrentPos = viewPos
-	SND.Killcam.CurrentAng = viewAng
+	SND.Killcam.CurrentAng = finalAng
 	SND.Killcam.CurrentPoint = p1
 	SND.Killcam.CurrentFrac = frac
 	SND.Killcam.CurrentIndex = i1
@@ -181,8 +182,8 @@ hook.Add("CalcView", "SND_KillcamView", function(ply, pos, ang, fov)
 
 	return {
 		origin = viewPos,
-		angles = viewAng,
-		fov = fov,
+		angles = finalAng,
+		fov = fovVal,
 		drawviewmodel = false
 	}
 end)
@@ -244,8 +245,10 @@ hook.Add("PostDrawTranslucentRenderables", "SND_KillcamWeaponRender", function()
 		local pos = SND.Killcam.CurrentPos
 		local ang = SND.Killcam.CurrentAng
 
-		-- Tethered offset: Adjusted for better height and weapon depth
-		local offset = ang:Forward() * 16 + ang:Right() * 9 + ang:Up() * -10
+		-- Tethered offset: Adjusted for better height and weapon depth based on ADS state
+		local isADS = bit.band(pt.b, IN_ATTACK2) ~= 0
+		local forwardOffset = isADS and 12 or 16
+		local offset = ang:Forward() * forwardOffset + ang:Right() * 9 + ang:Up() * -10
 		local drawPos = pos + offset
 
 		if bit.band(pt.b, IN_ATTACK) ~= 0 then
@@ -258,7 +261,8 @@ hook.Add("PostDrawTranslucentRenderables", "SND_KillcamWeaponRender", function()
 			end
 			if CurTime() > (SND.Killcam.LastShot or 0) + 0.08 then
 				SND.Killcam.LastShot = CurTime()
-				LocalPlayer():EmitSound("weapons/m4a1/m4a1_unsil-1.wav", 80, 100, 1, CHAN_WEAPON)
+				local shootSound = (wepData and wepData.Primary) and wepData.Primary.Sound or "weapons/m4a1/m4a1_unsil-1.wav"
+				LocalPlayer():EmitSound(shootSound, 80, 100, 1, CHAN_WEAPON)
 				local effect = EffectData()
 				effect:SetOrigin(pos + ang:Forward() * 30 + ang:Up() * -2)
 				effect:SetAngles(ang)
