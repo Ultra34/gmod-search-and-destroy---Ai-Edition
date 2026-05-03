@@ -1,3 +1,13 @@
+
+### Step 4 — Custom Assets (Optional)
+
+To use custom level icons, place `.png` files named by level (e.g., `1.png`, `2.png`) into:
+
+```
+garrysmod/data/snd_mwclassic/levels/
+```
+
+### Step 5 — Workshop addons
 SND.Levels = SND.Levels or {}
 local iconCache = {}
 
