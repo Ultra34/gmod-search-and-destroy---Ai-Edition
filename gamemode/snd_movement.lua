@@ -20,6 +20,21 @@ hook.Add("StartCommand", "SND_FreezeInput", function(ply, cmd)
 	end
 end)
 
+-- ── Aggressive Fire Block (Server & Client) ──────────────────────────────
+hook.Add("Think", "SND_FreezeFireLock", function()
+	local phase = SERVER and SND.Round.Phase or (SND.Client and SND.Client.Phase)
+	if phase ~= SND.PHASE_FREEZE then return end
+
+	for _, ply in ipairs(player.GetAll()) do
+		if not ply:Alive() then continue end
+		local wep = ply:GetActiveWeapon()
+		if IsValid(wep) then
+			wep:SetNextPrimaryFire(CurTime() + 0.1)
+			wep:SetNextSecondaryFire(CurTime() + 0.1)
+		end
+	end
+end)
+
 hook.Add("SetupMove", "SND_Movement", function(ply, mv, cmd)
 	if not IsValid(ply) or not ply:Alive() then return end
 

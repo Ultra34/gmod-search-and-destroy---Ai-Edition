@@ -42,11 +42,11 @@ hook.Add("HUDPaint", "SND_HUD", function()
 	local phase = SND.Client.Phase or SND.PHASE_WAIT
 	if phase == SND.PHASE_FREEZE then
 		-- Light blue cold tint overlay
-		surface.SetDrawColor(100, 180, 255, 20)
+		surface.SetDrawColor(100, 180, 255, 40)
 		surface.DrawRect(0, 0, sw, sh)
 
 		-- Cold blue vignette around the edges
-		surface.SetDrawColor(0, 120, 255, 120)
+		surface.SetDrawColor(0, 150, 255, 200)
 		surface.SetMaterial(MAT_VIGNETTE)
 		surface.DrawTexturedRect(0, 0, sw, sh)
 	end
@@ -380,5 +380,24 @@ end)
 hook.Add("HUDShouldDraw", "SND_DisableDefaultKillFeed", function(name)
 	if name == "CHudDeathNotice" then
 		return false
+	end
+end)
+
+-- ── Post-Processing Freeze Effect ────────────────────────────────────────
+local freezePP = {
+	[ "$pp_colour_addr" ] = 0,
+	[ "$pp_colour_addg" ] = 0.02,
+	[ "$pp_colour_addb" ] = 0.15,
+	[ "$pp_colour_brightness" ] = -0.05,
+	[ "$pp_colour_contrast" ] = 1.2,
+	[ "$pp_colour_colour" ] = 0.9,
+	[ "$pp_colour_mulr" ] = 0,
+	[ "$pp_colour_mulg" ] = 0,
+	[ "$pp_colour_mulb" ] = 0
+}
+
+hook.Add("RenderScreenspaceEffects", "SND_FreezePostProcess", function()
+	if SND.Client and SND.Client.Phase == SND.PHASE_FREEZE then
+		DrawColorModify(freezePP)
 	end
 end)
