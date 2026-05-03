@@ -13,6 +13,12 @@ One life per round, bomb plant and defuse, team scoring, optional map voting, Lu
 - **Bomb mechanics** — attacker carries the bomb, plants it by looking at the ground in a site and holding **E**; defenders defuse by standing on the bomb and holding **E**. CSS plant, defuse, and beep sounds included.
 - **3D site markers** — floating **A** (gold) and **B** (blue) labels visible through the level with off-screen directional arrows and a live countdown when the bomb is planted.
 - **Freeze phase** — nobody moves until the round goes live; a countdown progress bar fills the screen.
+- **MW2 Scoreboard** — Authentic Modern Warfare 2 (2009) style leaderboard with team headers, level icons, and UI scaling.
+- **Level & XP System** — Persistent rank system with XP earned from kills, headshots, plants, and defuses. Data is saved automatically.
+- **Crosshair Customization** — CS:GO/CS2 style crosshair menu (`!crosshair`) with real-time preview and profile support.
+- **Quick Grenade Throw** — Dedicated 'G' key for instant grenade usage that automatically switches back to your previous weapon.
+- **Health Regeneration** — Authentic CoD-style health regen with red damage vignettes and screen tinting.
+- **MW2 Movement** — Tactical movement including sprint stamina, jump/landing fatigue, and authentic camera sway.
 - **Gun picker UI** — during freeze time a Derma panel lets every player choose their primary and secondary from the full `iw4_*` pool before the round starts.
 - **Lua bots** — state-machine AI (Patrol → Engage → Chase → Plant → Defuse → Reload) with a **1–10 skill slider** that scales aim noise, reaction time, engage range, and reload thresholds. Bots switch weapons when empty and reload proactively when ammo is low.
 - **CSS player models** — Terrorist and Counter-Terrorist skins on both factions; bots and players share the same model system.
