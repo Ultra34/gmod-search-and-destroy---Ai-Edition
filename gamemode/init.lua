@@ -98,12 +98,14 @@ hook.Add("Tick", "SND_KillcamRecord", function()
 
 		local wep = ply:GetActiveWeapon()
 		table.insert(hist, {
-			p = ply:GetPos(),
-			a = ply:EyeAngles(),
-			o = ply:GetViewOffset(),
-			v = ply:GetVelocity(),
-			b = ply:GetInternalVariable("m_nButtons") or 0, -- Record buttons for firing state
-			w = IsValid(wep) and wep:GetClass() or ""
+			p  = ply:GetPos(),
+			a  = ply:EyeAngles(),
+			o  = ply:GetViewOffset(),
+			v  = ply:GetVelocity(),
+			b  = ply:GetInternalVariable("m_nButtons") or 0,
+			w  = IsValid(wep) and wep:GetClass() or "",
+			s  = ply:GetSequence(), -- Capture animation state
+			cy = ply:GetCycle()
 		})
 
 		if #hist > MAX_HISTORY then
@@ -114,15 +116,29 @@ end)
 
 function SND.Killcam.SetFinalKill(attacker, victim, weapon)
 	if not IsValid(attacker) or not attacker:IsPlayer() then return end
+	if not IsValid(victim) or not victim:IsPlayer() then return end
 	
-	local hist = SND.Killcam.History[attacker:EntIndex()]
-	if not hist or #hist < 10 then return end
+	local attHist = SND.Killcam.History[attacker:EntIndex()]
+	local vicHist = SND.Killcam.History[victim:EntIndex()]
+	if not attHist or #attHist < 10 then return end
+
+	-- Sync history lengths to prevent index mismatch
+	local count = math.min(#attHist, vicHist and #vicHist or math.huge)
+	local finalAtt = {}
+	local finalVic = {}
+
+	for i = 1, count do
+		table.insert(finalAtt, attHist[i])
+		if vicHist then table.insert(finalVic, vicHist[i]) end
+	end
 
 	SND.Killcam.LastKillData = {
 		attacker = attacker,
 		victim = victim,
 		weapon = weapon,
-		points = table.Copy(hist)
+		attPoints = finalAtt,
+		vicPoints = finalVic,
+		vicModel  = victim:GetModel()
 	}
 end
 
@@ -135,15 +151,22 @@ function SND.Killcam.SendFinalKillcam()
 
 	net.Start("SND_KillCam")
 		net.WriteEntity(data.attacker)
-		net.WriteEntity(data.victim)
 		net.WriteString(data.weapon)
-		net.WriteUInt(#data.points, 16)
-		for _, pt in ipairs(data.points) do
+		net.WriteString(data.vicModel)
+		net.WriteUInt(#data.attPoints, 16)
+		for _, pt in ipairs(data.attPoints) do
 			net.WriteVector(pt.p)
 			net.WriteAngle(pt.a)
 			net.WriteVector(pt.o or Vector(0,0,64))
 			net.WriteUInt(pt.b or 0, 32)
 			net.WriteString(pt.w or "")
+		end
+		net.WriteUInt(#data.vicPoints, 16)
+		for _, pt in ipairs(data.vicPoints) do
+			net.WriteVector(pt.p)
+			net.WriteAngle(pt.a)
+			net.WriteUInt(pt.s or 0, 16)
+			net.WriteFloat(pt.cy or 0)
 		end
 	net.Broadcast()
 	

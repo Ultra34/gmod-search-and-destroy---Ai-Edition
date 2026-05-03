@@ -23,6 +23,8 @@ SND.Killcam.Data = nil
 SND.Killcam.StartTime = 0
 SND.Killcam.PlaybackTime = 0
 SND.Killcam.WepModel = nil
+SND.Killcam.VictimModel = nil
+SND.Killcam.LastShot = 0
 local TICK_INTERVAL = 0.033
 
 net.Receive("SND_RoundState", function()
@@ -48,6 +50,10 @@ net.Receive("SND_RoundState", function()
 		if IsValid(SND.Killcam.WepModel) then
 			SND.Killcam.WepModel:Remove()
 			SND.Killcam.WepModel = nil
+		end
+		if IsValid(SND.Killcam.VictimModel) then
+			SND.Killcam.VictimModel:Remove()
+			SND.Killcam.VictimModel = nil
 		end
 	end
 end)
@@ -90,13 +96,13 @@ end)
 
 net.Receive("SND_KillCam", function()
 	local attacker = net.ReadEntity()
-	local victim = net.ReadEntity()
 	local weapon = net.ReadString()
-	local count = net.ReadUInt(16)
-	local points = {}
+	local vicMdl = net.ReadString()
+	local attCount = net.ReadUInt(16)
+	local attPoints = {}
 
-	for i = 1, count do
-		points[i] = {
+	for i = 1, attCount do
+		attPoints[i] = {
 			p = net.ReadVector(),
 			a = net.ReadAngle(),
 			o = net.ReadVector(),
@@ -105,14 +111,27 @@ net.Receive("SND_KillCam", function()
 		}
 	end
 
+	local vicCount = net.ReadUInt(16)
+	local vicPoints = {}
+	for i = 1, vicCount do
+		vicPoints[i] = {
+			p  = net.ReadVector(),
+			a  = net.ReadAngle(),
+			s  = net.ReadUInt(16),
+			cy = net.ReadFloat()
+		}
+	end
+
 	SND.Killcam.Data = {
 		attacker = attacker,
-		victim = victim,
 		weapon = weapon,
-		points = points
+		attPoints = attPoints,
+		vicPoints = vicPoints,
+		vicModelName = vicMdl
 	}
 	SND.Killcam.Active = true
 	SND.Killcam.PlaybackTime = 0
+	SND.Killcam.LastShot = 0
 
 	surface.PlaySound("ambient/levels/citadel/citadel_ambient_loop1.wav")
 end)
@@ -122,10 +141,10 @@ hook.Add("CalcView", "SND_KillcamView", function(ply, pos, ang, fov)
 
 	local dt = FrameTime()
 	local data = SND.Killcam.Data
-	local points = data.points
+	local attPoints = data.attPoints
 	
 	-- Slow motion logic: slow down near the end of the clip (impact)
-	local progress = SND.Killcam.PlaybackTime / (#points * TICK_INTERVAL)
+	local progress = SND.Killcam.PlaybackTime / (#attPoints * TICK_INTERVAL)
 	local timescale = (progress > 0.8) and 0.3 or 1.0
 	
 	SND.Killcam.PlaybackTime = SND.Killcam.PlaybackTime + dt * timescale
@@ -135,7 +154,7 @@ hook.Add("CalcView", "SND_KillcamView", function(ply, pos, ang, fov)
 	local i2 = i1 + 1
 	local frac = totalTime - math.floor(totalTime)
 
-	local p1 = points[i1] or points[#points]
+	local p1 = attPoints[i1] or attPoints[#attPoints]
 	local p2 = points[i2] or p1
 
 	-- Interpolate for smooth playback
@@ -145,8 +164,10 @@ hook.Add("CalcView", "SND_KillcamView", function(ply, pos, ang, fov)
 	SND.Killcam.CurrentPos = viewPos
 	SND.Killcam.CurrentAng = viewAng
 	SND.Killcam.CurrentPoint = p1
+	SND.Killcam.CurrentFrac = frac
+	SND.Killcam.CurrentIndex = i1
 
-	if i1 >= #points then
+	if i1 >= #attPoints then
 		SND.Killcam.Active = false
 	end
 
@@ -162,12 +183,42 @@ hook.Add("PrePlayerDraw", "SND_KillcamHideAttacker", function(ply)
 	if SND.Killcam.Active and SND.Killcam.Data and ply == SND.Killcam.Data.attacker then
 		return true -- Hide attacker body to prevent camera clipping
 	end
+	if SND.Killcam.Active and SND.Killcam.Data then
+		-- Hide the "real" victim if they are still in the world as a ragdoll/player
+		-- We will draw our own ghost version at the recorded position
+		return true 
+	end
 end)
 
 hook.Add("PostDrawTranslucentRenderables", "SND_KillcamWeaponRender", function()
-	if not SND.Killcam.Active or not SND.Killcam.CurrentPoint then return end
+	if not SND.Killcam.Active or not SND.Killcam.Data then return end
 
+	local data = SND.Killcam.Data
 	local pt = SND.Killcam.CurrentPoint
+	local idx = SND.Killcam.CurrentIndex
+	local frac = SND.Killcam.CurrentFrac
+
+	-- ── Render Victim Ghost ──────────────────────────────────────────────
+	if data.vicPoints and data.vicPoints[idx] then
+		if not IsValid(SND.Killcam.VictimModel) then
+			SND.Killcam.VictimModel = ClientsideModel(data.vicModelName, RENDERGROUP_OPAQUE)
+			SND.Killcam.VictimModel:SetNoDraw(true)
+		end
+		local vp1 = data.vicPoints[idx]
+		local vp2 = data.vicPoints[idx + 1] or vp1
+		
+		local vPos = LerpVector(frac, vp1.p, vp2.p)
+		local vAng = LerpAngle(frac, vp1.a, vp2.a)
+		vAng.p = 0 -- Keep feet on ground
+
+		SND.Killcam.VictimModel:SetPos(vPos)
+		SND.Killcam.VictimModel:SetAngles(vAng)
+		SND.Killcam.VictimModel:SetSequence(vp1.s)
+		SND.Killcam.VictimModel:SetCycle(vp1.cy)
+		SND.Killcam.VictimModel:DrawModel()
+	end
+
+	-- ── Render Attacker Weapon ───────────────────────────────────────────
 	local class = pt.w
 	if class == "" then return end
 
@@ -184,17 +235,27 @@ hook.Add("PostDrawTranslucentRenderables", "SND_KillcamWeaponRender", function()
 		local pos = SND.Killcam.CurrentPos
 		local ang = SND.Killcam.CurrentAng
 
-		local offset = ang:Forward() * 22 + ang:Right() * 10 + ang:Up() * -14
+		-- Tethered offset: Moves with the camera perfectly
+		local offset = ang:Forward() * 18 + ang:Right() * 8 + ang:Up() * -12
 		local drawPos = pos + offset
 
 		if bit.band(pt.b, IN_ATTACK) ~= 0 then
+			-- Effects and Sounds
 			local light = DynamicLight(0)
 			if light then
-				light.pos = pos + ang:Forward() * 35
+				light.pos = pos + ang:Forward() * 40
 				light.r = 255; light.g = 180; light.b = 50; light.brightness = 2
 				light.Size = 256; light.DieTime = CurTime() + 0.1
 			end
-			drawPos = drawPos + ang:Forward() * -1.5 -- Recoil jitter
+			if CurTime() > (SND.Killcam.LastShot or 0) + 0.08 then
+				SND.Killcam.LastShot = CurTime()
+				LocalPlayer():EmitSound("weapons/m4a1/m4a1_unsil-1.wav", 80, 100, 1, CHAN_WEAPON)
+				local effect = EffectData()
+				effect:SetOrigin(pos + ang:Forward() * 30 + ang:Up() * -2)
+				effect:SetAngles(ang)
+				util.Effect("MuzzleFlash", effect)
+			end
+			drawPos = drawPos + ang:Forward() * -2 -- Recoil
 		end
 
 		SND.Killcam.WepModel:SetPos(drawPos)
