@@ -263,11 +263,11 @@ hook.Add("PostDrawTranslucentRenderables", "SND_KillcamWeaponRender", function()
 		local pos = SND.Killcam.CurrentPos
 		local ang = SND.Killcam.CurrentAng
 
-		-- Tethered offset: Refined for "First Person" accuracy
+		-- Tethered offset: Adjusted to prevent weapons pointing up and improve view alignment
 		local isADS = bit.band(pt.b, IN_ATTACK2) ~= 0
-		local forwardOffset = isADS and 10 or 14
-		local rightOffset = isADS and 0 or 8.5
-		local upOffset = isADS and -8 or -11
+		local forwardOffset = isADS and 8 or 12
+		local rightOffset = isADS and 0 or 7.5
+		local upOffset = isADS and -7 or -10
 
 		local offset = ang:Forward() * forwardOffset + ang:Right() * rightOffset + ang:Up() * upOffset
 		local drawPos = pos + offset
@@ -280,20 +280,22 @@ hook.Add("PostDrawTranslucentRenderables", "SND_KillcamWeaponRender", function()
 				light.r = 255; light.g = 180; light.b = 50; light.brightness = 2
 				light.Size = 256; light.DieTime = CurTime() + 0.1
 			end
-			if CurTime() > (SND.Killcam.LastShot or 0) + 0.08 then
+			if CurTime() > (SND.Killcam.LastShot or 0) + 0.07 then
 				SND.Killcam.LastShot = CurTime()
 				local shootSound = (wepData and wepData.Primary and wepData.Primary.Sound) or "weapons/m4a1/m4a1_unsil-1.wav"
+				if type(shootSound) == "table" then shootSound = table.Random(shootSound) end
 				LocalPlayer():EmitSound(shootSound, 80, 100, 1, CHAN_WEAPON)
 				local effect = EffectData()
-				effect:SetOrigin(pos + ang:Forward() * 30 + ang:Up() * -2)
+				effect:SetOrigin(pos + ang:Forward() * 35 + ang:Up() * -3)
 				effect:SetAngles(ang)
 				util.Effect("MuzzleFlash", effect)
 			end
-			drawPos = drawPos + ang:Forward() * -1.5 + ang:Up() * 0.5 -- Kick back and up
+			drawPos = drawPos + ang:Forward() * -2.5 + ang:Up() * 1.2 -- Increased kick for firing impact
 		end
 
 		SND.Killcam.WepModel:SetPos(drawPos)
-		local renderAng = Angle(ang.p, ang.y, ang.r)
+		-- Apply eye angles with a slight forward tilt to look more natural
+		local renderAng = ang * 1
 		SND.Killcam.WepModel:SetAngles(renderAng)
 
 		-- Apply weapon animations

@@ -641,10 +641,9 @@ hook.Add("HUDPaint", "SND_HUD", function()
 		
 		local attackerName = IsValid(data.attacker) and data.attacker:Nick():upper() or "PLAYER"
 		local weaponName = data.weapon:upper()
-		draw.SimpleText(attackerName .. "  //  " .. weaponName, "Trebuchet24", 40 * sc, sh - 40 * sc, Color(255, 120, 0), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
 
 		-- ── Killed By Info Card ──────────────────────────────────────────
-		local cardW, cardH = 340 * sc, 110 * sc
+		local cardW, cardH = 340 * sc, 135 * sc
 		local cardX, cardY = 40 * sc, sh - 180 * sc
 		
 		surface.SetDrawColor(0, 0, 0, 200)
@@ -668,15 +667,17 @@ hook.Add("HUDPaint", "SND_HUD", function()
 
 		draw.SimpleText("KILLED BY", "Trebuchet18", cardX + 15 * sc, cardY + 15 * sc, Color(150, 150, 150), TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
 		draw.SimpleText(attackerName, "Trebuchet24", cardX + 15 * sc, cardY + 35 * sc, Color(255, 255, 255), TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
+		draw.SimpleText(weaponName, "Trebuchet18", cardX + 15 * sc, cardY + 65 * sc, Color(255, 120, 0), TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
 		
 		-- HP Bar in card
-		local hpWidth = (cardW - 30 * sc) * (data.attHP / 100)
+		local hpWidth = (cardW - 30 * sc) * (math.Clamp(data.attHP, 0, 100) / 100)
+		local hpY = cardY + 95 * sc
 		surface.SetDrawColor(40, 40, 40, 255)
-		surface.DrawRect(cardX + 15 * sc, cardY + 70 * sc, cardW - 30 * sc, 8 * sc)
+		surface.DrawRect(cardX + 15 * sc, hpY, cardW - 30 * sc, 8 * sc)
 		surface.SetDrawColor(220, 60, 40, 255)
-		surface.DrawRect(cardX + 15 * sc, cardY + 70 * sc, hpWidth, 8 * sc)
+		surface.DrawRect(cardX + 15 * sc, hpY, hpWidth, 8 * sc)
 		
-		draw.SimpleText(data.attHP .. " HP", "Trebuchet18", cardX + cardW - 15 * sc, cardY + 68 * sc, Color(255, 255, 255), TEXT_ALIGN_RIGHT, TEXT_ALIGN_BOTTOM)
+		draw.SimpleText(data.attHP .. " HP", "Trebuchet18", cardX + cardW - 15 * sc, hpY - 2 * sc, Color(255, 255, 255), TEXT_ALIGN_RIGHT, TEXT_ALIGN_BOTTOM)
 
 		-- ── Playback Progress Bar ────────────────────────────────────────
 		local totalPoints = #data.attPoints
