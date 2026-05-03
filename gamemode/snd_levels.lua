@@ -38,6 +38,9 @@ function SND.Levels.Load(ply)
 		ply.SND_XP = data.xp or 0
 		ply.SND_Level = data.lvl or 1
 	else
+		-- Ensure new players have initialized values so Save() works correctly
+		ply.SND_XP = 0
+		ply.SND_Level = 1
 		SND.Levels.Save(ply)
 		print("[SND] First-time join: Created data file for player " .. ply:Nick())
 	end
@@ -114,6 +117,39 @@ end)
 
 hook.Add("SND_OnBombDefused", "SND_XPOnDefuse", function(ply)
 	SND.Levels.AddXP(ply, 500)
+end)
+
+-- Admin command to manually add XP to a player
+concommand.Add("snd_addxp", function(ply, cmd, args)
+	-- Restrict to Admins/SuperAdmins
+	if IsValid(ply) and not ply:IsAdmin() then 
+		ply:ChatPrint("[SND] Admin only command.")
+		return 
+	end
+
+	local targetStr = args[1]
+	local amount = tonumber(args[2])
+
+	if not targetStr or not amount then
+		if IsValid(ply) then ply:ChatPrint("Usage: snd_addxp <name/steamid> <amount>") end
+		return
+	end
+
+	-- Search for the target player
+	local target = nil
+	for _, p in ipairs(player.GetAll()) do
+		if string.find(string.lower(p:Nick()), string.lower(targetStr), 1, true) or p:SteamID() == targetStr or p:SteamID64() == targetStr then
+			target = p
+			break
+		end
+	end
+
+	if IsValid(target) then
+		SND.Levels.AddXP(target, amount)
+		if IsValid(ply) then ply:ChatPrint("Added " .. amount .. " XP to " .. target:Nick()) end
+	else
+		if IsValid(ply) then ply:ChatPrint("Player not found: " .. targetStr) end
+	end
 end)
 
 print("[SND] Levels System Loaded (Server)")
