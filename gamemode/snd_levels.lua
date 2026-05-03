@@ -45,7 +45,6 @@ function SND.Levels.Load(ply)
 		print("[SND] First-time join: Created data file for player " .. ply:Nick())
 	end
 	ply:SetNWInt("SND_Level", ply.SND_Level)
-	SND.Levels.Sync(ply)
 end
 
 function SND.Levels.Sync(ply)
@@ -85,6 +84,10 @@ end
 
 hook.Add("PlayerInitialSpawn", "SND_LevelsInit", function(ply)
 	SND.Levels.Load(ply)
+	-- Delayed sync to ensure client-side receiver is ready
+	timer.Simple(2, function()
+		if IsValid(ply) then SND.Levels.Sync(ply) end
+	end)
 end)
 
 hook.Add("PlayerDisconnected", "SND_LevelsSaveDisconnect", function(ply)

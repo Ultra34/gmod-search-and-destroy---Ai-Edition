@@ -23,7 +23,7 @@ local cv_b       = CreateClientConVar("snd_crosshair_b", "255", true, false)
 SND.Client.XPPopups = SND.Client.XPPopups or {}
 local levelUpTime = 0
 local levelUpAlpha = 0
-local lastLevelReceived = -1
+local lastLevelReceived = 0
 
 -- ── Red Damage Vignette Materials ────────────────────────────────────────
 local MAT_GRAD_D = Material("vgui/gradient-d")
@@ -236,14 +236,16 @@ hook.Add("HUDPaint", "SND_HUD", function()
 	if lp:Alive() then
 		drawXPBar(sw, sh, sc, lp)
 		
-		-- Detect Level Up for Popup
-		local curLvl = lp:GetNWInt("SND_Level", 1)
-		if lastLevelReceived != -1 and curLvl > lastLevelReceived then
-			levelUpTime = CurTime()
-			surface.PlaySound("garrysmod/content_downloaded.wav")
-			print("[SND] Level Up detected on HUD: Rank " .. curLvl)
+		-- Detect Level Up for Popup (Ignoring the initial sync from 0)
+		local curLvl = lp:GetNWInt("SND_Level", 0)
+		if curLvl > 0 then
+			if lastLevelReceived ~= 0 and curLvl > lastLevelReceived then
+				levelUpTime = CurTime()
+				surface.PlaySound("garrysmod/content_downloaded.wav")
+				print("[SND] Level Up detected on HUD: Rank " .. curLvl)
+			end
+			lastLevelReceived = curLvl
 		end
-		lastLevelReceived = curLvl
 		drawLevelUpPopup(sw, sh, sc)
 	end
 
