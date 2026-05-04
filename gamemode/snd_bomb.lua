@@ -147,6 +147,7 @@ function SND.Bomb.ResetForRound()
 	SND.Bomb.PlantTime   = nil
 	removeBombProp()
 	stopBeepTimer()
+	timer.Remove("SND_ReassignBomb")
 
 	for _, ply in ipairs(player.GetAll()) do
 		timer.Remove("SND_Plant_"  .. ply:EntIndex())
@@ -376,7 +377,7 @@ end
 hook.Add("PlayerDeath", "SND_BombCarrierDeathFix", function(victim)
 	if SND.Bomb.State == SND.BOMB_STATE_CARRIED and victim == SND.Bomb.Carrier then
 		SND.Bomb.Carrier = nil
-		timer.Simple(2, function() SND.Bomb.AssignCarrier() end)
+		timer.Create("SND_ReassignBomb", 2, 1, function() SND.Bomb.AssignCarrier() end)
 	end
 end)
 

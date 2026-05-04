@@ -514,7 +514,7 @@ hook.Add("StartCommand", "SND_BotAI", function(bot, cmd)
 		end
 
 		if goal then
-			if bot.SND_Planting or bot.SND_Defusing then
+			if (bot.SND_Planting and isCarrier) or (bot.SND_Defusing and isRetaker) then
 				cmd:ClearMovement()
 				cmd:SetButtons(bit.bor(cmd:GetButtons(), IN_USE))
 				bot:SetEyeAngles(LerpAngle(0.1, bot:EyeAngles(), Angle(45, bot:EyeAngles().y, 0)))
@@ -542,6 +542,7 @@ hook.Add("StartCommand", "SND_BotAI", function(bot, cmd)
 
 					-- Interaction logic
 					if (ai.state == BS_PLANT or ai.state == BS_DEFUSE) then
+						cmd:ClearMovement() -- Stop moving immediately when starting interaction
 						cmd:SetButtons(bit.bor(cmd:GetButtons(), IN_USE))
 						bot:SetEyeAngles(LerpAngle(0.1, bot:EyeAngles(), Angle(45, bot:EyeAngles().y, 0)))
 					elseif bot:Team() == SND.TEAM_DEFEND then

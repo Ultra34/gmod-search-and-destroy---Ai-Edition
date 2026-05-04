@@ -100,6 +100,8 @@ end
 function SND.Round.SwitchTeams()
 	print("[SND] Halftime: Switching sides...")
 
+	SND.Bomb.ResetForRound() -- Clear all bomb data and timers before switching
+
 	-- Swap scores so teams keep their points after roles change
 	local oldAttack = SND.Round.AttackScore
 	SND.Round.AttackScore = SND.Round.DefendScore
