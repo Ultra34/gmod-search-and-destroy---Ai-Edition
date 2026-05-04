@@ -155,14 +155,28 @@ function SND.Bots.EnsureCount()
 		bot.SND_AI    = newAI()
 		bot:SetTeam(pickTeam())
 		
-		-- Assign Random Calling Card to Bot
+		-- Automatic Banner Selection from Data Folders
 		local botTitles = {"Lone Wolf", "Shadow", "Elite", "Hunter", "Stalker"}
 		local botMats = {"vgui/gradient-d", "vgui/gradient-u", "vgui/white"}
+		
+		local customBanners = file.Find("snd_mwclassic/banners/*", "DATA")
+		if #customBanners > 0 then
+			for _, f in ipairs(customBanners) do 
+				table.insert(botMats, "data/snd_mwclassic/banners/" .. f)
+			end
+		end
+
 		bot:SetNWString("SND_CardTitle", table.Random(botTitles))
 		bot:SetNWString("SND_CardMat", table.Random(botMats))
 
-		-- Assign Random Emblem to Bot
-		local botEmblems = {"vgui/icon_skull", "vgui/icon_star", "vgui/icon_target", "vgui/icon_crosshair"}
+		-- Automatic Emblem Selection from Data Folders
+		local botEmblems = {SND.Config.DefaultBotEmblem, "vgui/icon_star", "vgui/icon_target", "vgui/icon_crosshair"}
+		local customEmblems = file.Find("snd_mwclassic/emblems/*", "DATA")
+		if #customEmblems > 0 then
+			for _, f in ipairs(customEmblems) do 
+				table.insert(botEmblems, "data/snd_mwclassic/emblems/" .. f)
+			end
+		end
 		bot:SetNWString("SND_EmblemMat", table.Random(botEmblems))
 
 		SND.Teams.ApplyFactionModel(bot)

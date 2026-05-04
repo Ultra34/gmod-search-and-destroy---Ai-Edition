@@ -153,6 +153,9 @@ SND.Config.Factions = {
 	},
 }
 
+-- ── Default Bot Identity ────────────────────────────────────────────────
+SND.Config.DefaultBotEmblem = "data/snd_mwclassic/emblems/bot_emblem.png"
+
 -- ── Announcer ─────────────────────────────────────────────────────────────
 SND.Config.Announcer = {
 	prefix = "snd_mwclassic/announcer/",

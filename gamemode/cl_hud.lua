@@ -63,6 +63,37 @@ local MAT_GRAD_U = Material("vgui/gradient-u")
 local MAT_GRAD_L = Material("vgui/gradient-l")
 local MAT_GRAD_R = Material("vgui/gradient-r")
 
+-- ── GIF & Web Material Support ────────────────────────────────────────────
+local gifPanels = {}
+function SND.GetIMaterial(path)
+    if not path or path == "" or path == "steam" then return nil end
+
+    local isAnimated = path:lower():EndsWith(".gif") or path:lower():StartWith("http")
+    if isAnimated then
+        if gifPanels[path] and IsValid(gifPanels[path]) then 
+            return gifPanels[path]:GetHTMLMaterial() 
+        end
+
+        local p = vgui.Create("DHTML")
+        p:SetSize(512, 512)
+        p:SetAlpha(0)
+        p:SetMouseInputEnabled(false)
+        p:SetKeyboardInputEnabled(false)
+
+        local url = path
+        if not path:lower():StartWith("http") then
+            -- Convert local data path to asset URL for HTML panel
+            url = "asset://garrysmod/data/" .. path:gsub("^data/", "")
+        end
+
+        p:OpenURL(url)
+        gifPanels[path] = p
+        return p:GetHTMLMaterial()
+    end
+
+    return Material(path, "smooth noclamp")
+end
+
 -- ── Calling Card State ────────────────────────────────────────────────────
 SND.Client.ActiveCallingCard = SND.Client.ActiveCallingCard or nil
 local cardSlideIn = 0
@@ -314,20 +345,24 @@ local function drawCallingCardPopup(sw, sh, sc)
 
 	-- Draw Card Background (Material with transparency support)
 	surface.SetDrawColor(255, 255, 255, alpha)
-	local mat = Material(card.matPath)
-	if mat:IsError() then mat = nil end -- Don't draw opaque box if material fails
-	
-	if mat then
-		surface.SetMaterial(mat)
-		surface.DrawTexturedRect(x, y, w, h)
-	end
+    local bannerMat = card.bannerMat
+    if bannerMat and not (bannerMat:IsError() and not card.matPath:find(".gif")) then
+        -- Support for animated banner frames
+        local frames = bannerMat:GetInt("$numframes") or 1
+        if frames > 1 then
+            bannerMat:SetInt("$frame", math.floor(CurTime() * 12) % frames)
+        end
+
+        surface.SetMaterial(bannerMat)
+        surface.DrawTexturedRect(x, y, w, h)
+    end
 
 	-- Borders
 	surface.SetDrawColor(0, 0, 0, alpha * 0.8)
 	surface.DrawOutlinedRect(x, y, w, h, 2 * sc)
 
 	-- Text Info
-	local embSize = 104 * sc
+	local embSize = 64 * sc
 	local textX = x + embSize + 20 * sc
 	local textY = y + h * 0.5
 
@@ -359,13 +394,19 @@ local function drawCallingCardPopup(sw, sh, sc)
 			cardAvatar:SetAlpha(alpha)
 		end
 	else
-		if IsValid(cardAvatar) then cardAvatar:SetVisible(false) end
-		local emblemMat = Material(card.emblemMatPath)
-		if not emblemMat:IsError() then
-			surface.SetMaterial(emblemMat)
-			surface.SetDrawColor(255, 255, 255, alpha)
-			surface.DrawTexturedRect(embX, embY, embSize, embSize)
-		end
+        if IsValid(cardAvatar) then cardAvatar:SetVisible(false) end
+        local embMat = card.emblemMat
+        if embMat and not (embMat:IsError() and not card.emblemMatPath:find(".gif")) then
+            -- Support for animated emblem frames
+            local frames = embMat:GetInt("$numframes") or 1
+            if frames > 1 then
+                embMat:SetInt("$frame", math.floor(CurTime() * 12) % frames)
+            end
+
+            surface.SetMaterial(embMat)
+            surface.SetDrawColor(255, 255, 255, alpha)
+            surface.DrawTexturedRect(embX, embY, embSize, embSize)
+        end
 	end
 end
 
@@ -383,11 +424,18 @@ net.Receive("SND_ShowCallingCard", function()
 		endTime = CurTime() + 4
 	}
 
+    -- Pre-cache materials to prevent frame-lag and allow animation properties to be read
+    SND.Client.ActiveCallingCard.bannerMat = SND.GetIMaterial(SND.Client.ActiveCallingCard.matPath)
+    
+    if SND.Client.ActiveCallingCard.emblemMatPath ~= "steam" then
+        SND.Client.ActiveCallingCard.emblemMat = SND.GetIMaterial(SND.Client.ActiveCallingCard.emblemMatPath)
+    end
+
 	if not IsValid(cardAvatar) then
 		cardAvatar = vgui.Create("AvatarImage")
 		cardAvatar:SetPaintedManually(false)
 	end
-	cardAvatar:SetSteamID(SND.Client.ActiveCallingCard.sid64, 128)
+	cardAvatar:SetSteamID(SND.Client.ActiveCallingCard.sid64, 64)
 end)
 
 -- ── Main HUD ─────────────────────────────────────────────────────────────

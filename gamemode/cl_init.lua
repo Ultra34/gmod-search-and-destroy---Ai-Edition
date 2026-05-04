@@ -86,6 +86,15 @@ net.Receive("SND_MapVote", function()
 	chat.AddText(Color(120, 200, 255), "[SND] Map vote — candidates: ", Color(255, 255, 255), table.concat(maps, ", "))
 end)
 
+hook.Add("OnPlayerChat", "SND_PersonalizationCommand", function(ply, text)
+	if ply ~= LocalPlayer() then return end
+	local lower = string.lower(text)
+	if lower == "!card" or lower == "!emblem" or lower == "!identity" then
+		SND.OpenSettingsMenu()
+		return true
+	end
+end)
+
 hook.Add("PopulateToolMenu", "SND_SettingsMenu", function()
 	spawnmenu.AddToolMenuOption("Utilities", "SND", "SND_Settings", "S&D Settings", "", "", function(panel)
 		panel:ClearControls()

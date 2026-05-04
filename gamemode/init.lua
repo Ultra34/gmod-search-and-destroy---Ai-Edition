@@ -72,7 +72,7 @@ function GM:PlayerInitialSpawn(ply)
 	ply:SetNWString("SND_CardTitle", ply:GetPData("snd_card_title", "New Recruit"))
 	ply:SetNWString("SND_CardMat", ply:GetPData("snd_card_mat", "vgui/white"))
 	local isBot = (ply:IsBot() or ply.SND_IsBot)
-	ply:SetNWString("SND_EmblemMat", ply:GetPData("snd_emblem_mat", isBot and "vgui/icon_skull" or "steam"))
+	ply:SetNWString("SND_EmblemMat", ply:GetPData("snd_emblem_mat", isBot and SND.Config.DefaultBotEmblem or "steam"))
 
 	SND.Teams.ApplyFactionModel(ply)
 end
