@@ -646,19 +646,19 @@ hook.Add("HUDPaint", "SND_HUD", function()
 	-- ── Halftime Message ─────────────────────────────────────────────────
 	if SND.Client.HalftimeTime and CurTime() < SND.Client.HalftimeTime + 5 then
 		local age = CurTime() - SND.Client.HalftimeTime
-		local alpha = age < 4 and 255 or math.max(0, 255 - (age - 4) * 255)
+		local alpha = (age < 4) and 255 or math.max(0, 255 - (age - 4) * 255)
 		
-		local bannerH = 100 * sc
+		local bannerH = 140 * sc
 		local bannerY = sh * 0.5 - bannerH * 0.5
 		
-		surface.SetDrawColor(0, 0, 0, 180 * (alpha / 255))
+		surface.SetDrawColor(0, 0, 0, 220 * (alpha / 255))
 		surface.DrawRect(0, bannerY, sw, bannerH)
-		surface.SetDrawColor(255, 210, 50, alpha)
-		surface.DrawRect(0, bannerY, sw, 2 * sc)
-		surface.DrawRect(0, bannerY + bannerH - 2 * sc, sw, 2 * sc)
+		surface.SetDrawColor(255, 120, 0, alpha) -- BO3 Orange Accent
+		surface.DrawRect(0, bannerY, sw, 3 * sc)
+		surface.DrawRect(0, bannerY + bannerH - 3 * sc, sw, 3 * sc)
 
-		draw.SimpleText("HALFTIME", "DermaLarge", sw * 0.5, bannerY + 30 * sc, Color(255, 210, 50, alpha), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
-		draw.SimpleText("SWITCHING SIDES", "Trebuchet24", sw * 0.5, bannerY + 70 * sc, Color(255, 255, 255, alpha), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+		draw.SimpleText("HALFTIME", "SND_BO3_Title", sw * 0.5, bannerY + 45 * sc, Color(255, 210, 50, alpha), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+		draw.SimpleText("SWITCHING SIDES", "Trebuchet24", sw * 0.5, bannerY + 95 * sc, Color(255, 255, 255, alpha), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
 	end
 
 	-- ── Spectator label ───────────────────────────────────────────────────

@@ -71,7 +71,8 @@ function SND.Round.EndRound(reason)
 
 	-- ── Halftime Logic ──────────────────────────────────────────────────
 	-- In CoD, teams switch sides halfway through the match.
-	if not SND.Round.HalftimeReached and SND.Round.RoundNumber > 0 and SND.Round.RoundNumber == (lim - 1) then
+	local totalRounds = SND.Round.AttackScore + SND.Round.DefendScore
+	if not SND.Round.HalftimeReached and totalRounds > 0 and totalRounds == (lim - 1) then
 		SND.Round.HalftimeReached = true
 		net.Start("SND_Halftime") net.Broadcast()
 		
@@ -112,8 +113,8 @@ function SND.Round.SwitchTeams()
 		SND.Teams.ApplyFactionModel(ply)
 	end
 
-	SND.Round.Sync() -- Update HUD with swapped scores
 	SND.Announcer.OnRoundEnd(SND.WIN_DRAW) -- Play a neutral sound
+	SND.Round.Sync() -- Update HUD with swapped scores immediately
 end
 
 function SND.Round.StartNewRound()
