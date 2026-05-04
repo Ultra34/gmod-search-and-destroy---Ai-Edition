@@ -133,19 +133,26 @@ end
 
 -- ── Sprint View Bobbing (Client Only) ─────────────────────────────────────
 if CLIENT then
+    local bobIntensity = 0
     hook.Add("CalcView", "SND_SprintViewBob", function(ply, pos, ang, fov)
-        if not ply:Alive() or ply:GetObserverMode() ~= OBS_MODE_NONE then return end
+        if not IsValid(ply) or not ply:Alive() or ply:GetObserverMode() ~= OBS_MODE_NONE then return end
         
-        if ply.SND_Sprinting and ply:IsOnGround() and ply:GetVelocity():Length2D() > 100 then
-            local t = CurTime() * 10
-            local intensity = 0.5
+        -- Smoothly transition the bobbing intensity to prevent snapping
+        local isSprinting = ply.SND_Sprinting and ply:IsOnGround() and ply:GetVelocity():Length2D() > 100
+        bobIntensity = Lerp(FrameTime() * 10, bobIntensity, isSprinting and 1 or 0)
+
+        if bobIntensity > 0.001 then
+            local t = CurTime() * 12
+            local sway = 0.6 * bobIntensity
             
             -- MW2-style camera sway/roll during sprint
-            ang.roll = ang.roll + math.sin(t * 0.5) * intensity
-            ang.pitch = ang.pitch + math.cos(t) * (intensity * 0.5)
+            ang.roll = ang.roll + math.sin(t * 0.5) * sway
+            ang.pitch = ang.pitch + math.cos(t) * (sway * 0.5)
             
             return {
-                angles = ang
+                origin = pos, -- Explicitly set origin to prevent jitter
+                angles = ang,
+                fov = fov
             }
         end
     end)
