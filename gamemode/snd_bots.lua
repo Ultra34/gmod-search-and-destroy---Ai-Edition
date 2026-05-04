@@ -1,37 +1,39 @@
 --[[ Bot AI — state machine, skill 1-10, weapon reload/switch, bomb objectives
---[[ Bot AI — state machine, skill 1-10, weapon reload/switch
---[[ Bot AI Reworked — Roam & Kill
-     Uses PathFollower for navigation and tactical state management. ]]
+--[[ Bot AI Reworked — Roam, Investigate, & Objective Play ]]
 
 SND.Bots = SND.Bots or {}
 
 -- ── Bot states ────────────────────────────────────────────────────────────
-local BS_IDLE   = 0   -- frozen (freeze phase or waiting)
-local BS_PATROL = 1   -- no enemies known; wandering
-local BS_ENGAGE = 2   -- has line of sight on an enemy; shooting
-local BS_CHASE  = 3   -- lost sight; walking to last known position
-local BS_PLANT  = 4   -- attacker + bomb carrier; moving to site
-local BS_DEFUSE = 5   -- defender; bomb planted; moving to bomb
-local BS_RELOAD = 6   -- weapon empty/low; reloading or switching
+local BS_IDLE      = 0   -- Frozen (Freeze phase)
+local BS_PATROL    = 1   -- Moving toward objective/site
+local BS_ENGAGE    = 2   -- Active combat
+local BS_INVESTIGATE = 3 -- Heading toward a sound/last seen point
+local BS_SEARCH    = 4   -- Clearing corners at a location
+local BS_PLANT     = 5   -- Moving to plant
+local BS_DEFUSE    = 6   -- Moving to defuse
+local BS_FOLLOW    = 7   -- Escorting the carrier
 
 -- ── Skill 1-10 → internal float helpers ──────────────────────────────────
 local function skillT(s)       return (math.Clamp(s, 1, 10) - 1) / 9 end
 local function getSkill()      return SND.Settings.GetInt("bot_skill", 5) end
-local function aimNoise(s)     return Lerp(skillT(s), 12, 0.5) end
+local function aimNoise(s)     return Lerp(skillT(s), 15, 0.2) end
 local function reactionSec(s)  return Lerp(skillT(s), 0.8, 0.1) end
-local function engageRange(s)  return Lerp(skillT(s), 1500, 5000) end
+local function engageRange(s)  return Lerp(skillT(s), 2000, 6000) end
 local function botMoveSpeed(s) return Lerp(skillT(s), 180, 320) end
 
 -- ── AI State ──────────────────────────────────────────────────────────────
 local function newAI()
 	return {
 		state         = BS_IDLE,
-		enemy         = nil,     -- current target
+		enemy         = nil,
 		lastKnownPos  = nil,
 		lastKnownTime = 0,
-		canShoot      = false,   -- reaction time gate
-		shootGate     = 0,       -- CurTime() when bot may first fire at this target
-		patrolAngle   = math.Rand(0, 360),
+		searchPoints  = {},      -- Points to check when "investigating"
+		currentSearchIdx = 1,
+		nextSearchSwitch = 0,
+		
+		shootGate     = 0,
+		nextJump      = 0,
 		patrolFlip    = 0,
 		needsReload   = false,
 		reloadEnd     = 0,
@@ -84,6 +86,19 @@ function SND.Bots.CountBots()
 	local n = 0
 	for _, p in ipairs(player.GetAll()) do if p.SND_IsBot then n = n + 1 end end
 	return n
+end
+
+local function getEnemyCarrier()
+	if SND.Bomb.State ~= SND.BOMB_STATE_CARRIED then return nil end
+	local carrier = SND.Bomb.Carrier
+	if IsValid(carrier) and carrier:Alive() then return carrier end
+	return nil
+end
+
+local function getAllyCarrier(bot)
+	local carrier = SND.Bomb.Carrier
+	if IsValid(carrier) and carrier:Alive() and carrier:Team() == bot:Team() then return carrier end
+	return nil
 end
 
 local function pickTeam()
@@ -178,17 +193,17 @@ local function weaponCheck(bot, cmd)
 	local ai = bot.SND_AI
 
 	local max = wep:GetMaxClip1()
-	local clip = wep:Clip1()
+	local clip = wep:Clip1() or 0
 
 	-- 1. Mid-fight emergency switch: Primary is empty, pull out secondary
-	if ai.state == BS_ENGAGE and max > 0 and clip <= 0 then
+	if ai.state == BS_ENGAGE and max > 0 and (clip <= 0) then
 		local isPri = false
 		for _, pClass in ipairs(SND.Config.BotPrimaries) do
 			if wep:GetClass() == pClass then isPri = true break end
 		end
 
 		if isPri then
-			for _, sClass in ipairs(SND.Config.BotSecondaries) do
+			for _, sClass in ipairs(SND.Config.Mw2eSecondaries) do
 				local swep = bot:GetWeapon(sClass)
 				if IsValid(swep) and swep:Clip1() > 0 then
 					bot:SelectWeapon(sClass)
@@ -199,7 +214,7 @@ local function weaponCheck(bot, cmd)
 	end
 
 	-- 2. Reloading: If empty, or safe and needs a top-off (checking reserve ammo)
-	local isSafe = (ai.state == BS_PATROL or ai.state == BS_CHASE or ai.state == BS_IDLE)
+	local isSafe = (ai.state == BS_PATROL or ai.state == BS_SEARCH or ai.state == BS_IDLE)
 	local hasReserve = bot:GetAmmoCount(wep:GetPrimaryAmmoType()) > 0
 	if max > 0 and hasReserve then
 		if clip <= 0 or (isSafe and clip < max) then
@@ -212,7 +227,7 @@ local function weaponCheck(bot, cmd)
 		for _, pClass in ipairs(SND.Config.BotPrimaries) do
 			local pwep = bot:GetWeapon(pClass)
 			if IsValid(pwep) and pwep ~= wep and pwep:Clip1() > 0 then
-				bot:SelectWeapon(pClass)
+				timer.Simple(0.5, function() if IsValid(bot) then bot:SelectWeapon(pClass) end end)
 				break
 			end
 		end
@@ -220,17 +235,7 @@ local function weaponCheck(bot, cmd)
 end
 
 local function switchToFilledWeapon(bot)
-	local active = bot:GetActiveWeapon()
-	for _, wep in ipairs(bot:GetWeapons()) do
-		if IsValid(wep) and wep ~= active then
-			local max = wep:GetMaxClip1()
-			if max <= 0 or wep:Clip1() > 0 then
-				bot:SelectWeapon(wep:GetClass())
-				return true
-			end
-		end
-	end
-	return false
+	-- Implementation already handled in weaponCheck
 end
 
 -- ── Navigation ────────────────────────────────────────────────────────────
@@ -244,7 +249,7 @@ local function moveToward(bot, cmd, targetPos, speed)
 	if navmesh.IsLoaded() then
 		if not ai.path then
 			ai.path = Path("Follow")
-			ai.path:SetMinLookAheadDistance(300)
+			ai.path:SetMinLookAheadDistance(200)
 			ai.path:SetGoalTolerance(20)
 		end
 
@@ -257,44 +262,44 @@ local function moveToward(bot, cmd, targetPos, speed)
 
 		if ai.path:IsValid() then
 			ai.path:Update(bot)
-			-- FIX: GetPositionOnPath converts the distance (number) into a Vector (coordinates)
-			local cursorDist = ai.path:GetCursorPosition()
-			local pathPos = ai.path:GetPositionOnPath(cursorDist)
-			if isvector(pathPos) then 
-				moveDest = pathPos 
+			
+			-- Get the point slightly ahead on the path for smoother movement
+			local segments = ai.path:GetAllSegments()
+			if segments and #segments > 1 then
+				moveDest = segments[2].pos
 			end
 		end
 	end
 
-	-- Safety: Ensure moveDest is a vector before subtraction
 	if not isvector(moveDest) then moveDest = targetPos end
 
-	local diff = moveDest - myPos
 	local dist = (targetPos - myPos):Length()
+	if dist < 40 then return dist end
 
-	if dist < 30 then return dist end
-
-	-- Improved Stuck detection / Obstacle jumping
-	if bot:IsOnGround() and CurTime() > ai.stuckCheck then
-		if myPos:Distance(ai.stuckPos) < 15 then
-			cmd:SetButtons(bit.bor(cmd:GetButtons(), IN_JUMP))
+	-- Stuck Jump Detection
+	if bot:IsOnGround() and speed > 0 then
+		if myPos:DistToSqr(ai.stuckPos) < 25 then
+			if CurTime() > ai.nextJump then
+				cmd:SetButtons(bit.bor(cmd:GetButtons(), IN_JUMP))
+				ai.nextJump = CurTime() + 1.0
+			end
 		end
-		ai.stuckPos = myPos
-		ai.stuckCheck = CurTime() + 0.5
+		if CurTime() > ai.stuckCheck then
+			ai.stuckPos = myPos
+			ai.stuckCheck = CurTime() + 0.2
+		end
 	end
 
 	local distToGoal = moveDest:Distance(myPos)
-
-	-- Only adjust eye angles for movement when not actively engaging an enemy
 	if ai.state ~= BS_ENGAGE and distToGoal > 15 then
 		local goalAngle = (moveDest - myPos):Angle()
 		goalAngle.p = 0
 
-		-- Tactical Roam: Check corners while moving
+		-- Tactical Scanning
 		if CurTime() > ai.nextScan then
-			-- 30% chance to scan a corner, otherwise stay focused forward
-			ai.isScanning = math.random() < 0.3
-			ai.scanOffset = ai.isScanning and math.random(-45, 45) or 0
+			-- Scan corners randomly while moving
+			ai.isScanning = math.random() < 0.4
+			ai.scanOffset = ai.isScanning and math.random(-60, 60) or 0
 			ai.nextScan = CurTime() + math.Rand(0.5, 2.0)
 		end
 
@@ -309,14 +314,14 @@ local function moveToward(bot, cmd, targetPos, speed)
 		bot:SetEyeAngles(curAng)
 	end
 
-	cmd:SetForwardMove(speed)
+	cmd:SetForwardMove(speed * math.Clamp(distToGoal / 100, 0.5, 1))
 	return dist
 end
 
 -- Lead aiming: Predict where the player will be based on velocity
 local function getAimVector(bot, target, noise)
 	local targetPos = target:GetPos() + Vector(0, 0, 55) -- Aim for chest/head
-	local dist = bot:GetPos():Distance(targetPos)
+	local dist = bot:EyePos():Distance(targetPos)
 	
 	-- Prediction: Bullet travel time simulation
 	local velocity = target:GetVelocity()
@@ -324,8 +329,8 @@ local function getAimVector(bot, target, noise)
 	targetPos = targetPos + prediction
 
 	local aimAng = (targetPos - bot:EyePos()):Angle()
-	aimAng.p = aimAng.p + math.Rand(-noise, noise)
-	aimAng.y = aimAng.y + math.Rand(-noise, noise)
+	aimAng.p = aimAng.p + math.Rand(-noise, noise) * (dist / 1000)
+	aimAng.y = aimAng.y + math.Rand(-noise, noise) * (dist / 1000)
 
 	return aimAng
 end
@@ -351,27 +356,30 @@ hook.Add("StartCommand", "SND_BotAI", function(bot, cmd)
 	local targetObj = nil
 	local isCarrier = (bot:Team() == SND.TEAM_ATTACK and SND.Bomb.Carrier == bot)
 	local isRetaker = (bot:Team() == SND.TEAM_DEFEND and SND.Bomb.State == SND.BOMB_STATE_PLANTED)
+	local allyCarrier = getAllyCarrier(bot)
 
 	-- Update objective state if not in active combat
-	if ai.state ~= BS_ENGAGE then
+	if ai.state ~= BS_ENGAGE and ai.state ~= BS_INVESTIGATE and ai.state ~= BS_SEARCH then
 		if isCarrier then ai.state = BS_PLANT
 		elseif isRetaker then ai.state = BS_DEFUSE
+		elseif allyCarrier and allyCarrier ~= bot then ai.state = BS_FOLLOW
 		elseif ai.state == BS_IDLE then ai.state = BS_PATROL end
 	end
 
-	if ai.state == BS_PATROL or ai.state == BS_PLANT or ai.state == BS_DEFUSE or ai.state == BS_CHASE then
+	if ai.state == BS_PATROL or ai.state == BS_PLANT or ai.state == BS_DEFUSE or ai.state == BS_FOLLOW then
 		if ai.state == BS_PLANT then
 			local site = nearestSite(bot)
 			if site then targetObj = site.plantPos or site.pos end
 		elseif ai.state == BS_DEFUSE then
 			targetObj = SND.Bomb.PlantPos
-		elseif bot:Team() == SND.TEAM_ATTACK then
-			-- Support carrier
-			if IsValid(SND.Bomb.Carrier) then targetObj = SND.Bomb.Carrier:GetPos() end
+		elseif ai.state == BS_FOLLOW and IsValid(allyCarrier) then
+			-- Stay behind the carrier
+			targetObj = allyCarrier:GetPos() - allyCarrier:GetForward() * 150
 		else
-			-- Guard sites
+			-- Defenders/Patrollers: Anchor sites
 			local sites = SND.Config.MapSites[game.GetMap()]
 			if sites and #sites > 0 then
+				-- Use EntIndex to determine which site to anchor
 				local siteIdx = (bot:EntIndex() % #sites) + 1
 				targetObj = sites[siteIdx].plantPos or sites[siteIdx].pos
 			end
@@ -425,25 +433,48 @@ hook.Add("StartCommand", "SND_BotAI", function(bot, cmd)
 			cmd:SetButtons(bit.bor(cmd:GetButtons(), IN_DUCK))
 		end
 	else
-		-- No enemy visible, focus on objectives or patrol
+		-- No enemy visible
 		ai.enemy = nil
 		ai.shootGate = 0
 		
-		local goal = targetObj or ai.lastKnownPos
+		-- Resolve Investigation vs Patrolling
+		local goal = nil
+		if ai.state == BS_INVESTIGATE and ai.lastKnownPos then
+			goal = ai.lastKnownPos
+		elseif ai.state == BS_SEARCH then
+			goal = ai.searchPoints[ai.currentSearchIdx]
+		else
+			goal = targetObj
+		end
+
 		if goal then
-			-- If we are already mid-interaction, stop moving entirely to avoid velocity cancellation
 			if bot.SND_Planting or bot.SND_Defusing then
 				cmd:ClearMovement()
 				cmd:SetButtons(bit.bor(cmd:GetButtons(), IN_USE))
 				bot:SetEyeAngles(LerpAngle(0.1, bot:EyeAngles(), Angle(45, bot:EyeAngles().y, 0)))
 			else
 				local d = moveToward(bot, cmd, goal, speed)
-			
-				-- Start interaction if close enough
-				if d < 110 then
+
+				if d < 50 then
+					-- Reached investigation point?
+					if ai.state == BS_INVESTIGATE then
+						ai.state = BS_SEARCH
+						ai.searchPoints = {
+							goal + Vector(200, 200, 0),
+							goal + Vector(-200, 200, 0),
+							goal + Vector(0, -200, 0)
+						}
+						ai.currentSearchIdx = 1
+					elseif ai.state == BS_SEARCH then
+						ai.currentSearchIdx = ai.currentSearchIdx + 1
+						if ai.currentSearchIdx > #ai.searchPoints then
+							ai.state = BS_PATROL -- Finished searching
+						end
+					end
+
+					-- Interaction logic
 					if (ai.state == BS_PLANT or ai.state == BS_DEFUSE) then
 						cmd:SetButtons(bit.bor(cmd:GetButtons(), IN_USE))
-						-- Look at the ground to prepare the plant/defuse trace
 						bot:SetEyeAngles(LerpAngle(0.1, bot:EyeAngles(), Angle(45, bot:EyeAngles().y, 0)))
 					elseif bot:Team() == SND.TEAM_DEFEND then
 						cmd:ClearMovement() -- Camping
@@ -490,15 +521,10 @@ hook.Add("EntityEmitSound", "SND_BotHearing", function(t)
 		local modifiedRange = range * (0.5 + (skill / 10))
 
 		if dist < modifiedRange then
-			-- If the bot can't see the target, they investigate the sound
 			if not canSee(bot, src) then
 				ai.lastKnownPos = soundPos
 				ai.lastKnownTime = CurTime()
-				
-				-- Only switch to chase if currently idling or patrolling
-				if ai.state == BS_IDLE or ai.state == BS_PATROL then
-					ai.state = BS_CHASE
-				end
+				ai.state = BS_INVESTIGATE
 			end
 		end
 	end
