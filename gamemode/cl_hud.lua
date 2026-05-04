@@ -590,7 +590,9 @@ hook.Add("HUDPaint", "SND_HUD", function()
 	end
 
 	-- ── Victory Messages (Round End) ──────────────────────────────────────
-	if phase == SND.PHASE_POST then
+	local isHalftimeActive = SND.Client.HalftimeTime and SND.Client.HalftimeTime > 0 and CurTime() < SND.Client.HalftimeTime + 5
+
+	if phase == SND.PHASE_POST and not isHalftimeActive then
 		local winLimit = SND.Settings.GetInt("win_limit", 4)
 		local matchOver = (SND.Client.Winner ~= SND.WIN_DRAW and SND.Client.Winner ~= SND.WIN_NONE) and ((SND.Client.AttackScore or 0) >= winLimit or (SND.Client.DefendScore or 0) >= winLimit)
 
