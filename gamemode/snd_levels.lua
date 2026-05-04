@@ -1,6 +1,8 @@
 SND.Levels = SND.Levels or {}
 
-util.AddNetworkString("SND_UpdateXP")
+if SERVER then
+	util.AddNetworkString("SND_UpdateXP")
+end
 
 -- XP Curve: 2000 XP per level
 local XP_PER_LEVEL = 2000

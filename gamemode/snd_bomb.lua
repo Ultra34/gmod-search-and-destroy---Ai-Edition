@@ -1,6 +1,8 @@
 --[[ Bomb: plant at crosshair ground point, locked prop, CSS beeping, defuse
      REPLACES: gamemode/snd_bomb.lua ]]
 
+AddCSLuaFile()
+
 SND.Bomb = SND.Bomb or {}
 
 SND.Bomb.State       = SND.BOMB_STATE_NONE
@@ -11,8 +13,10 @@ SND.Bomb.DefuseEnd   = 0
 SND.Bomb.PlantTime   = nil
 SND.Bomb.PropEnt     = nil
 
-util.AddNetworkString("SND_Bomb")
-util.AddNetworkString("SND_BombProgress")
+if SERVER then
+	util.AddNetworkString("SND_Bomb")
+	util.AddNetworkString("SND_BombProgress")
+end
 
 local FUSE_TIME = 45  -- seconds until detonation
 

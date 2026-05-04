@@ -1,6 +1,8 @@
 --[[ COD-style movement: freeze lock, sprint, air accel
      REPLACES: gamemode/snd_movement.lua ]]
 
+AddCSLuaFile()
+
 SND.Movement = SND.Movement or {}
 
 function SND.Movement.Setup(ply)

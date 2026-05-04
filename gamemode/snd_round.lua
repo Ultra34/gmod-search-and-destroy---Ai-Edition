@@ -1,5 +1,7 @@
 --[[ Round state, win conditions, spectate rules, team balance hooks ]]
 
+AddCSLuaFile()
+
 SND.Round = SND.Round or {}
 
 SND.Round.Phase = SND.PHASE_WAIT
