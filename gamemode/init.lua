@@ -32,6 +32,7 @@ include("snd_levels.lua")
 file.CreateDir("snd_mwclassic/players")
 file.CreateDir("snd_mwclassic/banners")
 file.CreateDir("snd_mwclassic/emblems")
+file.CreateDir("snd_mwclassic/titles")
 
 print("[SND] Calling Card & Emblem System initialized successfully.")
 
@@ -39,6 +40,8 @@ util.AddNetworkString("SND_ShowCallingCard")
 util.AddNetworkString("SND_SetEmblem")
 util.AddNetworkString("SND_SetCallingCard")
 util.AddNetworkString("SND_SetShowTitle")
+util.AddNetworkString("SND_SetTitleMat")
+util.AddNetworkString("SND_SetUseTitleMat")
 
 DEFINE_BASECLASS("gamemode_base")
 
@@ -73,6 +76,8 @@ function GM:PlayerInitialSpawn(ply)
 	ply:SetNWString("SND_CardTitle", ply:GetPData("snd_card_title", "New Recruit"))
 	ply:SetNWString("SND_CardMat", ply:GetPData("snd_card_mat", "vgui/white"))
 	ply:SetNWBool("SND_ShowTitle", ply:GetPData("snd_show_title", "1") == "1")
+	ply:SetNWBool("SND_UseTitleMat", ply:GetPData("snd_use_title_mat", "0") == "1")
+	ply:SetNWString("SND_TitleMat", ply:GetPData("snd_title_mat", "vgui/white"))
 	local isBot = (ply:IsBot() or ply.SND_IsBot)
 	ply:SetNWString("SND_EmblemMat", ply:GetPData("snd_emblem_mat", isBot and SND.Config.DefaultBotEmblem or "steam"))
 
@@ -138,6 +143,8 @@ function GM:PlayerDeath(victim, inflictor, attacker)
 			net.WriteBool(attacker:IsBot() or attacker.SND_IsBot)
 			net.WriteUInt(attacker:Team(), 4)
 			net.WriteBool(attacker:GetNWBool("SND_ShowTitle", true))
+			net.WriteBool(attacker:GetNWBool("SND_UseTitleMat", false))
+			net.WriteString(attacker:GetNWString("SND_TitleMat", "vgui/white"))
 			net.WriteBool(false) -- You were NOT the killer
 		net.Send(victim)
 
@@ -153,6 +160,8 @@ function GM:PlayerDeath(victim, inflictor, attacker)
 			net.WriteBool(victim:IsBot() or victim.SND_IsBot)
 			net.WriteUInt(victim:Team(), 4)
 			net.WriteBool(victim:GetNWBool("SND_ShowTitle", true))
+			net.WriteBool(victim:GetNWBool("SND_UseTitleMat", false))
+			net.WriteString(victim:GetNWString("SND_TitleMat", "vgui/white"))
 			net.WriteBool(true) -- You WERE the killer
 		net.Send(attacker)
 	end

@@ -348,10 +348,12 @@ local function drawCallingCardPopup(sw, sh, sc)
     surface.DrawRect(x, y, w, h)
 
 	-- Draw Card Background (Material with transparency support)
+	surface.SetMaterial(Material("vgui/white")) -- Reset state
 	surface.SetDrawColor(255, 255, 255, alpha)
     local bannerMat = card.bannerMat
     if bannerMat and not (bannerMat:IsError() and not card.matPath:find(".gif")) then
-        -- Support for animated banner frames
+        surface.SetMaterial(bannerMat)
+		-- Support for animated banner frames
         local frames = bannerMat:GetInt("$numframes") or 1
         if frames > 1 then
             bannerMat:SetInt("$frame", math.floor(CurTime() * 12) % frames)
@@ -373,9 +375,23 @@ local function drawCallingCardPopup(sw, sh, sc)
 	local textY = y + h * 0.5
 
 	-- Custom Title Text (Overlayed on Banner)
-    if card.showTitle then
-	    draw.SimpleText(card.title:upper(), "SND_BO3_Team", textX + 1, textY - 11 * sc, Color(0, 0, 0, alpha), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
-	    draw.SimpleText(card.title:upper(), "SND_BO3_Team", textX, textY - 12 * sc, Color(255, 210, 50, alpha), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+	if card.showTitle then
+		if card.useTitleMat then
+			local tMat = card.titleMat
+			if tMat and not (tMat:IsError() and not card.titleMatPath:find(".gif")) then
+				local tW, tH = 256 * sc, 64 * sc
+				local frames = tMat:GetInt("$numframes") or 1
+				if frames > 1 then tMat:SetInt("$frame", math.floor(CurTime() * 12) % frames) end
+				surface.SetMaterial(tMat)
+				surface.SetDrawColor(255, 255, 255, alpha)
+				surface.DrawTexturedRect(textX, textY - tH * 0.5 - 12 * sc, tW, tH)
+			else
+				draw.SimpleText(card.title:upper(), "SND_BO3_Team", textX, textY - 12 * sc, Color(255, 210, 50, alpha), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+			end
+		else
+			draw.SimpleText(card.title:upper(), "SND_BO3_Team", textX + 1, textY - 11 * sc, Color(0, 0, 0, alpha), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+			draw.SimpleText(card.title:upper(), "SND_BO3_Team", textX, textY - 12 * sc, Color(255, 210, 50, alpha), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+		end
     end
 	
 	-- Player Name (Team Colored)
@@ -393,6 +409,7 @@ local function drawCallingCardPopup(sw, sh, sc)
 	end
 
 	if card.emblemMatPath == "steam" and not card.isBot and card.sid64 ~= "0" then
+		surface.SetMaterial(Material("vgui/white"))
 		if IsValid(cardAvatar) then
 			cardAvatar:SetVisible(true)
 			cardAvatar:SetPos(embX, embY)
@@ -402,6 +419,7 @@ local function drawCallingCardPopup(sw, sh, sc)
 	else
         if IsValid(cardAvatar) then cardAvatar:SetVisible(false) end
         local embMat = card.emblemMat
+		surface.SetMaterial(Material("vgui/white"))
         if embMat and not (embMat:IsError() and not card.emblemMatPath:find(".gif")) then
             -- Support for animated emblem frames
             local frames = embMat:GetInt("$numframes") or 1
@@ -428,6 +446,8 @@ net.Receive("SND_ShowCallingCard", function()
 		isBot = net.ReadBool(),
         team = net.ReadUInt(4),
         showTitle = net.ReadBool(),
+		useTitleMat = net.ReadBool(),
+		titleMatPath = net.ReadString(),
         wasKiller = net.ReadBool(),
 		startTime = CurTime(),
 		endTime = CurTime() + 4
