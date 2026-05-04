@@ -514,14 +514,19 @@ hook.Add("StartCommand", "SND_BotAI", function(bot, cmd)
 		end
 
 		if goal then
-			if (bot.SND_Planting and isCarrier) or (bot.SND_Defusing and isRetaker) then
+			local distToGoal = bot:GetPos():Distance(goal)
+			local site = nearestSite(bot)
+			local siteRad = site and (site.defuseRadius or site.radius or 96) or 96
+
+			-- Use the site's radius to determine success rather than reaching exact coordinates to prevent jittering
+			local inObjectiveRadius = (ai.state == BS_PLANT or ai.state == BS_DEFUSE) and distToGoal < (siteRad * 0.8)
+
+			if (bot.SND_Planting and isCarrier) or (bot.SND_Defusing and isRetaker) or inObjectiveRadius then
 				cmd:ClearMovement()
 				cmd:SetButtons(bit.bor(cmd:GetButtons(), IN_USE))
 				bot:SetEyeAngles(LerpAngle(0.1, bot:EyeAngles(), Angle(45, bot:EyeAngles().y, 0)))
 			else
 				local d = moveToward(bot, cmd, goal, speed)
-				local site = nearestSite(bot)
-				local siteRad = site and (site.defuseRadius or site.radius or 96) or 96
 
 				if d < (siteRad * 0.7) then
 					-- Reached investigation point?
@@ -540,12 +545,7 @@ hook.Add("StartCommand", "SND_BotAI", function(bot, cmd)
 						end
 					end
 
-					-- Interaction logic
-					if (ai.state == BS_PLANT or ai.state == BS_DEFUSE) then
-						cmd:ClearMovement() -- Stop moving immediately when starting interaction
-						cmd:SetButtons(bit.bor(cmd:GetButtons(), IN_USE))
-						bot:SetEyeAngles(LerpAngle(0.1, bot:EyeAngles(), Angle(45, bot:EyeAngles().y, 0)))
-					elseif bot:Team() == SND.TEAM_DEFEND then
+					if bot:Team() == SND.TEAM_DEFEND and ai.state == BS_PATROL then
 						cmd:ClearMovement() -- Camping
 					end
 				end
