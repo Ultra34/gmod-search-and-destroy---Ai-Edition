@@ -253,16 +253,16 @@ local function moveToward(bot, cmd, targetPos, speed)
 			ai.path:SetGoalTolerance(20)
 		end
 
-		-- Recompute path every 1 second or if goal moves
-		if CurTime() > ai.nextPathUpdate or ai.lastPathGoal:DistToSqr(targetPos) > 16384 then
+		-- Recompute path if goal moves significantly or path is stale
+		if not ai.path:IsValid() or CurTime() > ai.nextPathUpdate or ai.lastPathGoal:DistToSqr(targetPos) > 4096 then
 			ai.path:Compute(bot, targetPos)
-			ai.nextPathUpdate = CurTime() + 1.0
+			ai.nextPathUpdate = CurTime() + 2.0
 			ai.lastPathGoal = targetPos
 		end
 
 		if ai.path:IsValid() then
 			ai.path:Update(bot)
-			
+
 			-- Get the point slightly ahead on the path for smoother movement
 			local segments = ai.path:GetAllSegments()
 			if segments and #segments > 1 then
@@ -358,12 +358,16 @@ hook.Add("StartCommand", "SND_BotAI", function(bot, cmd)
 	local isRetaker = (bot:Team() == SND.TEAM_DEFEND and SND.Bomb.State == SND.BOMB_STATE_PLANTED)
 	local allyCarrier = getAllyCarrier(bot)
 
-	-- Update objective state if not in active combat
-	if ai.state ~= BS_ENGAGE and ai.state ~= BS_INVESTIGATE and ai.state ~= BS_SEARCH then
-		if isCarrier then ai.state = BS_PLANT
-		elseif isRetaker then ai.state = BS_DEFUSE
-		elseif allyCarrier and allyCarrier ~= bot then ai.state = BS_FOLLOW
-		elseif ai.state == BS_IDLE then ai.state = BS_PATROL end
+	-- Update objective state (Objective takes priority over investigation/searching)
+	if ai.state ~= BS_ENGAGE then
+		if isCarrier then 
+			ai.state = BS_PLANT
+		elseif isRetaker then 
+			ai.state = BS_DEFUSE
+		elseif ai.state ~= BS_INVESTIGATE and ai.state ~= BS_SEARCH then
+			if allyCarrier and allyCarrier ~= bot then ai.state = BS_FOLLOW
+			elseif ai.state == BS_IDLE then ai.state = BS_PATROL end
+		end
 	end
 
 	if ai.state == BS_PATROL or ai.state == BS_PLANT or ai.state == BS_DEFUSE or ai.state == BS_FOLLOW then
