@@ -203,12 +203,15 @@ local function nearestSite(bot)
 	local map = game.GetMap()
 	local sites = SND.Config.MapSites[map]
 	if not sites or #sites == 0 then return nil, math.huge end
+	
 	local best, bestDist
+	local myPos = bot:GetPos()
+
 	for _, s in ipairs(sites) do
-		local d = bot:GetPos():DistToSqr(s.plantPos or s.pos)
+		local d = myPos:Distance2D(s.plantPos or s.pos)
 		if not best or d < bestDist then best, bestDist = s, d end
 	end
-	return best, math.sqrt(bestDist)
+	return best, bestDist
 end
 
 local function weaponCheck(bot, cmd)
@@ -514,17 +517,17 @@ hook.Add("StartCommand", "SND_BotAI", function(bot, cmd)
 		end
 
 		if goal then
-			local distToGoal = bot:GetPos():Distance(goal)
+			local distToGoal2D = bot:GetPos():Distance2D(goal)
 			local site = nearestSite(bot)
 			local siteRad = site and (site.defuseRadius or site.radius or 96) or 96
 
-			-- Use the site's radius to determine success rather than reaching exact coordinates to prevent jittering
-			local inObjectiveRadius = (ai.state == BS_PLANT or ai.state == BS_DEFUSE) and distToGoal < (siteRad * 0.8)
+			-- Use a 2D check with a generous buffer (90% of radius) to prevent jittering
+			local inObjectiveRadius = (ai.state == BS_PLANT or ai.state == BS_DEFUSE) and distToGoal2D < (siteRad * 0.9)
 
 			if (bot.SND_Planting and isCarrier) or (bot.SND_Defusing and isRetaker) or inObjectiveRadius then
 				cmd:ClearMovement()
 				cmd:SetButtons(bit.bor(cmd:GetButtons(), IN_USE))
-				bot:SetEyeAngles(LerpAngle(0.1, bot:EyeAngles(), Angle(45, bot:EyeAngles().y, 0)))
+				bot:SetEyeAngles(LerpAngle(0.1, bot:EyeAngles(), Angle(75, bot:EyeAngles().y, 0)))
 			else
 				local d = moveToward(bot, cmd, goal, speed)
 

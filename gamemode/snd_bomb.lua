@@ -72,7 +72,7 @@ local function nearestSite(ply)
 	local best, bi
 	local sites = getSites()
 	for i, s in ipairs(sites) do
-		local d = ply:GetPos():Distance(s.plantPos)
+		local d = ply:GetPos():Distance2D(s.plantPos)
 		if not best or d < best then best, bi = d, i end
 	end
 	return bi, sites[bi], best
@@ -303,7 +303,7 @@ function SND.Bomb.TryDefuse(ply)
 	if not IsValid(ply)                         then return end
 	if ply:Team() ~= SND.TEAM_DEFEND           then return end
 	if not SND.Bomb.PlantPos                   then return end
-	if ply:GetPos():Distance(SND.Bomb.PlantPos) > 128 then return end
+	if ply:GetPos():Distance2D(SND.Bomb.PlantPos) > 128 then return end
 	if ply.SND_Defusing                        then return end
 
 	ply.SND_Defusing = true
@@ -330,7 +330,7 @@ function SND.Bomb.TryDefuse(ply)
 			ply:ChatPrint("[SND] Defuse cancelled — you moved.")
 			return
 		end
-		if ply:GetPos():Distance(SND.Bomb.PlantPos) > 160 then
+		if ply:GetPos():Distance2D(SND.Bomb.PlantPos) > 160 then
 			SND.Bomb.CancelAction(ply, "defuse")
 			ply:ChatPrint("[SND] Defuse cancelled — too far from the bomb.")
 			return
