@@ -9,6 +9,7 @@ SND.Round.RoundNumber = 0
 SND.Round.MatchStarted = false
 SND.Round.Winner = SND.WIN_NONE
 SND.Round.RoundTimerEnd = 0
+SND.Round.HalftimeReached = false
 
 local nextBalanceCheck = 0
 
@@ -66,10 +67,22 @@ function SND.Round.EndRound(reason)
 	SND.Announcer.OnRoundEnd(reason)
 	SND.Bomb.ResetForRound()
 
+	local lim = SND.Settings.GetInt("win_limit", 4)
+
+	-- ── Halftime Logic ──────────────────────────────────────────────────
+	-- In CoD, teams switch sides halfway through the match.
+	if not SND.Round.HalftimeReached and SND.Round.RoundNumber == (lim - 1) then
+		SND.Round.HalftimeReached = true
+		net.Start("SND_Halftime") net.Broadcast()
+		
+		timer.Simple(2, function()
+			SND.Round.SwitchTeams()
+		end)
+	end
+
 	-- Sync phase to clients immediately
 	SND.Round.Sync()
 
-	local lim = SND.Settings.GetInt("win_limit", 4)
 	if SND.Round.AttackScore >= lim or SND.Round.DefendScore >= lim then
 		timer.Simple(8, function()
 			SND.MapVote.StartMatchEnd()
@@ -79,6 +92,20 @@ function SND.Round.EndRound(reason)
 			SND.Round.StartNewRound()
 		end)
 	end
+end
+
+function SND.Round.SwitchTeams()
+	print("[SND] Halftime: Switching sides...")
+	for _, ply in ipairs(player.GetAll()) do
+		local oldTeam = ply:Team()
+		if oldTeam == SND.TEAM_ATTACK then
+			ply:SetTeam(SND.TEAM_DEFEND)
+		elseif oldTeam == SND.TEAM_DEFEND then
+			ply:SetTeam(SND.TEAM_ATTACK)
+		end
+		SND.Teams.ApplyFactionModel(ply)
+	end
+	SND.Announcer.OnRoundEnd(SND.WIN_DRAW) -- Play a neutral sound
 end
 
 function SND.Round.StartNewRound()
@@ -190,6 +217,7 @@ timer.Create("SND_RoundTick", 0.25, 0, function()
 end)
 
 util.AddNetworkString("SND_RoundState")
+util.AddNetworkString("SND_Halftime")
 
 function SND.Round.Sync(target)
     net.Start("SND_RoundState")

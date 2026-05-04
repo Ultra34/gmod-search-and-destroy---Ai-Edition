@@ -16,6 +16,7 @@ SND.Round = SND.Round or {}
 SND.Client.KillFeed = SND.Client.KillFeed or {} -- Initialize kill feed table
 SND.Bomb = SND.Bomb or {}
 SND.Round.RoundTimerEnd = 0
+SND.Client.HalftimeTime = 0
 
 net.Receive("SND_RoundState", function()
 	local phase = net.ReadUInt(3)
@@ -69,6 +70,11 @@ net.Receive("SND_KillFeed", function()
         weaponName = weaponName,
         timestamp = CurTime()
     })
+end)
+
+net.Receive("SND_Halftime", function()
+	SND.Client.HalftimeTime = CurTime()
+	surface.PlaySound("ambient/levels/citadel/citadel_ambient_loop1.wav")
 end)
 
 

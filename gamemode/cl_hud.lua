@@ -643,6 +643,24 @@ hook.Add("HUDPaint", "SND_HUD", function()
 		end
 	end
 
+	-- ── Halftime Message ─────────────────────────────────────────────────
+	if SND.Client.HalftimeTime and CurTime() < SND.Client.HalftimeTime + 5 then
+		local age = CurTime() - SND.Client.HalftimeTime
+		local alpha = age < 4 and 255 or math.max(0, 255 - (age - 4) * 255)
+		
+		local bannerH = 100 * sc
+		local bannerY = sh * 0.5 - bannerH * 0.5
+		
+		surface.SetDrawColor(0, 0, 0, 180 * (alpha / 255))
+		surface.DrawRect(0, bannerY, sw, bannerH)
+		surface.SetDrawColor(255, 210, 50, alpha)
+		surface.DrawRect(0, bannerY, sw, 2 * sc)
+		surface.DrawRect(0, bannerY + bannerH - 2 * sc, sw, 2 * sc)
+
+		draw.SimpleText("HALFTIME", "DermaLarge", sw * 0.5, bannerY + 30 * sc, Color(255, 210, 50, alpha), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+		draw.SimpleText("SWITCHING SIDES", "Trebuchet24", sw * 0.5, bannerY + 70 * sc, Color(255, 255, 255, alpha), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+	end
+
 	-- ── Spectator label ───────────────────────────────────────────────────
 	if not lp:Alive() and (phase == SND.PHASE_LIVE or phase == SND.PHASE_FREEZE) then
 		local tgt  = lp:GetObserverTarget()
