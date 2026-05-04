@@ -305,12 +305,12 @@ local function drawCallingCardPopup(sw, sh, sc)
 		slide = math.EaseIn(math.Clamp((duration - age) / animSpeed, 0, 1), 4)
 	end
 	
-	local y = sh - (h + 90 * sc) * slide -- Raised higher above the XP bar
+	local y = sh - (h + 110 * sc) * slide -- Raised higher above the XP bar
 
 	-- Status Label (Killed By / You Killed)
 	local isKiller = card.sid64 == LocalPlayer():SteamID64()
 	local statusText = isKiller and ("YOU KILLED " .. (card.victimName or "ENEMY"):upper()) or "KILLED BY"
-	draw.SimpleText(statusText, "SND_BO3_Header", sw * 0.5, y - 8 * sc, col(255, 255, 255, alpha), TEXT_ALIGN_CENTER, TEXT_ALIGN_BOTTOM)
+	draw.SimpleText(statusText, "SND_BO3_Header", sw * 0.5, y - 10 * sc, col(255, 255, 255, alpha), TEXT_ALIGN_CENTER, TEXT_ALIGN_BOTTOM)
 
 	-- Draw Card Background (Material with transparency support)
 	surface.SetDrawColor(255, 255, 255, alpha)
@@ -327,34 +327,34 @@ local function drawCallingCardPopup(sw, sh, sc)
 	surface.DrawOutlinedRect(x, y, w, h, 2 * sc)
 
 	-- Text Info
-	local embSize = 100 * sc
-	local textX = x + embSize + 25 * sc
+	local embSize = 104 * sc
+	local textX = x + embSize + 20 * sc
 	local textY = y + h * 0.5
 
 	-- Custom Title Text (Overlayed on Banner)
-	draw.SimpleText(card.title:upper(), "SND_BO3_Team", textX + 1, textY - 9 * sc, Color(0, 0, 0, alpha), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
-	draw.SimpleText(card.title:upper(), "SND_BO3_Team", textX, textY - 10 * sc, Color(255, 210, 50, alpha), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+	draw.SimpleText(card.title:upper(), "SND_BO3_Team", textX + 1, textY - 11 * sc, Color(0, 0, 0, alpha), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+	draw.SimpleText(card.title:upper(), "SND_BO3_Team", textX, textY - 12 * sc, Color(255, 210, 50, alpha), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
 	
 	-- Player Name
-	draw.SimpleText(card.name:upper(), "SND_BO3_Player", textX + 1, textY + 19 * sc, Color(0, 0, 0, alpha), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
-	draw.SimpleText(card.name:upper(), "SND_BO3_Player", textX, textY + 18 * sc, Color(255, 255, 255, alpha), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+	draw.SimpleText(card.name:upper(), "SND_BO3_Player", textX + 1, textY + 13 * sc, Color(0, 0, 0, alpha), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+	draw.SimpleText(card.name:upper(), "SND_BO3_Player", textX, textY + 12 * sc, Color(255, 255, 255, alpha), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
 
-	-- Rank Icon (Far Right)
+	-- Rank Icon (Far Right of banner)
 	local lvl = card.level or 1
 	local icon = (SND.Levels and SND.Levels.GetIcon) and SND.Levels.GetIcon(lvl)
 	if icon then
 		surface.SetMaterial(icon)
 		surface.SetDrawColor(255, 255, 255, alpha)
-		surface.DrawTexturedRect(x + w - 48 * sc, y + h * 0.5 - 18 * sc, 36 * sc, 36 * sc)
+		surface.DrawTexturedRect(x + w - 50 * sc, y + h * 0.5 - 18 * sc, 36 * sc, 36 * sc)
 	end
 
-	-- Emblem (Left side, square 1:1)
-	local embX, embY = x + 10 * sc, y + (h - embSize) * 0.5
+	-- Emblem (Far Left, square 1:1)
+	local embX, embY = x + 8 * sc, y + (h - embSize) * 0.5
 
-	if card.emblemMatPath == "steam" and card.sid64 != "0" then
+	if card.emblemMatPath == "steam" and not card.isBot and card.sid64 ~= "0" then
 		if IsValid(cardAvatar) then
 			cardAvatar:SetVisible(true)
-			cardAvatar:SetPos(embX, embY - 2 * sc) -- Slight adjustment for avatar panel
+			cardAvatar:SetPos(embX, embY)
 			cardAvatar:SetSize(embSize, embSize)
 			cardAvatar:SetAlpha(alpha)
 		end
@@ -378,6 +378,7 @@ net.Receive("SND_ShowCallingCard", function()
 		sid64 = net.ReadString(),
 		victimName = net.ReadString(),
 		level = net.ReadUInt(16),
+		isBot = net.ReadBool(),
 		startTime = CurTime(),
 		endTime = CurTime() + 4
 	}

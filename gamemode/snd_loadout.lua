@@ -67,8 +67,9 @@ function SND.Loadout.Apply(ply)
 		pri = cv and cv:GetString() or ""
 	end
 	if pri == "" then
-		if defaults.random_primary and SND.Config.Mw2ePrimaries and #SND.Config.Mw2ePrimaries > 0 then
-			pri = table.Random(SND.Config.Mw2ePrimaries)
+		local pool = ply.SND_IsBot and SND.Config.BotPrimaries or SND.Config.Mw2ePrimaries
+		if defaults.random_primary and pool and #pool > 0 then
+			pri = table.Random(pool)
 		else
 			pri = defaults.primary
 		end
@@ -81,8 +82,9 @@ function SND.Loadout.Apply(ply)
 		sec = cv and cv:GetString() or ""
 	end
 	if sec == "" then
-		if defaults.random_secondary and SND.Config.Mw2eSecondaries and #SND.Config.Mw2eSecondaries > 0 then
-			sec = table.Random(SND.Config.Mw2eSecondaries)
+		local pool = ply.SND_IsBot and SND.Config.BotSecondaries or SND.Config.Mw2eSecondaries
+		if defaults.random_secondary and pool and #pool > 0 then
+			sec = table.Random(pool)
 		else
 			sec = defaults.secondary
 		end

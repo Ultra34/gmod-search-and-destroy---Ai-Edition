@@ -28,6 +28,13 @@ include("snd_spectate.lua")
 include("snd_bot_anim.lua")
 include("snd_levels.lua")
 
+-- Ensure the directory structure exists in garrysmod/data/
+file.CreateDir("snd_mwclassic/players")
+file.CreateDir("snd_mwclassic/banners")
+file.CreateDir("snd_mwclassic/emblems")
+
+print("[SND] Calling Card & Emblem System initialized successfully.")
+
 util.AddNetworkString("SND_ShowCallingCard")
 util.AddNetworkString("SND_SetEmblem")
 util.AddNetworkString("SND_SetCallingCard")
@@ -64,7 +71,8 @@ function GM:PlayerInitialSpawn(ply)
 	-- Load Calling Card
 	ply:SetNWString("SND_CardTitle", ply:GetPData("snd_card_title", "New Recruit"))
 	ply:SetNWString("SND_CardMat", ply:GetPData("snd_card_mat", "vgui/white"))
-	ply:SetNWString("SND_EmblemMat", ply:GetPData("snd_emblem_mat", "steam"))
+	local isBot = (ply:IsBot() or ply.SND_IsBot)
+	ply:SetNWString("SND_EmblemMat", ply:GetPData("snd_emblem_mat", isBot and "vgui/icon_skull" or "steam"))
 
 	SND.Teams.ApplyFactionModel(ply)
 end
@@ -124,6 +132,7 @@ function GM:PlayerDeath(victim, inflictor, attacker)
 			net.WriteString(attacker:SteamID64())
 			net.WriteString(victim:Nick())
 			net.WriteUInt(attacker:GetNWInt("SND_Level", 1), 16)
+			net.WriteBool(attacker:IsBot() or attacker.SND_IsBot)
 		net.Send({attacker, victim}) -- Show to both involved parties
 	end
 end

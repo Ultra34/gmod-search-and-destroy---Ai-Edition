@@ -7,8 +7,7 @@ end
 -- XP Curve: 2000 XP per level
 local XP_PER_LEVEL = 2000
 
--- Ensure the directory structure exists on server startup
-file.CreateDir("snd_mwclassic/players")
+-- Ensure the levels icons directory exists
 file.CreateDir("snd_mwclassic/levels")
 
 local function getPlayerFile(ply)
