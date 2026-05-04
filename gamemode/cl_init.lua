@@ -16,7 +16,7 @@ SND.Round = SND.Round or {}
 SND.Client.KillFeed = SND.Client.KillFeed or {} -- Initialize kill feed table
 SND.Bomb = SND.Bomb or {}
 SND.Round.RoundTimerEnd = 0
-SND.Client.HalftimeTime = 0
+SND.Client.HalftimeTime = -1
 
 net.Receive("SND_RoundState", function()
 	local phase = net.ReadUInt(3)

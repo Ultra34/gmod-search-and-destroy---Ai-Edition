@@ -644,7 +644,7 @@ hook.Add("HUDPaint", "SND_HUD", function()
 	end
 
 	-- ── Halftime Message ─────────────────────────────────────────────────
-	if SND.Client.HalftimeTime and CurTime() < SND.Client.HalftimeTime + 5 then
+	if SND.Client.HalftimeTime and SND.Client.HalftimeTime > 0 and CurTime() < SND.Client.HalftimeTime + 5 then
 		local age = CurTime() - SND.Client.HalftimeTime
 		local alpha = (age < 4) and 255 or math.max(0, 255 - (age - 4) * 255)
 		
