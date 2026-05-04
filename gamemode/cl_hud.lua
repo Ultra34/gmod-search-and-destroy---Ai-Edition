@@ -115,6 +115,25 @@ local function drawXPBar(sw, sh, sc, lp)
 	draw.SimpleText("RANK " .. level .. " PROGRESS", "Trebuchet18", x, y - 15 * sc, Color(255, 210, 50, 200), TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
 end
 
+-- ── Stamina Bar ──────────────────────────────────────────────────────────
+local function drawStaminaBar(sw, sh, sc, lp)
+	local stamina = lp:GetNWFloat("SND_Stamina", 1.0)
+	if stamina >= 0.99 and not lp.SND_Sprinting then return end -- Hide if full and idle
+
+	local w, h = 180 * sc, 4 * sc
+	local x, y = sw * 0.5 - w * 0.5, sh * 0.75
+	local isExhausted = lp:GetNWBool("SND_Exhausted", false)
+
+	-- Background
+	surface.SetDrawColor(0, 0, 0, 150)
+	surface.DrawRect(x, y, w, h)
+
+	-- Fill
+	local barCol = isExhausted and Color(255, 60, 40, 200) or Color(255, 255, 255, 180)
+	surface.SetDrawColor(barCol)
+	surface.DrawRect(x, y, w * stamina, h)
+end
+
 -- ── Level Up Popup ───────────────────────────────────────────────────────
 local function drawLevelUpPopup(sw, sh, sc)
 	if levelUpTime < 0 or CurTime() > levelUpTime + 4 then return end
@@ -254,6 +273,7 @@ hook.Add("HUDPaint", "SND_HUD", function()
 	-- ── XP & Leveling UI ──────────────────────────────────────────────────
 	if lp:Alive() then
 		drawXPBar(sw, sh, sc, lp)
+		drawStaminaBar(sw, sh, sc, lp)
 		
 		-- Detect Level Up for Popup (Ignoring the initial sync from 0)
 		local curLvl = lp:GetNWInt("SND_Level", 0)

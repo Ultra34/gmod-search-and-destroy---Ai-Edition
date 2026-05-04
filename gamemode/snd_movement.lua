@@ -52,38 +52,66 @@ hook.Add("SetupMove", "SND_Movement", function(ply, mv, cmd)
 	if phase ~= SND.PHASE_LIVE then return end
 
 	-- ── SPRINT ────────────────────────────────────────────────────────────
-    local mult        = SND.Settings.Get("sprint_mult", 1.5)
-    local base        = SND.Settings.GetInt("run_speed", 280)
-    local onGround    = ply:IsOnGround()
-    local wantSprint  = cmd:KeyDown(IN_SPEED)
-    local stamina     = ply:GetNWFloat("SND_Stamina", 1.0)
-    local isMoving    = mv:GetForwardSpeed() > 0
+	local mult        = SND.Settings.Get("sprint_mult", 1.5)
+	local base        = SND.Settings.GetInt("run_speed", 280)
+	local onGround    = ply:IsOnGround()
+	local wantSprint  = cmd:KeyDown(IN_SPEED)
+	local isADS       = cmd:KeyDown(IN_ATTACK2)
+	local stamina     = ply:GetNWFloat("SND_Stamina", 1.0)
+	local isExhausted = ply:GetNWBool("SND_Exhausted", false)
+	local isMoving    = mv:GetForwardSpeed() > 0 or math.abs(mv:GetSideSpeed()) > 0
 
-    -- Sprint Stamina Logic (MW2 had limited sprint duration)
-    if onGround and wantSprint and isMoving and stamina > 0 and not ply:Crouching() then
-        ply.SND_Sprinting = true
-        local sprintSpeed = base * mult
-        
-        -- Apply Jump Penalty (prevents bunny hopping)
-        if ply.SND_JumpPenaltyTimer and CurTime() < ply.SND_JumpPenaltyTimer then
-            sprintSpeed = sprintSpeed * 0.7
-        end
+	-- ADS Speed Reduction
+	if isADS then
+		local adsMult = SND.Settings.Get("ads_slow", 0.88)
+		base = base * adsMult
+	end
 
-        mv:SetMaxClientSpeed(sprintSpeed)
-        mv:SetMaxSpeed(sprintSpeed)
+	-- Jump Stamina Cost
+	if onGround and cmd:KeyDown(IN_JUMP) and not ply.SND_JumpDown then
+		ply.SND_JumpDown = true
+		if SERVER then
+			stamina = math.max(0, stamina - 0.15) -- 15% cost per jump
+			ply:SetNWFloat("SND_Stamina", stamina)
+		end
+	elseif not cmd:KeyDown(IN_JUMP) then
+		ply.SND_JumpDown = false
+	end
 
-        if SERVER then
-            ply:SetNWFloat("SND_Stamina", math.max(0, stamina - (FrameTime() * 0.25))) -- ~4 seconds of sprint
-        end
-    else
-        ply.SND_Sprinting = false
-        mv:SetMaxClientSpeed(base)
-        mv:SetMaxSpeed(base)
+	-- Sprint Logic
+	if onGround and wantSprint and isMoving and stamina > 0 and not isExhausted and not ply:Crouching() and not isADS then
+		ply.SND_Sprinting = true
+		local sprintSpeed = base * mult
 
-        if SERVER and stamina < 1.0 then
-            ply:SetNWFloat("SND_Stamina", math.min(1.0, stamina + (FrameTime() * 0.4))) -- Recovery
-        end
-    end
+		if ply.SND_JumpPenaltyTimer and CurTime() < ply.SND_JumpPenaltyTimer then
+			sprintSpeed = sprintSpeed * 0.7
+		end
+
+		mv:SetMaxClientSpeed(sprintSpeed)
+		mv:SetMaxSpeed(sprintSpeed)
+
+		if SERVER then
+			local drain = SND.Settings.Get("stamina_drain", 0.22)
+			local nextStam = math.max(0, stamina - (FrameTime() * drain))
+			ply:SetNWFloat("SND_Stamina", nextStam)
+			if nextStam <= 0 then
+				ply:SetNWBool("SND_Exhausted", true)
+				ply:EmitSound("player/breathe1.wav", 50, 100, 0.4)
+			end
+		end
+	else
+		ply.SND_Sprinting = false
+		mv:SetMaxClientSpeed(base)
+		mv:SetMaxSpeed(base)
+
+		if SERVER and stamina < 1.0 then
+			local recoverBase = SND.Settings.Get("stamina_recover", 0.15)
+			local bonus = (not isMoving) and 1.5 or (ply:Crouching() and 2.0 or 1.0)
+			local nextStam = math.min(1.0, stamina + (FrameTime() * recoverBase * bonus))
+			ply:SetNWFloat("SND_Stamina", nextStam)
+			if nextStam > 0.25 then ply:SetNWBool("SND_Exhausted", false) end
+		end
+	end
 end)
 
 -- ── Air acceleration tweak ────────────────────────────────────────────────
