@@ -111,16 +111,11 @@ SND.Config.DefaultLoadouts = {
 }
 
 -- ── Bot loadout pools (no snipers / riot shield — keeps AI sane) ──────────
-SND.Config.BotPrimaries = {}
-for _, v in ipairs(AR)  do table.insert(SND.Config.BotPrimaries, v) end
-for _, v in ipairs(SMG) do table.insert(SND.Config.BotPrimaries, v) end
-for _, v in ipairs(LMG) do table.insert(SND.Config.BotPrimaries, v) end
+SND.Config.BotPrimaries = table.Copy(SND.Config.Mw2ePrimaries)
+-- Remove riot shield from bots to prevent AI navigation issues
+table.RemoveByValue(SND.Config.BotPrimaries, "iw4_riotshield")
 
-SND.Config.BotSecondaries = {
-	"iw4_deserteagle",
-	"iw4_usp",
-	"iw4_glock",
-}
+SND.Config.BotSecondaries = table.Copy(SND.Config.Mw2eSecondaries)
 
 -- ── Bomb sites ────────────────────────────────────────────────────────────
 SND.Config.MapSites = {
