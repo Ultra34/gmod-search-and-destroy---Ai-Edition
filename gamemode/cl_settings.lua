@@ -2,16 +2,13 @@
      REPLACES: gamemode/cl_settings.lua ]]
 
 function SND.OpenSettingsMenu()
-	local lp = LocalPlayer()
-	if not IsValid(lp) then return end
+	if not IsValid(LocalPlayer()) or not LocalPlayer():IsSuperAdmin() then return end
 
 	local f = vgui.Create("DFrame")
-	f:SetTitle("")
-	f:SetSize(500, 620)
+	f:SetTitle("S&D Match Settings")
+	f:SetSize(400, 500)
 	f:Center()
 	f:MakePopup()
-	f.btnMaxim:SetVisible(false)
-	f.btnMinim:SetVisible(false)
 
 	f.Paint = function(self, w, h)
 		draw.RoundedBox(0, 0, 0, w, h, Color(15, 15, 15, 245))
@@ -31,6 +28,8 @@ function SND.OpenSettingsMenu()
 		local cardH = w / 4
 		pnl:SetTall(cardH)
 		local sc_local = w / 480
+		local embSize = 64 * sc_local
+		local embX_off = 15 * sc_local
 
 		-- 1. Banner
 		local bPath = pathEntry and pathEntry:GetText() or lp:GetNWString("SND_CardMat", "vgui/white")
@@ -45,8 +44,7 @@ function SND.OpenSettingsMenu()
 
 		-- 2. Emblem
 		local ePath = embPathEntry and embPathEntry:GetText() or lp:GetNWString("SND_EmblemMat", "steam")
-		local embSize = 64 * sc_local
-		local embX, embY = 8 * sc_local, (cardH - embSize) * 0.5
+		local embX, embY = embX_off, (cardH - embSize) * 0.5
 		if ePath == "steam" then
 			if IsValid(av) then
 				av:SetVisible(true)
@@ -66,7 +64,7 @@ function SND.OpenSettingsMenu()
 		end
 
 		-- 3. Text Overlay
-		local textX = embSize + 20 * sc_local
+		local textX = embX_off + embSize + 15 * sc_local
 		local textY = cardH * 0.5
 		local tTxt = titleEntry and titleEntry:GetText() or lp:GetNWString("SND_CardTitle", "New Recruit")
 		draw.SimpleText(tTxt:upper(), "SND_BO3_Team", textX + 1, textY - 11 * sc_local, Color(0, 0, 0), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)

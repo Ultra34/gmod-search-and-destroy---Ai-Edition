@@ -90,7 +90,7 @@ hook.Add("OnPlayerChat", "SND_PersonalizationCommand", function(ply, text)
 	if ply ~= LocalPlayer() then return end
 	local lower = string.lower(text)
 	if lower == "!card" or lower == "!emblem" or lower == "!identity" then
-		SND.OpenSettingsMenu()
+		SND.OpenPersonalizationMenu()
 		return true
 	end
 end)

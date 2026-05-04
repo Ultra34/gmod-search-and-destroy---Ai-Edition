@@ -38,6 +38,7 @@ print("[SND] Calling Card & Emblem System initialized successfully.")
 util.AddNetworkString("SND_ShowCallingCard")
 util.AddNetworkString("SND_SetEmblem")
 util.AddNetworkString("SND_SetCallingCard")
+util.AddNetworkString("SND_SetShowTitle")
 
 DEFINE_BASECLASS("gamemode_base")
 
@@ -71,6 +72,7 @@ function GM:PlayerInitialSpawn(ply)
 	-- Load Calling Card
 	ply:SetNWString("SND_CardTitle", ply:GetPData("snd_card_title", "New Recruit"))
 	ply:SetNWString("SND_CardMat", ply:GetPData("snd_card_mat", "vgui/white"))
+	ply:SetNWBool("SND_ShowTitle", ply:GetPData("snd_show_title", "1") == "1")
 	local isBot = (ply:IsBot() or ply.SND_IsBot)
 	ply:SetNWString("SND_EmblemMat", ply:GetPData("snd_emblem_mat", isBot and SND.Config.DefaultBotEmblem or "steam"))
 
@@ -124,16 +126,35 @@ function GM:PlayerDeath(victim, inflictor, attacker)
 	SND.Announcer.OnDeathContext(victim, attacker)
 
 	if IsValid(attacker) and attacker:IsPlayer() and attacker ~= victim then
+		-- 1. Send Attacker's Identity to Victim (The person who killed you)
 		net.Start("SND_ShowCallingCard")
 			net.WriteString(attacker:Nick())
-			net.WriteString(attacker:GetNWString("SND_CardTitle", "Killer"))
+			net.WriteString(attacker:GetNWString("SND_CardTitle", "New Recruit"))
 			net.WriteString(attacker:GetNWString("SND_CardMat", "vgui/white"))
 			net.WriteString(attacker:GetNWString("SND_EmblemMat", "vgui/white"))
 			net.WriteString(attacker:SteamID64())
 			net.WriteString(victim:Nick())
 			net.WriteUInt(attacker:GetNWInt("SND_Level", 1), 16)
 			net.WriteBool(attacker:IsBot() or attacker.SND_IsBot)
-		net.Send({attacker, victim}) -- Show to both involved parties
+			net.WriteUInt(attacker:Team(), 4)
+			net.WriteBool(attacker:GetNWBool("SND_ShowTitle", true))
+			net.WriteBool(false) -- You were NOT the killer
+		net.Send(victim)
+
+		-- 2. Send Victim's Identity to Attacker (The person you just killed)
+		net.Start("SND_ShowCallingCard")
+			net.WriteString(victim:Nick())
+			net.WriteString(victim:GetNWString("SND_CardTitle", "New Recruit"))
+			net.WriteString(victim:GetNWString("SND_CardMat", "vgui/white"))
+			net.WriteString(victim:GetNWString("SND_EmblemMat", "vgui/white"))
+			net.WriteString(victim:SteamID64())
+			net.WriteString(victim:Nick())
+			net.WriteUInt(victim:GetNWInt("SND_Level", 1), 16)
+			net.WriteBool(victim:IsBot() or victim.SND_IsBot)
+			net.WriteUInt(victim:Team(), 4)
+			net.WriteBool(victim:GetNWBool("SND_ShowTitle", true))
+			net.WriteBool(true) -- You WERE the killer
+		net.Send(attacker)
 	end
 end
 
