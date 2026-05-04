@@ -276,17 +276,24 @@ local function moveToward(bot, cmd, targetPos, speed)
 	local dist = (targetPos - myPos):Length()
 	if dist < 40 then return dist end
 
-	-- Stuck Jump Detection
+	-- Stuck Detection & Resolution
 	if bot:IsOnGround() and speed > 0 then
-		if myPos:DistToSqr(ai.stuckPos) < 25 then
-			if CurTime() > ai.nextJump then
-				cmd:SetButtons(bit.bor(cmd:GetButtons(), IN_JUMP))
-				ai.nextJump = CurTime() + 1.0
+		-- If we haven't moved more than 10 units in the check interval
+		if myPos:DistToSqr(ai.stuckPos) < 100 then
+			if CurTime() > ai.stuckCheck then
+				-- We are likely stuck in a corner or on geometry
+				if CurTime() > ai.nextJump then
+					cmd:SetButtons(bit.bor(cmd:GetButtons(), IN_JUMP))
+					ai.nextJump = CurTime() + 0.8
+				end
+
+				ai.nextPathUpdate = 0 -- Force re-pathfinding next tick
+				cmd:SetSideMove(math.Rand(-speed, speed)) -- Wiggle laterally to get unstuck
 			end
-		end
-		if CurTime() > ai.stuckCheck then
+		else
+			-- We have moved, update tracking
 			ai.stuckPos = myPos
-			ai.stuckCheck = CurTime() + 0.2
+			ai.stuckCheck = CurTime() + 0.4 -- Check if we've moved significantly every 0.4s
 		end
 	end
 
@@ -358,16 +365,15 @@ hook.Add("StartCommand", "SND_BotAI", function(bot, cmd)
 	local isRetaker = (bot:Team() == SND.TEAM_DEFEND and SND.Bomb.State == SND.BOMB_STATE_PLANTED)
 	local allyCarrier = getAllyCarrier(bot)
 
-	-- Update objective state (Objective takes priority over investigation/searching)
-	if ai.state ~= BS_ENGAGE then
-		if isCarrier then 
-			ai.state = BS_PLANT
-		elseif isRetaker then 
-			ai.state = BS_DEFUSE
-		elseif ai.state ~= BS_INVESTIGATE and ai.state ~= BS_SEARCH then
-			if allyCarrier and allyCarrier ~= bot then ai.state = BS_FOLLOW
-			elseif ai.state == BS_IDLE then ai.state = BS_PATROL end
-		end
+	-- Determine if we have a mission-critical objective
+	local hasMissionCritical = isCarrier or isRetaker
+
+	-- Objective selection logic when not in active combat
+	if ai.state ~= BS_ENGAGE and ai.state ~= BS_INVESTIGATE and ai.state ~= BS_SEARCH then
+		if isCarrier then ai.state = BS_PLANT
+		elseif isRetaker then ai.state = BS_DEFUSE
+		elseif allyCarrier and allyCarrier ~= bot then ai.state = BS_FOLLOW
+		elseif ai.state == BS_IDLE then ai.state = BS_PATROL end
 	end
 
 	if ai.state == BS_PATROL or ai.state == BS_PLANT or ai.state == BS_DEFUSE or ai.state == BS_FOLLOW then
@@ -441,6 +447,18 @@ hook.Add("StartCommand", "SND_BotAI", function(bot, cmd)
 		ai.enemy = nil
 		ai.shootGate = 0
 		
+		-- FORCED: Mission-critical objective takes absolute priority over investigation.
+		-- If we just finished a fight (BS_ENGAGE) or were looking for someone, 
+		-- but the bomb needs attention, go straight to it.
+		if hasMissionCritical then
+			if isCarrier then ai.state = BS_PLANT 
+			else ai.state = BS_DEFUSE end
+		elseif ai.state == BS_ENGAGE and ai.lastKnownPos then
+			-- We lost sight of an enemy but have no bomb objective?
+			-- Head to last known pos to investigate.
+			ai.state = BS_INVESTIGATE
+		end
+
 		-- Resolve Investigation vs Patrolling
 		local goal = nil
 		if ai.state == BS_INVESTIGATE and ai.lastKnownPos then
