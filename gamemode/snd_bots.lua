@@ -3,6 +3,29 @@
 
 SND.Bots = SND.Bots or {}
 
+-- ── Debugging ─────────────────────────────────────────────────────────────
+if SERVER then
+	CreateConVar("snd_bot_debug_paths", "0", FCVAR_CHEAT, "Visualize bot pathfinding segments in real-time.")
+
+	hook.Add("Think", "SND_BotDebugPaths", function()
+		if not GetConVar("snd_bot_debug_paths"):GetBool() then return end
+
+		for _, bot in ipairs(player.GetAll()) do
+			if not bot.SND_IsBot or not bot:Alive() then continue end
+			local ai = bot.SND_AI
+			if not ai or not ai.path or not ai.path:IsValid() then continue end
+
+			local segments = ai.path:GetAllSegments()
+			if not segments then continue end
+
+			for i = 1, #segments - 1 do
+				debugoverlay.Line(segments[i].pos, segments[i+1].pos, 0.1, Color(0, 255, 0), true)
+				debugoverlay.Cross(segments[i+1].pos, 3, 0.1, Color(255, 255, 0), true)
+			end
+		end
+	end)
+end
+
 -- ── Bot states ────────────────────────────────────────────────────────────
 local BS_IDLE      = 0   -- Frozen (Freeze phase)
 local BS_PATROL    = 1   -- Moving toward objective/site
@@ -41,6 +64,7 @@ local function newAI()
 		strafeFlip    = 0,
 		stuckPos      = Vector(0,0,0),
 		stuckCheck    = 0,
+		stuckStartTime = 0,
 		nextShot      = 0,
 		path          = nil, -- PathFollower object
 		nextPathUpdate = 0,
@@ -276,11 +300,15 @@ local function moveToward(bot, cmd, targetPos, speed)
 	local dist = (targetPos - myPos):Length()
 	if dist < 40 then return dist end
 
+	local isStuck = false
 	-- Stuck Detection & Resolution
 	if bot:IsOnGround() and speed > 0 then
-		-- If we haven't moved more than 10 units in the check interval
-		if myPos:DistToSqr(ai.stuckPos) < 100 then
+		-- If we haven't moved more than 16 units in the check interval
+		if myPos:DistToSqr(ai.stuckPos) < 256 then
 			if CurTime() > ai.stuckCheck then
+				if ai.stuckStartTime == 0 then ai.stuckStartTime = CurTime() end
+				isStuck = true
+
 				-- We are likely stuck in a corner or on geometry
 				if CurTime() > ai.nextJump then
 					cmd:SetButtons(bit.bor(cmd:GetButtons(), IN_JUMP))
@@ -289,11 +317,19 @@ local function moveToward(bot, cmd, targetPos, speed)
 
 				ai.nextPathUpdate = 0 -- Force re-pathfinding next tick
 				cmd:SetSideMove(math.Rand(-speed, speed)) -- Wiggle laterally to get unstuck
+				cmd:SetForwardMove(math.Rand(-speed, speed)) -- Wiggle forward/back to break friction
+
+				-- If stuck for too long, reset the path object to force a total re-evaluation
+				if CurTime() - ai.stuckStartTime > 4 then
+					ai.path = nil
+					ai.stuckStartTime = CurTime()
+				end
 			end
 		else
 			-- We have moved, update tracking
 			ai.stuckPos = myPos
-			ai.stuckCheck = CurTime() + 0.4 -- Check if we've moved significantly every 0.4s
+			ai.stuckCheck = CurTime() + 0.5 
+			ai.stuckStartTime = 0
 		end
 	end
 
@@ -321,7 +357,10 @@ local function moveToward(bot, cmd, targetPos, speed)
 		bot:SetEyeAngles(curAng)
 	end
 
-	cmd:SetForwardMove(speed * math.Clamp(distToGoal / 100, 0.5, 1))
+	-- If we are currently trying to wiggle out of a stuck spot, don't overwrite the move buttons
+	if not isStuck then
+		cmd:SetForwardMove(speed * math.Clamp(distToGoal / 100, 0.5, 1))
+	end
 	return dist
 end
 
@@ -398,7 +437,12 @@ hook.Add("StartCommand", "SND_BotAI", function(bot, cmd)
 
 	-- Combat Scanning
 	local enemy, dist = nearestEnemy(bot, true)
-	if IsValid(enemy) and dist < engageRange(skill) then
+	
+	-- Mission Focus: Carriers only engage if the enemy is a direct, close-range threat
+	local shouldEngage = IsValid(enemy) and dist < engageRange(skill)
+	if isCarrier and shouldEngage and dist > 800 then shouldEngage = false end
+
+	if shouldEngage then
 		ai.state = BS_ENGAGE
 		ai.lastKnownPos = enemy:GetPos()
 		ai.lastKnownTime = now
@@ -476,8 +520,10 @@ hook.Add("StartCommand", "SND_BotAI", function(bot, cmd)
 				bot:SetEyeAngles(LerpAngle(0.1, bot:EyeAngles(), Angle(45, bot:EyeAngles().y, 0)))
 			else
 				local d = moveToward(bot, cmd, goal, speed)
+				local _, site = nearestSite(bot)
+				local siteRad = site and (site.defuseRadius or site.radius or 96) or 96
 
-				if d < 50 then
+				if d < (siteRad * 0.7) then
 					-- Reached investigation point?
 					if ai.state == BS_INVESTIGATE then
 						ai.state = BS_SEARCH

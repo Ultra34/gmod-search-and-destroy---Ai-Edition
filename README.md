@@ -233,6 +233,14 @@ Bots cannot see through walls — they use a last-known-position system and only
 | `snd_mapvote_time` | 20 | Seconds before server picks a map |
 | `snd_rust_swap_spawns` | 0 | Flip attacker/defender spawns on Rust maps |
 
+### Debugging Commands
+
+| ConVar | Default | Description |
+|---|---|---|
+| `snd_bot_debug_paths` | 0 | (Cheat) Visualizes bot pathfinding nodes and segments with 3D lines. |
+
+> Use `snd_bot_debug_paths 1` to troubleshoot bot navigation or stuck points.
+
 ### Loadout ConVar overrides
 
 Force a specific weapon for a slot instead of drawing from the pool:
