@@ -520,7 +520,7 @@ hook.Add("StartCommand", "SND_BotAI", function(bot, cmd)
 				bot:SetEyeAngles(LerpAngle(0.1, bot:EyeAngles(), Angle(45, bot:EyeAngles().y, 0)))
 			else
 				local d = moveToward(bot, cmd, goal, speed)
-				local _, site = nearestSite(bot)
+				local site = nearestSite(bot)
 				local siteRad = site and (site.defuseRadius or site.radius or 96) or 96
 
 				if d < (siteRad * 0.7) then
