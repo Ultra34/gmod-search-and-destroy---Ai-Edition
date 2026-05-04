@@ -18,6 +18,11 @@ hook.Add("StartCommand", "SND_FreezeInput", function(ply, cmd)
 		cmd:SetButtons(bit.band(cmd:GetButtons(), bit.bnot(blocked)))
 		cmd:ClearMovement()
 	end
+
+	-- Prevent sprinting if exhausted
+	if ply:GetNWBool("SND_Exhausted", false) then
+		cmd:RemoveKey(IN_SPEED)
+	end
 end)
 
 -- ── Aggressive Fire Block (Server & Client) ──────────────────────────────
@@ -53,7 +58,8 @@ hook.Add("SetupMove", "SND_Movement", function(ply, mv, cmd)
 
 	-- ── SPRINT ────────────────────────────────────────────────────────────
 	local mult        = SND.Settings.Get("sprint_mult", 1.5)
-	local base        = SND.Settings.GetInt("run_speed", 280)
+	local walkSpeed   = SND.Settings.GetInt("walk_speed", 190)
+	local runSpeed    = SND.Settings.GetInt("run_speed", 280)
 	local onGround    = ply:IsOnGround()
 	local wantSprint  = cmd:KeyDown(IN_SPEED)
 	local isADS       = cmd:KeyDown(IN_ATTACK2)
@@ -61,10 +67,11 @@ hook.Add("SetupMove", "SND_Movement", function(ply, mv, cmd)
 	local isExhausted = ply:GetNWBool("SND_Exhausted", false)
 	local isMoving    = mv:GetForwardSpeed() > 0 or math.abs(mv:GetSideSpeed()) > 0
 
-	-- ADS Speed Reduction
+	-- ADS Speed Reduction (applied to baseline speeds)
 	if isADS then
 		local adsMult = SND.Settings.Get("ads_slow", 0.88)
-		base = base * adsMult
+		runSpeed = runSpeed * adsMult
+		walkSpeed = walkSpeed * adsMult
 	end
 
 	-- Jump Stamina Cost
@@ -78,17 +85,12 @@ hook.Add("SetupMove", "SND_Movement", function(ply, mv, cmd)
 		ply.SND_JumpDown = false
 	end
 
+	local targetSpeed = runSpeed
+
 	-- Sprint Logic
 	if onGround and wantSprint and isMoving and stamina > 0 and not isExhausted and not ply:Crouching() and not isADS then
 		ply.SND_Sprinting = true
-		local sprintSpeed = base * mult
-
-		if ply.SND_JumpPenaltyTimer and CurTime() < ply.SND_JumpPenaltyTimer then
-			sprintSpeed = sprintSpeed * 0.7
-		end
-
-		mv:SetMaxClientSpeed(sprintSpeed)
-		mv:SetMaxSpeed(sprintSpeed)
+		targetSpeed = runSpeed * mult
 
 		if SERVER then
 			local drain = SND.Settings.Get("stamina_drain", 0.22)
@@ -101,17 +103,24 @@ hook.Add("SetupMove", "SND_Movement", function(ply, mv, cmd)
 		end
 	else
 		ply.SND_Sprinting = false
-		mv:SetMaxClientSpeed(base)
-		mv:SetMaxSpeed(base)
+		if isExhausted then targetSpeed = walkSpeed end
 
 		if SERVER and stamina < 1.0 then
 			local recoverBase = SND.Settings.Get("stamina_recover", 0.15)
-			local bonus = (not isMoving) and 1.5 or (ply:Crouching() and 2.0 or 1.0)
+			local bonus = (not isMoving) and 2.0 or (ply:Crouching() and 1.2 or 0.6)
 			local nextStam = math.min(1.0, stamina + (FrameTime() * recoverBase * bonus))
 			ply:SetNWFloat("SND_Stamina", nextStam)
 			if nextStam > 0.25 then ply:SetNWBool("SND_Exhausted", false) end
 		end
 	end
+
+	-- Apply Jump Penalty (prevents bunny hopping)
+	if ply.SND_JumpPenaltyTimer and CurTime() < ply.SND_JumpPenaltyTimer then
+		targetSpeed = targetSpeed * 0.7
+	end
+
+	mv:SetMaxClientSpeed(targetSpeed)
+	mv:SetMaxSpeed(targetSpeed)
 end)
 
 -- ── Air acceleration tweak ────────────────────────────────────────────────
