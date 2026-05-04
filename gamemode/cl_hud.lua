@@ -50,6 +50,11 @@ local MAT_GRAD_U = Material("vgui/gradient-u")
 local MAT_GRAD_L = Material("vgui/gradient-l")
 local MAT_GRAD_R = Material("vgui/gradient-r")
 
+-- ── Calling Card State ────────────────────────────────────────────────────
+SND.Client.ActiveCallingCard = SND.Client.ActiveCallingCard or nil
+local cardSlideIn = 0
+local cardAvatar = nil
+
 -- ── Colours ───────────────────────────────────────────────────────────────
 local function col(r, g, b, a) return Color(r, g, b, a or 255) end
 
@@ -257,6 +262,118 @@ local function drawPlantPrompt(sw, sh, sc, lp)
 	end
 end
 
+-- ── Calling Card HUD (MW2 Style) ─────────────────────────────────────────
+local function drawCallingCardPopup(sw, sh, sc)
+	local card = SND.Client.ActiveCallingCard
+	if not card or CurTime() > card.endTime then return end
+
+	local age = CurTime() - card.startTime
+	local duration = card.endTime - card.startTime
+	
+	-- Cleanup Avatar Panel if card expired
+	if CurTime() > card.endTime then
+		if IsValid(cardAvatar) then cardAvatar:SetVisible(false) end
+		return
+	end
+
+	-- Slide and Alpha Logic (Classic MW2 Speed)
+	local alpha = 255
+	if age < 0.5 then alpha = (age / 0.5) * 255 
+	elseif age > duration - 0.5 then alpha = ((duration - age) / 0.5) * 255 end
+
+	-- Authentic MW2 Sizes: 480x120
+	local w, h = 480 * sc, 120 * sc
+	local x = sw * 0.5 - w * 0.5
+	
+	-- MW2 Style: Slide up from the absolute bottom center
+	local animSpeed = 0.4
+	local slide = math.EaseOut(math.Clamp(age / animSpeed, 0, 1), 4)
+	if age > duration - animSpeed then
+		slide = math.EaseIn(math.Clamp((duration - age) / animSpeed, 0, 1), 4)
+	end
+	
+	local y = sh - (h + 45 * sc) * slide
+
+	-- Status Label (Killed By / You Killed)
+	local isKiller = card.sid64 == LocalPlayer():SteamID64()
+	local statusText = isKiller and ("YOU KILLED " .. (card.victimName or "ENEMY"):upper()) or "KILLED BY"
+	draw.SimpleText(statusText, "SND_BO3_Header", sw * 0.5, y - 5 * sc, col(255, 255, 255, alpha), TEXT_ALIGN_CENTER, TEXT_ALIGN_BOTTOM)
+
+	-- Draw Card Background (Material)
+	surface.SetDrawColor(255, 255, 255, alpha)
+	local mat = Material(card.matPath)
+	if mat:IsError() then mat = Material("vgui/white") surface.SetDrawColor(40, 40, 40, alpha) end
+	
+	surface.SetMaterial(mat)
+	surface.DrawTexturedRect(x, y, w, h)
+
+	-- Borders
+	surface.SetDrawColor(0, 0, 0, alpha * 0.8)
+	surface.DrawOutlinedRect(x, y, w, h, 2 * sc)
+
+	-- Text Info
+	local textX = x + 15 * sc
+	local textY = y + h * 0.5
+
+	-- Custom Title Text (Overlayed on Banner)
+	-- Use a slightly larger shadow for legibility on custom images
+	draw.SimpleText(card.title:upper(), "SND_BO3_Team", textX + 1, textY - 9 * sc, Color(0, 0, 0, alpha), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+	draw.SimpleText(card.title:upper(), "SND_BO3_Team", textX, textY - 10 * sc, Color(255, 210, 50, alpha), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+	
+	-- Player Name
+	draw.SimpleText(card.name:upper(), "SND_BO3_Player", textX, textY + 18 * sc, Color(255, 255, 255, alpha), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+
+	-- Rank Icon (Classic Position)
+	local lvl = card.level or 1
+	local icon = (SND.Levels and SND.Levels.GetIcon) and SND.Levels.GetIcon(lvl)
+	if icon then
+		surface.SetMaterial(icon)
+		surface.SetDrawColor(255, 255, 255, alpha)
+		surface.DrawTexturedRect(x + w - 45 * sc, y + h - 45 * sc, 32 * sc, 32 * sc)
+	end
+
+	-- Emblem (Top right, square 1:1)
+	local embSize = 85 * sc
+	local embX, embY = x + w - embSize - 10 * sc, y + 10 * sc
+
+	if card.emblemMatPath == "steam" then
+		if IsValid(cardAvatar) then
+			cardAvatar:SetVisible(true)
+			cardAvatar:SetPos(embX, embY)
+			cardAvatar:SetSize(embSize, embSize)
+			cardAvatar:SetAlpha(alpha)
+		end
+	else
+		if IsValid(cardAvatar) then cardAvatar:SetVisible(false) end
+		local emblemMat = Material(card.emblemMatPath)
+		if not emblemMat:IsError() then
+			surface.SetMaterial(emblemMat)
+			surface.SetDrawColor(255, 255, 255, alpha)
+			surface.DrawTexturedRect(embX, embY, embSize, embSize)
+		end
+	end
+end
+
+net.Receive("SND_ShowCallingCard", function()
+	SND.Client.ActiveCallingCard = {
+		name = net.ReadString(),
+		title = net.ReadString(),
+		matPath = net.ReadString(),
+		emblemMatPath = net.ReadString(),
+		sid64 = net.ReadString(),
+		victimName = net.ReadString(),
+		level = net.ReadUInt(16),
+		startTime = CurTime(),
+		endTime = CurTime() + 4
+	}
+
+	if not IsValid(cardAvatar) then
+		cardAvatar = vgui.Create("AvatarImage")
+		cardAvatar:SetPaintedManually(false)
+	end
+	cardAvatar:SetSteamID(SND.Client.ActiveCallingCard.sid64, 128)
+end)
+
 -- ── Main HUD ─────────────────────────────────────────────────────────────
 hook.Add("HUDPaint", "SND_HUD", function()
 	local lp = LocalPlayer()
@@ -267,6 +384,8 @@ hook.Add("HUDPaint", "SND_HUD", function()
 	local sw, sh = ScrW(), ScrH()
 
 	if lp:Alive() and lp:GetObserverMode() == OBS_MODE_NONE and crosshairVisible then drawCrosshair(sw, sh, sc) end
+
+	drawCallingCardPopup(sw, sh, sc)
 
 	if lp:Alive() then drawDamageVignette(sw, sh, sc, lp:Health()) end
 

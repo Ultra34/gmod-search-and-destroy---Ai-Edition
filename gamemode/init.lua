@@ -23,6 +23,10 @@ include("snd_spectate.lua")
 include("snd_bot_anim.lua")
 include("snd_levels.lua")
 
+util.AddNetworkString("SND_ShowCallingCard")
+util.AddNetworkString("SND_SetEmblem")
+util.AddNetworkString("SND_SetCallingCard")
+
 DEFINE_BASECLASS("gamemode_base")
 
 function GM:Initialize()
@@ -51,6 +55,12 @@ function GM:PlayerInitialSpawn(ply)
 		ply.SND_Joined = true
 		ply:SetTeam(math.random(1, 2) == 1 and SND.TEAM_ATTACK or SND.TEAM_DEFEND)
 	end
+	
+	-- Load Calling Card
+	ply:SetNWString("SND_CardTitle", ply:GetPData("snd_card_title", "New Recruit"))
+	ply:SetNWString("SND_CardMat", ply:GetPData("snd_card_mat", "vgui/white"))
+	ply:SetNWString("SND_EmblemMat", ply:GetPData("snd_emblem_mat", "steam"))
+
 	SND.Teams.ApplyFactionModel(ply)
 end
 
@@ -75,10 +85,42 @@ function GM:PlayerSpawn(ply)
 	SND.Bots.OnPlayerSpawn(ply)
 end
 
+net.Receive("SND_SetCallingCard", function(_, ply)
+	local title = net.ReadString()
+	local mat = net.ReadString()
+	
+	ply:SetNWString("SND_CardTitle", title)
+	ply:SetNWString("SND_CardMat", mat)
+	ply:SetPData("snd_card_title", title)
+	ply:SetPData("snd_card_mat", mat)
+end
+
+net.Receive("SND_SetEmblem", function(_, ply)
+	local mat = net.ReadString()
+	
+	ply:SetNWString("SND_EmblemMat", mat)
+	ply:SetPData("snd_emblem_mat", mat)
+end)
+
+
+
+
 function GM:PlayerDeath(victim, inflictor, attacker)
 	self.BaseClass.PlayerDeath(self, victim, inflictor, attacker)
 	SND.Round.OnPlayerDeath(victim, attacker)
 	SND.Announcer.OnDeathContext(victim, attacker)
+
+	if IsValid(attacker) and attacker:IsPlayer() and attacker ~= victim then
+		net.Start("SND_ShowCallingCard")
+			net.WriteString(attacker:Nick())
+			net.WriteString(attacker:GetNWString("SND_CardTitle", "Killer"))
+			net.WriteString(attacker:GetNWString("SND_CardMat", "vgui/white"))
+			net.WriteString(attacker:GetNWString("SND_EmblemMat", "vgui/white"))
+			net.WriteString(attacker:SteamID64())
+			net.WriteString(victim:Nick())
+			net.WriteUInt(attacker:GetNWInt("SND_Level", 1), 16)
+		net.Send({attacker, victim}) -- Show to both involved parties
+	end
 end
 
 -- ── Health Regeneration (CoD Style) ──────────────────────────────────────

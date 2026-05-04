@@ -154,6 +154,17 @@ function SND.Bots.EnsureCount()
 		bot.SND_IsBot = true
 		bot.SND_AI    = newAI()
 		bot:SetTeam(pickTeam())
+		
+		-- Assign Random Calling Card to Bot
+		local botTitles = {"Lone Wolf", "Shadow", "Elite", "Hunter", "Stalker"}
+		local botMats = {"vgui/gradient-d", "vgui/gradient-u", "vgui/white"}
+		bot:SetNWString("SND_CardTitle", table.Random(botTitles))
+		bot:SetNWString("SND_CardMat", table.Random(botMats))
+
+		-- Assign Random Emblem to Bot
+		local botEmblems = {"vgui/icon_skull", "vgui/icon_star", "vgui/icon_target", "vgui/icon_crosshair"}
+		bot:SetNWString("SND_EmblemMat", table.Random(botEmblems))
+
 		SND.Teams.ApplyFactionModel(bot)
 		bot:Spawn()
 	end

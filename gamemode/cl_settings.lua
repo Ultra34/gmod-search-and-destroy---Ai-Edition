@@ -50,6 +50,143 @@ function SND.OpenSettingsMenu()
 		}
 	}
 
+	-- ── Calling Card Customization ──────────────────────────────────────
+	local cardPnl = vgui.Create("DPanelList")
+	cardPnl:SetPadding(15)
+	cardPnl:SetSpacing(10)
+
+	local lbl = vgui.Create("DLabel")
+	lbl:SetText("Personalize your Calling Card shown to enemies on kill.")
+	lbl:SetDark(true)
+	cardPnl:AddItem(lbl)
+
+	local titleEntry = vgui.Create("DTextEntry")
+	titleEntry:SetPlaceholderText("Custom Title (e.g., Tactical Expert)")
+	titleEntry:SetText(LocalPlayer():GetNWString("SND_CardTitle", "New Recruit"))
+	cardPnl:AddItem(titleEntry)
+
+	local pathEntry = vgui.Create("DTextEntry")
+	pathEntry:SetPlaceholderText("Material Path (e.g., vgui/gradient-d)")
+	pathEntry:SetText(LocalPlayer():GetNWString("SND_CardMat", "vgui/white"))
+	cardPnl:AddItem(pathEntry)
+
+	local saveBtn = vgui.Create("DButton")
+	saveBtn:SetText("Save Calling Card")
+	saveBtn:SetTall(30)
+	saveBtn.DoClick = function()
+		local path = pathEntry:GetText()
+		local mat = Material(path)
+		
+		-- Size Validation Logic
+		if not mat:IsError() then
+			local w, h = mat:Width(), mat:Height()
+			if w != 480 or h != 120 then
+				chat.AddText(Color(255, 50, 50), "[SND] WARNING: ", Color(255, 255, 255), "Banner must be exactly 480x120 pixels! Yours is " .. w .. "x" .. h)
+			end
+		end
+
+		net.Start("SND_SetCallingCard")
+			net.WriteString(titleEntry:GetText())
+			net.WriteString(path)
+		net.SendToServer()
+		surface.PlaySound("buttons/button14.wav")
+	end
+	cardPnl:AddItem(saveBtn)
+
+	local previewLabel = vgui.Create("DLabel")
+	previewLabel:SetText("\nPreview:")
+	cardPnl:AddItem(previewLabel)
+
+	local preview = vgui.Create("DPanel")
+	preview:SetTall(100) -- Enforce 4:1 Ratio in preview
+	preview.Paint = function(self, w, h)
+		local cardH = w / 4
+		self:SetTall(cardH)
+		surface.SetDrawColor(255, 255, 255)
+		surface.SetMaterial(Material(pathEntry:GetText()))
+		surface.DrawTexturedRect(0, 0, w, cardH)
+	end
+	cardPnl:AddItem(preview)
+
+	sheet:AddSheet("Calling Card", cardPnl, "icon16/vcard.png")
+
+	-- ── Emblem Customization ────────────────────────────────────────────
+	local emblemPnl = vgui.Create("DPanelList")
+	emblemPnl:SetPadding(15)
+	emblemPnl:SetSpacing(10)
+
+	local lbl = vgui.Create("DLabel")
+	lbl:SetText("Personalize your Emblem shown on kill popups.")
+	lbl:SetDark(true)
+	emblemPnl:AddItem(lbl)
+
+	local pathEntry = vgui.Create("DTextEntry")
+	pathEntry:SetPlaceholderText("Material Path (e.g., vgui/icon_skull)")
+	pathEntry:SetText(LocalPlayer():GetNWString("SND_EmblemMat", "vgui/white"))
+	emblemPnl:AddItem(pathEntry)
+
+	local steamBtn = vgui.Create("DButton")
+	steamBtn:SetText("Use Steam Profile Avatar")
+	steamBtn:SetTall(25)
+	steamBtn.DoClick = function()
+		pathEntry:SetText("steam")
+		net.Start("SND_SetEmblem")
+			net.WriteString("steam")
+		net.SendToServer()
+	end
+	emblemPnl:AddItem(steamBtn)
+
+	local saveBtn = vgui.Create("DButton")
+	saveBtn:SetText("Save Emblem")
+	saveBtn:SetTall(30)
+	saveBtn.DoClick = function()
+		local path = pathEntry:GetText()
+		local mat = Material(path)
+
+		-- Size Validation Logic
+		if path != "steam" and not mat:IsError() then
+			local w, h = mat:Width(), mat:Height()
+			if w != 128 or h != 128 then
+				chat.AddText(Color(255, 50, 50), "[SND] WARNING: ", Color(255, 255, 255), "Emblem must be exactly 128x128 pixels! Yours is " .. w .. "x" .. h)
+			end
+		end
+
+		net.Start("SND_SetEmblem")
+			net.WriteString(path)
+		net.SendToServer()
+		surface.PlaySound("buttons/button14.wav")
+	end
+	emblemPnl:AddItem(saveBtn)
+
+	local previewLabel = vgui.Create("DLabel")
+	previewLabel:SetText("\nPreview:")
+	emblemPnl:AddItem(previewLabel)
+
+	local preview = vgui.Create("DPanel")
+	preview:SetSize(128, 128) -- Enforce 1:1 square
+	local previewAvatar = vgui.Create("AvatarImage", preview)
+	previewAvatar:Dock(FILL)
+	previewAvatar:SetVisible(false)
+
+	preview.Paint = function(self, w, h)
+		local path = pathEntry:GetText()
+		if path == "steam" then
+			previewAvatar:SetVisible(true)
+			previewAvatar:SetPlayer(LocalPlayer(), 128)
+			return
+		end
+		
+		previewAvatar:SetVisible(false)
+		surface.SetDrawColor(255, 255, 255)
+		local mat = Material(path)
+		if mat:IsError() then mat = Material("vgui/white") surface.SetDrawColor(40, 40, 40) end
+		surface.SetMaterial(mat)
+		surface.DrawTexturedRect(0, 0, w, h)
+	end
+	emblemPnl:AddItem(preview)
+
+	sheet:AddSheet("Emblem", emblemPnl, "icon16/medal_gold_1.png")
+
 	for catName, settings in pairs(categories) do
 		local pnl = vgui.Create("DPanelList")
 		pnl:EnableVerticalScrollbar(true)
