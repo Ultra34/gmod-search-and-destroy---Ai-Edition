@@ -67,26 +67,28 @@ function SND.Round.EndRound(reason)
 	SND.Announcer.OnRoundEnd(reason)
 	SND.Bomb.ResetForRound()
 
-	local lim = SND.Settings.GetInt("win_limit", 4)
-
-	-- ── Halftime Logic ──────────────────────────────────────────────────
-	-- In CoD, teams switch sides halfway through the match.
-	local totalRounds = SND.Round.AttackScore + SND.Round.DefendScore
-	if not SND.Round.HalftimeReached and totalRounds > 0 and totalRounds == (lim - 1) then
-		SND.Round.HalftimeReached = true
-		net.Start("SND_Halftime") net.Broadcast()
-		
-		timer.Simple(5, function() -- Switch teams after victory banner has displayed
-			SND.Round.SwitchTeams()
-		end)
-	end
-
 	-- Sync phase to clients immediately
 	SND.Round.Sync()
+
+	local lim = SND.Settings.GetInt("win_limit", 4)
+	local totalRounds = SND.Round.AttackScore + SND.Round.DefendScore
+	local isHalftime = not SND.Round.HalftimeReached and totalRounds > 0 and totalRounds == (lim - 1)
 
 	if SND.Round.AttackScore >= lim or SND.Round.DefendScore >= lim then
 		timer.Simple(8, function()
 			SND.MapVote.StartMatchEnd()
+		end)
+	elseif isHalftime then
+		-- Wait until Victory Phase is over, then trigger Halftime
+		timer.Simple(8, function()
+			SND.Round.HalftimeReached = true
+			net.Start("SND_Halftime") net.Broadcast()
+			SND.Round.SwitchTeams()
+
+			-- Show Halftime banner for 5 seconds before starting the Freeze Phase
+			timer.Simple(5, function()
+				SND.Round.StartNewRound()
+			end)
 		end)
 	else
 		timer.Simple(8, function()
