@@ -50,6 +50,7 @@ function SND.MapVote.StartMatchEnd()
 	SND.Round.AttackScore = 0
 	SND.Round.DefendScore = 0
 	SND.Round.RoundNumber = 0
+	SND.Round.HalftimeReached = false -- Reset for a new match
 	if SND.Settings.GetInt("mapvote_enabled", 1) then
 		SND.MapVote.Start()
 	else

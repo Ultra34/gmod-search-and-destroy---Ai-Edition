@@ -71,11 +71,11 @@ function SND.Round.EndRound(reason)
 
 	-- ── Halftime Logic ──────────────────────────────────────────────────
 	-- In CoD, teams switch sides halfway through the match.
-	if not SND.Round.HalftimeReached and SND.Round.RoundNumber == (lim - 1) then
+	if not SND.Round.HalftimeReached and SND.Round.RoundNumber > 0 and SND.Round.RoundNumber == (lim - 1) then
 		SND.Round.HalftimeReached = true
 		net.Start("SND_Halftime") net.Broadcast()
 		
-		timer.Simple(2, function()
+		timer.Simple(5, function() -- Switch teams after victory banner has displayed
 			SND.Round.SwitchTeams()
 		end)
 	end
@@ -96,6 +96,12 @@ end
 
 function SND.Round.SwitchTeams()
 	print("[SND] Halftime: Switching sides...")
+
+	-- Swap scores so teams keep their points after roles change
+	local oldAttack = SND.Round.AttackScore
+	SND.Round.AttackScore = SND.Round.DefendScore
+	SND.Round.DefendScore = oldAttack
+
 	for _, ply in ipairs(player.GetAll()) do
 		local oldTeam = ply:Team()
 		if oldTeam == SND.TEAM_ATTACK then
@@ -105,6 +111,8 @@ function SND.Round.SwitchTeams()
 		end
 		SND.Teams.ApplyFactionModel(ply)
 	end
+
+	SND.Round.Sync() -- Update HUD with swapped scores
 	SND.Announcer.OnRoundEnd(SND.WIN_DRAW) -- Play a neutral sound
 end
 
