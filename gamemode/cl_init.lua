@@ -1,5 +1,4 @@
 include("shared.lua")
-include("snd_settings.lua")
 include("snd_bot_anim.lua")
 include("cl_hud.lua")
 include("snd_movement.lua")

@@ -1,15 +1,16 @@
-AddCSLuaFile("shared.lua")
-AddCSLuaFile("snd_settings.lua")
-AddCSLuaFile("cl_init.lua")
-AddCSLuaFile("cl_hud.lua")
-AddCSLuaFile("cl_settings.lua")
-AddCSLuaFile("snd_bot_anim.lua")
-AddCSLuaFile("cl_crosshair_menu.lua")
-AddCSLuaFile("cl_levels.lua")
-AddCSLuaFile("snd_movement.lua")
-AddCSLuaFile("snd_teams.lua")
-AddCSLuaFile("snd_bomb.lua")
-AddCSLuaFile("snd_round.lua")
+-- Mark all client-side and shared files for download
+AddCSLuaFile("shared.lua")           -- Shared constants
+AddCSLuaFile("cl_init.lua")           -- Client entry
+AddCSLuaFile("cl_hud.lua")            -- HUD & Visuals
+AddCSLuaFile("cl_settings.lua")       -- SuperAdmin UI
+AddCSLuaFile("cl_levels.lua")         -- XP/Rank Client
+AddCSLuaFile("cl_crosshair_menu.lua") -- Crosshair UI
+AddCSLuaFile("snd_settings.lua")      -- Replicated ConVars
+AddCSLuaFile("snd_bot_anim.lua")      -- Animation Fixes
+AddCSLuaFile("snd_movement.lua")      -- Movement & Stamina logic
+AddCSLuaFile("snd_teams.lua")         -- Faction logic
+AddCSLuaFile("snd_bomb.lua")          -- Bomb logic
+AddCSLuaFile("snd_round.lua")         -- Round manager
 
 include("shared.lua")
 include("snd_settings.lua")
@@ -97,7 +98,7 @@ net.Receive("SND_SetCallingCard", function(_, ply)
 	ply:SetNWString("SND_CardMat", mat)
 	ply:SetPData("snd_card_title", title)
 	ply:SetPData("snd_card_mat", mat)
-end
+end)
 
 net.Receive("SND_SetEmblem", function(_, ply)
 	local mat = net.ReadString()
