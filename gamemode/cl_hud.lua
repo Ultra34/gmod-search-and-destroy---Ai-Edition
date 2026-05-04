@@ -1,6 +1,19 @@
 --[[ HUD: scores, phase, freeze countdown bar, bomb carrier/planted info
      REPLACES: gamemode/cl_hud.lua ]]
 
+-- Ensure math.EaseOut and math.EaseIn are defined (defensive check)
+if not math.EaseOut then
+    function math.EaseOut(t, power)
+        power = power or 2
+        return 1 - (1 - t)^power
+    end
+end
+if not math.EaseIn then
+    function math.EaseIn(t, power)
+        power = power or 2
+        return t^power
+    end
+end
 -- ── Freeze end time (set by SND_FreezeInfo net message) ──────────────────
 local freezeEndTime  = 0
 local freezeDuration = 6
