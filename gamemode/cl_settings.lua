@@ -21,8 +21,8 @@ function SND.OpenSettingsMenu()
 	sheet:Dock(FILL)
 	sheet:DockMargin(10, 30, 10, 10)
 
-	-- Forward declarations for unified card preview
-	local titleEntry, pathEntry, embPathEntry
+	-- Forward declarations
+	local titleEntry, pathEntry, embPathEntry, showTitleCheck, useTitleMatCheck, titleMatEntry
 
 	local function drawFullPreview(pnl, w, h, av)
 		local cardH = w / 4
@@ -89,6 +89,22 @@ function SND.OpenSettingsMenu()
 	local cardPnl = vgui.Create("DPanelList")
 	cardPnl:SetPadding(15)
 	cardPnl:SetSpacing(15)
+
+    local titleMatList = vgui.Create("DComboBox")
+    titleMatList:SetValue("Select Title Graphic...")
+    cardPnl:AddItem(titleMatList)
+    for _, filename in ipairs(file.Find("snd_mwclassic/titles/*", "DATA")) do
+        titleMatList:AddChoice(filename, "data/snd_mwclassic/titles/" .. filename)
+    end
+
+    titleMatEntry = vgui.Create("DTextEntry")
+    titleMatEntry:SetText(lp:GetNWString("SND_TitleMat", "vgui/white"))
+    cardPnl:AddItem(titleMatEntry)
+
+    useTitleMatCheck = vgui.Create("DCheckBoxLabel")
+    useTitleMatCheck:SetText("Use Image as Title")
+    useTitleMatCheck:SetChecked(lp:GetNWBool("SND_UseTitleMat", false))
+    cardPnl:AddItem(useTitleMatCheck)
 
 	local bannerHelp = vgui.Create("DLabel")
 	bannerHelp:SetText("Available Banners (Place in data/snd_mwclassic/banners/)\nRequired Size: 480 x 120")
