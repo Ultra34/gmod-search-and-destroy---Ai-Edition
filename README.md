@@ -16,6 +16,7 @@ One life per round, bomb plant and defuse, team scoring, optional map voting, Lu
 - **3D site markers** — floating **A** (gold) and **B** (blue) labels visible through the level with off-screen directional arrows and a live countdown when the bomb is planted.
 - **Freeze phase** — nobody moves until the round goes live; a countdown progress bar fills the screen.
 - **COD-styled Leaderboard** — High-fidelity Call of Duty (Black Ops III) inspired leaderboard with sleek translucent backgrounds, team headers, level icons, and UI scaling.
+- **Calling Cards & Emblems** — MW2-style kill banners that slide onto the screen for both the killer and the victim. Supports custom titles, background images, and Steam avatars.
 - **Level & XP System** — Persistent rank system with XP earned from kills, headshots, plants, and defuses. Data is saved automatically.
 - **Crosshair Customization** — CS:GO/CS2 style crosshair menu (`!crosshair`) with real-time preview and profile support.
 - **Quick Grenade Throw** — Dedicated 'G' key for instant grenade usage that automatically switches back to your previous weapon.
