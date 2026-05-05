@@ -157,7 +157,7 @@ function SND.Bots.EnsureCount()
 		
 		-- Automatic Banner Selection from Data Folders
 		local botTitles = {"Lone Wolf", "Shadow", "Elite", "Hunter", "Stalker"}
-		local botMats = {"vgui/gradient-d", "vgui/gradient-u", "vgui/white"}
+		local botMats = {SND.Config.DefaultBotBanner or "vgui/white", "vgui/gradient-d", "vgui/gradient-u"}
 		
 		local customBanners = file.Find("snd_mwclassic/banners/*", "DATA")
 		if #customBanners > 0 then
@@ -168,9 +168,12 @@ function SND.Bots.EnsureCount()
 
 		bot:SetNWString("SND_CardTitle", table.Random(botTitles))
 		bot:SetNWString("SND_CardMat", table.Random(botMats))
+		bot:SetNWBool("SND_ShowTitle", true)
+		bot:SetNWBool("SND_UseTitleMat", false)
+		bot:SetNWString("SND_TitleMat", "vgui/white")
 
 		-- Automatic Emblem Selection from Data Folders
-		local botEmblems = {SND.Config.DefaultBotEmblem, "vgui/icon_star", "vgui/icon_target", "vgui/icon_crosshair"}
+		local botEmblems = {SND.Config.DefaultBotEmblem or "vgui/icon_skull", "vgui/icon_star", "vgui/icon_target", "vgui/icon_crosshair"}
 		local customEmblems = file.Find("snd_mwclassic/emblems/*", "DATA")
 		if #customEmblems > 0 then
 			for _, f in ipairs(customEmblems) do 

@@ -74,12 +74,12 @@ function GM:PlayerInitialSpawn(ply)
 	
 	-- Load Calling Card
 	ply:SetNWString("SND_CardTitle", ply:GetPData("snd_card_title", "New Recruit"))
-	ply:SetNWString("SND_CardMat", ply:GetPData("snd_card_mat", "vgui/white"))
+	local isBot = (ply:IsBot() or ply.SND_IsBot)
+	ply:SetNWString("SND_CardMat", ply:GetPData("snd_card_mat", isBot and (SND.Config.DefaultBotBanner or "") or ""))
 	ply:SetNWBool("SND_ShowTitle", ply:GetPData("snd_show_title", "1") == "1")
 	ply:SetNWBool("SND_UseTitleMat", ply:GetPData("snd_use_title_mat", "0") == "1")
 	ply:SetNWString("SND_TitleMat", ply:GetPData("snd_title_mat", "vgui/white"))
-	local isBot = (ply:IsBot() or ply.SND_IsBot)
-	ply:SetNWString("SND_EmblemMat", ply:GetPData("snd_emblem_mat", isBot and SND.Config.DefaultBotEmblem or "steam"))
+	ply:SetNWString("SND_EmblemMat", ply:GetPData("snd_emblem_mat", isBot and (SND.Config.DefaultBotEmblem or "vgui/icon_skull") or "steam"))
 
 	SND.Teams.ApplyFactionModel(ply)
 end

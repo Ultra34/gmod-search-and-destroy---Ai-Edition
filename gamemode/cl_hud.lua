@@ -80,19 +80,24 @@ function SND.GetIMaterial(path)
         p:SetMouseInputEnabled(false)
         p:SetKeyboardInputEnabled(false)
 
-        local url = path
-        if not path:lower():StartWith("http") then
-            -- Convert local data path to asset URL for HTML panel
-            url = "asset://garrysmod/data/" .. path:gsub("^data/", "")
-        end
+        local url = path:lower():StartWith("http") and path or ("asset://garrysmod/data/" .. path:gsub("^data/", ""))
+        -- Cleaner wrapper to ensure the image fills the 4:1 or 1:1 area perfectly
+        p:SetHTML([[
+            <html>
+            <body style="margin:0; padding:0; overflow:hidden; background:transparent;">
+                <img src="]] .. url .. [[" style="width:100%; height:100%; object-fit:fill;">
+            </body>
+            </html>
+        ]])
 
-        p:OpenURL(url)
         gifPanels[path] = p
         return p:GetHTMLMaterial()
     end
 
     return Material(path, "smooth noclamp")
 end
+
+local MAT_WHITE = Material("vgui/white")
 
 -- ── Calling Card State ────────────────────────────────────────────────────
 SND.Client.ActiveCallingCard = SND.Client.ActiveCallingCard or nil
@@ -348,18 +353,20 @@ local function drawCallingCardPopup(sw, sh, sc)
     surface.DrawRect(x, y, w, h)
 
 	-- Draw Card Background (Material with transparency support)
-	surface.SetMaterial(Material("vgui/white")) -- Reset state
+	surface.SetMaterial(MAT_WHITE) -- Reset state
 	surface.SetDrawColor(255, 255, 255, alpha)
     local bannerMat = card.bannerMat
-    if bannerMat and not (bannerMat:IsError() and not card.matPath:find(".gif")) then
+    if bannerMat and not (bannerMat:IsError() and not tostring(card.matPath):find(".gif")) then
         surface.SetMaterial(bannerMat)
-		-- Support for animated banner frames
-        local frames = bannerMat:GetInt("$numframes") or 1
-        if frames > 1 then
-            bannerMat:SetInt("$frame", math.floor(CurTime() * 12) % frames)
-        end
 
-        surface.SetMaterial(bannerMat)
+		-- Support for animated banner frames (VTF only)
+		if not tostring(card.matPath):find(".gif") then
+			local frames = bannerMat:GetInt("$numframes") or 1
+			if frames > 1 then
+				bannerMat:SetInt("$frame", math.floor(CurTime() * 12) % frames)
+			end
+		end
+
         surface.DrawTexturedRect(x, y, w, h)
     end
 
@@ -377,13 +384,18 @@ local function drawCallingCardPopup(sw, sh, sc)
 	-- Custom Title Text (Overlayed on Banner)
 	if card.showTitle then
 		if card.useTitleMat then
+			surface.SetMaterial(MAT_WHITE)
 			local tMat = card.titleMat
-			if tMat and not (tMat:IsError() and not card.titleMatPath:find(".gif")) then
+			if tMat and not (tMat:IsError() and not tostring(card.titleMatPath):find(".gif")) then
 				local tW, tH = 256 * sc, 64 * sc
-				local frames = tMat:GetInt("$numframes") or 1
-				if frames > 1 then tMat:SetInt("$frame", math.floor(CurTime() * 12) % frames) end
 				surface.SetMaterial(tMat)
 				surface.SetDrawColor(255, 255, 255, alpha)
+
+				if not tostring(card.titleMatPath):find(".gif") then
+					local frames = tMat:GetInt("$numframes") or 1
+					if frames > 1 then tMat:SetInt("$frame", math.floor(CurTime() * 12) % frames) end
+				end
+
 				surface.DrawTexturedRect(textX, textY - tH * 0.5 - 12 * sc, tW, tH)
 			else
 				draw.SimpleText(card.title:upper(), "SND_BO3_Team", textX, textY - 12 * sc, Color(255, 210, 50, alpha), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
@@ -401,7 +413,7 @@ local function drawCallingCardPopup(sw, sh, sc)
 
 	-- Rank Icon (Far Right of banner)
 	local lvl = card.level or 1
-	local icon = (SND.Levels and SND.Levels.GetIcon) and SND.Levels.GetIcon(lvl)
+	local icon = (SND.Levels and SND.Levels.GetIcon) and SND.Levels.GetIcon(lvl) or nil
 	if icon then
 		surface.SetMaterial(icon)
 		surface.SetDrawColor(255, 255, 255, alpha)
@@ -409,7 +421,7 @@ local function drawCallingCardPopup(sw, sh, sc)
 	end
 
 	if card.emblemMatPath == "steam" and not card.isBot and card.sid64 ~= "0" then
-		surface.SetMaterial(Material("vgui/white"))
+		surface.SetMaterial(MAT_WHITE)
 		if IsValid(cardAvatar) then
 			cardAvatar:SetVisible(true)
 			cardAvatar:SetPos(embX, embY)
@@ -419,15 +431,18 @@ local function drawCallingCardPopup(sw, sh, sc)
 	else
         if IsValid(cardAvatar) then cardAvatar:SetVisible(false) end
         local embMat = card.emblemMat
-		surface.SetMaterial(Material("vgui/white"))
-        if embMat and not (embMat:IsError() and not card.emblemMatPath:find(".gif")) then
-            -- Support for animated emblem frames
-            local frames = embMat:GetInt("$numframes") or 1
-            if frames > 1 then
-                embMat:SetInt("$frame", math.floor(CurTime() * 12) % frames)
+		surface.SetMaterial(MAT_WHITE)
+        if embMat and not (embMat:IsError() and not tostring(card.emblemMatPath):find(".gif")) then
+            surface.SetMaterial(embMat)
+
+            -- Support for animated emblem frames (VTF only)
+            if not tostring(card.emblemMatPath):find(".gif") then
+                local frames = embMat:GetInt("$numframes") or 1
+                if frames > 1 then
+                    embMat:SetInt("$frame", math.floor(CurTime() * 12) % frames)
+                end
             end
 
-            surface.SetMaterial(embMat)
             surface.SetDrawColor(255, 255, 255, alpha)
             surface.DrawTexturedRect(embX, embY, embSize, embSize)
         end
