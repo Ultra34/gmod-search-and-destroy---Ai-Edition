@@ -334,7 +334,12 @@ local function moveToward(bot, cmd, targetPos, speed)
 			cmd:SetButtons(bit.bor(cmd:GetButtons(), IN_JUMP))
 			ai.nextJump = CurTime() + 1.2 -- Jump cooldown
 		end
-		cmd:SetSideMove(speed * (ai.strafeDir or 1)) -- Strafe to the side
+
+		-- Intelligently strafe away from the wall's normal
+		local right = bot:GetRight()
+		local dot = wallTrace.HitNormal:Dot(right)
+		ai.strafeDir = (dot > 0) and 1 or -1
+		cmd:SetSideMove(speed * ai.strafeDir)
 	end
 
 	local dist = (targetPos - myPos):Length()

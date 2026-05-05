@@ -330,7 +330,7 @@ local function drawCallingCardPopup(sw, sh, sc)
 	if age < 0.5 then alpha = (age / 0.5) * 255 
 	elseif age > duration - 0.5 then alpha = ((duration - age) / 0.5) * 255 end
 
-	-- Authentic MW2 2009 Dimensions
+	-- Authentic MW2 2009 Sizes: 512x128
 	local w, h = 512 * sc, 128 * sc
 	local x = sw * 0.5 - w * 0.5
 	
@@ -352,21 +352,13 @@ local function drawCallingCardPopup(sw, sh, sc)
     surface.SetDrawColor(30, 30, 30, alpha * 0.7)
     surface.DrawRect(x, y, w, h)
 
-	-- Borders
-	surface.SetDrawColor(0, 0, 0, alpha * 0.8)
-	surface.DrawOutlinedRect(x, y, w, h, 2 * sc)
-
-	-- Positioning Anchors
-	local embSize = 96 * sc
-	local embX, embY = x + 12 * sc, y + (h - embSize) * 0.5
-	local textX = x + 125 * sc
-
-	-- ── MW2 Title Graphic (Beside Emblem) ────────────────────────────────
-	if card.showTitle and card.useTitleMat then 
-		surface.SetMaterial(MAT_WHITE)
+	-- ── MW2 Title Graphic (Top Strip Beside Emblem) ──────────────────────
+	if card.showTitle and card.useTitleMat then
+		surface.SetMaterial(MAT_WHITE) -- Reset state
+		surface.SetDrawColor(255, 255, 255, alpha)
 		local tMat = card.titleMat
 		if tMat and not (tMat:IsError() and not tostring(card.titleMatPath):match("[.gif|data/]")) then
-			local tW, tH = 256 * sc, 32 * sc
+			local tW, tH = 512 * sc, 64 * sc
 			surface.SetMaterial(tMat)
 			surface.SetDrawColor(255, 255, 255, alpha)
 
@@ -379,16 +371,25 @@ local function drawCallingCardPopup(sw, sh, sc)
 		end
 	end
 
+	-- Borders
+	surface.SetDrawColor(0, 0, 0, alpha * 0.8)
+	surface.DrawOutlinedRect(x, y, w, h, 2 * sc)
+
+	-- Text Info
+	local embSize = 96 * sc -- MW2 emblem is 96x96, overlapping top and bottom
+	local embX, embY = x + 10 * sc, y + (h - embSize) * 0.5 -- Positioned to overlap
+	local textX = x + 120 * sc
+
 	-- Custom Title Text (Overlayed on Banner)
 	if card.showTitle and not card.useTitleMat then
-		draw.SimpleText(card.title:upper(), "SND_BO3_Team", textX + 1, y + 36 * sc, Color(0, 0, 0, alpha), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER) -- Top half
-		draw.SimpleText(card.title:upper(), "SND_BO3_Team", textX, y + 35 * sc, Color(255, 210, 50, alpha), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER) -- Top half
+		draw.SimpleText(card.title:upper(), "SND_BO3_Team", textX + 1, y + 36 * sc, Color(0, 0, 0, alpha), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+		draw.SimpleText(card.title:upper(), "SND_BO3_Team", textX, y + 35 * sc, Color(255, 210, 50, alpha), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
     end
 	
 	-- Player Name (Team Colored)
     local tCol = team.GetColor(card.team or 0)
 	draw.SimpleText(card.name:upper(), "SND_BO3_Player", textX + 1, y + 93 * sc, Color(0, 0, 0, alpha), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
-	draw.SimpleText(card.name:upper(), "SND_BO3_Player", textX, y + 92 * sc, Color(tCol.r, tCol.g, tCol.b, alpha), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER) -- Bottom half
+	draw.SimpleText(card.name:upper(), "SND_BO3_Player", textX, y + 92 * sc, Color(tCol.r, tCol.g, tCol.b, alpha), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
 
 	-- Rank Icon (Far Right of banner)
 	local lvl = card.level or 1
@@ -462,7 +463,7 @@ net.Receive("SND_ShowCallingCard", function()
 		cardAvatar = vgui.Create("AvatarImage")
 		cardAvatar:SetPaintedManually(false)
 	end
-	cardAvatar:SetSteamID(card.sid64, 64)
+	cardAvatar:SetSteamID(card.sid64, 128) -- Higher resolution for 96px emblem
 end)
 
 -- ── Main HUD ─────────────────────────────────────────────────────────────
