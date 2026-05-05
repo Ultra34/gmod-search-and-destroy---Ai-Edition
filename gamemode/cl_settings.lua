@@ -110,20 +110,6 @@ function SND.OpenPersonalizationMenu()
 		surface.SetDrawColor(30, 30, 30, 180)
 		surface.DrawRect(0, 0, w, cardH)
 
-		-- 1. MW2 Strip Preview (Full Width Top)
-		if showTitleCheck and showTitleCheck:GetChecked() and useTitleMatCheck and useTitleMatCheck:GetChecked() then
-			local tPath = titleMatEntry and titleMatEntry:GetText() or lp:GetNWString("SND_TitleMat", "vgui/white")
-			local tMat = SND.GetIMaterial(tPath)
-			if tMat and not (tMat:IsError() and not tPath:match("[.gif|data/]")) then
-				local tW, tH = w, 64 * sc_local
-				local frames = tMat:GetInt("$numframes") or 1
-				if frames > 1 then tMat:SetInt("$frame", math.floor(CurTime() * 12) % frames) end
-				surface.SetMaterial(tMat)
-				surface.SetDrawColor(255, 255, 255)
-				surface.DrawTexturedRect(0, 0, tW, tH)
-			end
-		end
-
 		-- 2. Emblem
 		local ePath = embPathEntry and embPathEntry:GetText() or lp:GetNWString("SND_EmblemMat", "steam")
 		local embX, embY = 12 * sc_local, (cardH - embSize) * 0.5
@@ -148,6 +134,20 @@ function SND.OpenPersonalizationMenu()
 
 		-- 3. Text Overlay
 		local textX = 125 * sc_local
+
+		-- 4. MW2 Strip Preview (Beside Emblem)
+		if showTitleCheck and showTitleCheck:GetChecked() and useTitleMatCheck and useTitleMatCheck:GetChecked() then
+			local tPath = titleMatEntry and titleMatEntry:GetText() or lp:GetNWString("SND_TitleMat", "vgui/white")
+			local tMat = SND.GetIMaterial(tPath)
+			if tMat and not (tMat:IsError() and not tPath:match("[.gif|data/]")) then
+				local tW, tH = 256 * sc_local, 32 * sc_local
+				local frames = tMat:GetInt("$numframes") or 1
+				if frames > 1 then tMat:SetInt("$frame", math.floor(CurTime() * 12) % frames) end
+				surface.SetMaterial(tMat)
+				surface.SetDrawColor(255, 255, 255)
+				surface.DrawTexturedRect(textX, 36 * sc_local - (tH * 0.5), tW, tH)
+			end
+		end
 		
 		if showTitleCheck and showTitleCheck:GetChecked() and not (useTitleMatCheck and useTitleMatCheck:GetChecked()) then
 			local tTxt = titleEntry and titleEntry:GetText() or lp:GetNWString("SND_CardTitle", "New Recruit")
