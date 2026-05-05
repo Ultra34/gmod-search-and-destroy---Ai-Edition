@@ -2,26 +2,102 @@
      REPLACES: gamemode/cl_settings.lua ]]
 
 function SND.OpenSettingsMenu()
-	if not IsValid(LocalPlayer()) or not LocalPlayer():IsSuperAdmin() then return end
+	local lp = LocalPlayer()
+	if not IsValid(lp) or not lp:IsSuperAdmin() then return end
 
 	local f = vgui.Create("DFrame")
-	f:SetTitle("S&D Match Settings")
-	f:SetSize(400, 500)
+	f:SetTitle("")
+	f:SetSize(440, 540)
 	f:Center()
 	f:MakePopup()
+	f.btnMaxim:SetVisible(false)
+	f.btnMinim:SetVisible(false)
 
 	f.Paint = function(self, w, h)
 		draw.RoundedBox(0, 0, 0, w, h, Color(15, 15, 15, 245))
 		surface.SetDrawColor(255, 120, 0, 255)
 		surface.DrawRect(0, 0, w, 3)
-		draw.SimpleText("S&D SETTINGS & IDENTITY", "SND_BO3_Title", 15, 20, Color(255, 255, 255), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+		draw.SimpleText("MATCH CONFIG", "SND_BO3_Title", 15, 20, Color(255, 255, 255), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+	end
+
+	local sheet = vgui.Create("DPropertySheet", f)
+	sheet:Dock(FILL)
+	sheet:DockMargin(5, 30, 5, 5)
+
+	local categories = {
+		["Match Rules"] = {
+			{ key = "snd_round_time",       lbl = "Round duration (sec)", min = 60,   max = 300,  dec = 0 },
+			{ key = "snd_freeze_time",      lbl = "Freeze duration (sec)",min = 0,    max = 20,   dec = 0 },
+			{ key = "snd_win_limit",        lbl = "Rounds to win match",  min = 1,    max = 16,   dec = 0 },
+			{ key = "snd_mapvote_enabled",  lbl = "Enable Map Vote",      min = 0,    max = 1,    dec = 0 },
+			{ key = "snd_team_balance",     lbl = "Auto Team Balance",    min = 0,    max = 1,    dec = 0 },
+		},
+		["Combat & Movement"] = {
+			{ key = "snd_walk_speed",       lbl = "Walk Speed",           min = 120,  max = 320,  dec = 0 },
+			{ key = "snd_run_speed",        lbl = "Base Run Speed",       min = 160,  max = 400,  dec = 0 },
+			{ key = "snd_sprint_mult",      lbl = "Sprint Multiplier",    min = 1,    max = 2.2,  dec = 2 },
+			{ key = "snd_plant_time",       lbl = "Bomb Plant Time",      min = 2,    max = 10,   dec = 1 },
+			{ key = "snd_defuse_time",      lbl = "Bomb Defuse Time",     min = 3,    max = 12,   dec = 1 },
+		},
+		["Bots & AI"] = {
+			{ key = "snd_bot_count",        lbl = "Target Bot Count",     min = 0,    max = 24,   dec = 0 },
+			{ key = "snd_bot_skill",        lbl = "Global Bot Skill",     min = 1,    max = 10,   dec = 0 },
+		},
+		["Interface"] = {
+			{ key = "snd_announcer_volume", lbl = "Announcer Volume",     min = 0,    max = 1,    dec = 2 },
+			{ key = "snd_hud_scale",        lbl = "HUD Global Scale",     min = 0.75, max = 1.5,  dec = 2 },
+		}
+	}
+
+	for catName, settings in pairs(categories) do
+		local pnl = vgui.Create("DPanelList")
+		pnl:EnableVerticalScrollbar(true)
+		pnl:SetSpacing(5)
+		pnl:SetPadding(10)
+
+		for _, row in ipairs(settings) do
+			local cv  = GetConVar(row.key)
+			local cur = cv and cv:GetFloat() or row.min
+			local sl  = vgui.Create("DNumSlider")
+			sl:SetText(row.lbl)
+			sl:SetMinMax(row.min, row.max)
+			sl:SetDecimals(row.dec or 0)
+			sl:SetValue(cur)
+			sl.OnValueChanged = function(_, val)
+				net.Start("SND_SetCvar")
+					net.WriteString(row.key)
+					net.WriteString(tostring(val))
+				net.SendToServer()
+			end
+			pnl:AddItem(sl)
+		end
+		sheet:AddSheet(catName, pnl)
+	end
+end
+
+function SND.OpenPersonalizationMenu()
+	local lp = LocalPlayer()
+	if not IsValid(lp) then return end
+
+	local f = vgui.Create("DFrame")
+	f:SetTitle("")
+	f:SetSize(500, 640)
+	f:Center()
+	f:MakePopup()
+	f.btnMaxim:SetVisible(false)
+	f.btnMinim:SetVisible(false)
+
+	f.Paint = function(self, w, h)
+		draw.RoundedBox(0, 0, 0, w, h, Color(15, 15, 15, 245))
+		surface.SetDrawColor(255, 120, 0, 255)
+		surface.DrawRect(0, 0, w, 3)
+		draw.SimpleText("PLAYER IDENTITY", "SND_BO3_Title", 15, 20, Color(255, 255, 255), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
 	end
 
 	local sheet = vgui.Create("DPropertySheet", f)
 	sheet:Dock(FILL)
 	sheet:DockMargin(10, 30, 10, 10)
 
-	-- Forward declarations
 	local titleEntry, pathEntry, embPathEntry, showTitleCheck, useTitleMatCheck, titleMatEntry
 
 	local function drawFullPreview(pnl, w, h, av)
@@ -30,6 +106,10 @@ function SND.OpenSettingsMenu()
 		local sc_local = w / 480
 		local embSize = 64 * sc_local
 		local embX_off = 15 * sc_local
+
+		-- Transparent hint-of-grey background
+		surface.SetDrawColor(30, 30, 30, 180)
+		surface.DrawRect(0, 0, w, cardH)
 
 		-- 1. Banner
 		local bPath = pathEntry and pathEntry:GetText() or lp:GetNWString("SND_CardMat", "vgui/white")
@@ -66,11 +146,29 @@ function SND.OpenSettingsMenu()
 		-- 3. Text Overlay
 		local textX = embX_off + embSize + 15 * sc_local
 		local textY = cardH * 0.5
-		local tTxt = titleEntry and titleEntry:GetText() or lp:GetNWString("SND_CardTitle", "New Recruit")
-		draw.SimpleText(tTxt:upper(), "SND_BO3_Team", textX + 1, textY - 11 * sc_local, Color(0, 0, 0), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
-		draw.SimpleText(tTxt:upper(), "SND_BO3_Team", textX, textY - 12 * sc_local, Color(255, 210, 50), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+
+		if showTitleCheck and showTitleCheck:GetChecked() then
+			if useTitleMatCheck and useTitleMatCheck:GetChecked() then
+				local tPath = titleMatEntry and titleMatEntry:GetText() or lp:GetNWString("SND_TitleMat", "vgui/white")
+				local tMat = SND.GetIMaterial(tPath)
+				if tMat and not (tMat:IsError() and not tPath:find(".gif")) then
+					local tW, tH = 256 * sc_local, 64 * sc_local
+					local frames = tMat:GetInt("$numframes") or 1
+					if frames > 1 then tMat:SetInt("$frame", math.floor(CurTime() * 12) % frames) end
+					surface.SetMaterial(tMat)
+					surface.SetDrawColor(255, 255, 255)
+					surface.DrawTexturedRect(textX, textY - tH * 0.5 - 12 * sc_local, tW, tH)
+				end
+			else
+				local tTxt = titleEntry and titleEntry:GetText() or lp:GetNWString("SND_CardTitle", "New Recruit")
+				draw.SimpleText(tTxt:upper(), "SND_BO3_Team", textX + 1, textY - 11 * sc_local, Color(0, 0, 0), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+				draw.SimpleText(tTxt:upper(), "SND_BO3_Team", textX, textY - 12 * sc_local, Color(255, 210, 50), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+			end
+		end
+
+		local tCol = team.GetColor(lp:Team())
 		draw.SimpleText(lp:Nick():upper(), "SND_BO3_Player", textX + 1, textY + 13 * sc_local, Color(0, 0, 0), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
-		draw.SimpleText(lp:Nick():upper(), "SND_BO3_Player", textX, textY + 12 * sc_local, Color(255, 255, 255), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+		draw.SimpleText(lp:Nick():upper(), "SND_BO3_Player", textX, textY + 12 * sc_local, Color(tCol.r, tCol.g, tCol.b), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
 
 		-- 4. Rank
 		local lvl = lp:GetNWInt("SND_Level", 1)
@@ -85,75 +183,60 @@ function SND.OpenSettingsMenu()
 		surface.DrawOutlinedRect(0, 0, w, cardH, 2)
 	end
 
-	-- ── PUBLIC: Calling Card Tab ────────────────────────────────────────
+	-- ── Calling Card Tab ────────────────────────────────────────────────
 	local cardPnl = vgui.Create("DPanelList")
 	cardPnl:SetPadding(15)
 	cardPnl:SetSpacing(15)
 
-    local titleMatList = vgui.Create("DComboBox")
-    titleMatList:SetValue("Select Title Graphic...")
-    cardPnl:AddItem(titleMatList)
-    for _, filename in ipairs(file.Find("snd_mwclassic/titles/*", "DATA")) do
-        titleMatList:AddChoice(filename, "data/snd_mwclassic/titles/" .. filename)
-    end
-
-    titleMatEntry = vgui.Create("DTextEntry")
-    titleMatEntry:SetText(lp:GetNWString("SND_TitleMat", "vgui/white"))
-    cardPnl:AddItem(titleMatEntry)
-
-    useTitleMatCheck = vgui.Create("DCheckBoxLabel")
-    useTitleMatCheck:SetText("Use Image as Title")
-    useTitleMatCheck:SetChecked(lp:GetNWBool("SND_UseTitleMat", false))
-    cardPnl:AddItem(useTitleMatCheck)
-
-	local bannerHelp = vgui.Create("DLabel")
-	bannerHelp:SetText("Available Banners (Place in data/snd_mwclassic/banners/)\nRequired Size: 480 x 120")
-	bannerHelp:SetAutoStretchVertical(true)
-	bannerHelp:SetDark(false)
-	cardPnl:AddItem(bannerHelp)
-
 	local bannerList = vgui.Create("DComboBox")
-	bannerList:SetTall(25)
-	bannerList:SetValue("Select a detected banner...")
+	bannerList:SetValue("Select Banner Image...")
 	cardPnl:AddItem(bannerList)
-
-	-- Automatic Folder Scanning
-	local banners = file.Find("snd_mwclassic/banners/*", "DATA")
-	for _, filename in ipairs(banners) do
+	for _, filename in ipairs(file.Find("snd_mwclassic/banners/*", "DATA")) do
 		bannerList:AddChoice(filename, "data/snd_mwclassic/banners/" .. filename)
 	end
 
 	titleEntry = vgui.Create("DTextEntry")
-	titleEntry:SetPlaceholderText("Step 1: Enter Custom Title...")
 	titleEntry:SetText(lp:GetNWString("SND_CardTitle", "New Recruit"))
-	titleEntry:SetTall(30)
 	cardPnl:AddItem(titleEntry)
 
 	pathEntry = vgui.Create("DTextEntry")
-	pathEntry:SetPlaceholderText("Step 2: Path (Auto-filled by list above)")
 	pathEntry:SetText(lp:GetNWString("SND_CardMat", "vgui/white"))
-	pathEntry:SetTall(30)
 	cardPnl:AddItem(pathEntry)
 
-	bannerList.OnSelect = function(_, _, _, data)
-		pathEntry:SetText(data)
+	local titleMatList = vgui.Create("DComboBox")
+	titleMatList:SetValue("Select Title Graphic...")
+	cardPnl:AddItem(titleMatList)
+	for _, filename in ipairs(file.Find("snd_mwclassic/titles/*", "DATA")) do
+		titleMatList:AddChoice(filename, "data/snd_mwclassic/titles/" .. filename)
 	end
 
+	titleMatEntry = vgui.Create("DTextEntry")
+	titleMatEntry:SetText(lp:GetNWString("SND_TitleMat", "vgui/white"))
+	cardPnl:AddItem(titleMatEntry)
+
+	useTitleMatCheck = vgui.Create("DCheckBoxLabel")
+	useTitleMatCheck:SetText("Use Image as Title")
+	useTitleMatCheck:SetChecked(lp:GetNWBool("SND_UseTitleMat", false))
+	cardPnl:AddItem(useTitleMatCheck)
+
+	showTitleCheck = vgui.Create("DCheckBoxLabel")
+	showTitleCheck:SetText("Overlay Title Text")
+	showTitleCheck:SetChecked(lp:GetNWBool("SND_ShowTitle", true))
+	cardPnl:AddItem(showTitleCheck)
+
+	titleMatList.OnSelect = function(_, _, _, data) titleMatEntry:SetText(data) end
+	bannerList.OnSelect = function(_, _, _, data) pathEntry:SetText(data) end
+
 	local saveBtn = vgui.Create("DButton")
-	saveBtn:SetText("SAVE CALLING CARD")
+	saveBtn:SetText("SAVE IDENTITY")
 	saveBtn:SetTall(40)
 	saveBtn.DoClick = function()
-		local path = pathEntry:GetText()
-		local mat = Material(path)
-		if not mat:IsError() then
-			local w, h = mat:Width(), mat:Height()
-			if w ~= 480 or h ~= 120 then
-				chat.AddText(Color(255, 50, 50), "[SND] NOTE: ", Color(255, 255, 255), "Ideal banner size is 480x120. Yours is " .. w .. "x" .. h)
-			end
-		end
+		net.Start("SND_SetShowTitle") net.WriteBool(showTitleCheck:GetChecked()) net.SendToServer()
+		net.Start("SND_SetUseTitleMat") net.WriteBool(useTitleMatCheck:GetChecked()) net.SendToServer()
+		net.Start("SND_SetTitleMat") net.WriteString(titleMatEntry:GetText()) net.SendToServer()
 		net.Start("SND_SetCallingCard")
 			net.WriteString(titleEntry:GetText())
-			net.WriteString(path)
+			net.WriteString(pathEntry:GetText())
 		net.SendToServer()
 		surface.PlaySound("buttons/button14.wav")
 	end
@@ -163,59 +246,35 @@ function SND.OpenSettingsMenu()
 	preview:SetTall(100)
 	local previewAv = vgui.Create("AvatarImage", preview)
 	previewAv:SetVisible(false)
-
-	preview.Paint = function(self, w, h)
-		drawFullPreview(self, w, h, previewAv)
-	end
+	preview.Paint = function(self, w, h) drawFullPreview(self, w, h, previewAv) end
 	cardPnl:AddItem(preview)
 
 	sheet:AddSheet("Calling Card", cardPnl, "icon16/vcard.png")
 
-	-- ── PUBLIC: Emblem Tab ──────────────────────────────────────────────
+	-- ── Emblem Tab ──────────────────────────────────────────────────────
 	local emblemPnl = vgui.Create("DPanelList")
 	emblemPnl:SetPadding(15)
 	emblemPnl:SetSpacing(15)
 
-	local emblemHelp = vgui.Create("DLabel")
-	emblemHelp:SetText("Available Emblems (Place in data/snd_mwclassic/emblems/)\nRequired Size: 64 x 64")
-	emblemHelp:SetAutoStretchVertical(true)
-	emblemHelp:SetDark(false)
-	emblemPnl:AddItem(emblemHelp)
-
 	local emblemList = vgui.Create("DComboBox")
-	emblemList:SetTall(25)
-	emblemList:SetValue("Select a detected emblem...")
+	emblemList:SetValue("Select Emblem Image...")
 	emblemPnl:AddItem(emblemList)
-
-	embPathEntry = vgui.Create("DTextEntry")
-	embPathEntry:SetPlaceholderText("Path (Auto-filled or 'steam')")
-	embPathEntry:SetText(lp:GetNWString("SND_EmblemMat", "steam"))
-	embPathEntry:SetTall(30)
-	emblemPnl:AddItem(embPathEntry)
-
-	-- Automatic Folder Scanning
-	local emblems = file.Find("snd_mwclassic/emblems/*", "DATA")
-	for _, filename in ipairs(emblems) do
+	for _, filename in ipairs(file.Find("snd_mwclassic/emblems/*", "DATA")) do
 		emblemList:AddChoice(filename, "data/snd_mwclassic/emblems/" .. filename)
 	end
 
-	emblemList.OnSelect = function(_, _, _, data)
-		embPathEntry:SetText(data)
-	end
+	embPathEntry = vgui.Create("DTextEntry")
+	embPathEntry:SetText(lp:GetNWString("SND_EmblemMat", "steam"))
+	emblemPnl:AddItem(embPathEntry)
+	emblemList.OnSelect = function(_, _, _, data) embPathEntry:SetText(data) end
 
 	local steamBtn = vgui.Create("DButton")
 	steamBtn:SetText("USE STEAM AVATAR")
-	steamBtn:SetTall(30)
-	steamBtn.DoClick = function()
-		embPathEntry:SetText("steam")
-		net.Start("SND_SetEmblem")
-			net.WriteString("steam")
-		net.SendToServer()
-	end
+	steamBtn.DoClick = function() embPathEntry:SetText("steam") end
 	emblemPnl:AddItem(steamBtn)
 
 	local saveEmbBtn = vgui.Create("DButton")
-	saveEmbBtn:SetText("SAVE CUSTOM EMBLEM")
+	saveEmbBtn:SetText("SAVE EMBLEM")
 	saveEmbBtn:SetTall(40)
 	saveEmbBtn.DoClick = function()
 		local path = embPathEntry:GetText()
@@ -237,64 +296,8 @@ function SND.OpenSettingsMenu()
 	embPreview:SetTall(100)
 	local av = vgui.Create("AvatarImage", embPreview)
 	av:SetVisible(false)
-
-	embPreview.Paint = function(self, w, h)
-		drawFullPreview(self, w, h, av)
-	end
+	embPreview.Paint = function(self, w, h) drawFullPreview(self, w, h, av) end
 	emblemPnl:AddItem(embPreview)
 
 	sheet:AddSheet("Emblem", emblemPnl, "icon16/medal_gold_1.png")
-
-	-- ── ADMIN: Match Settings Tabs ──────────────────────────────────────
-	if lp:IsSuperAdmin() then
-		local categories = {
-			["Match Rules"] = {
-				{ key = "snd_round_time",       lbl = "Round duration (sec)", min = 60,   max = 300,  dec = 0 },
-				{ key = "snd_freeze_time",      lbl = "Freeze duration (sec)",min = 0,    max = 20,   dec = 0 },
-				{ key = "snd_win_limit",        lbl = "Rounds to win match",  min = 1,    max = 16,   dec = 0 },
-				{ key = "snd_mapvote_enabled",  lbl = "Enable Map Vote",      min = 0,    max = 1,    dec = 0 },
-				{ key = "snd_team_balance",     lbl = "Auto Team Balance",    min = 0,    max = 1,    dec = 0 },
-			},
-			["Combat & Movement"] = {
-				{ key = "snd_walk_speed",       lbl = "Walk Speed",           min = 120,  max = 320,  dec = 0 },
-				{ key = "snd_run_speed",        lbl = "Base Run Speed",       min = 160,  max = 400,  dec = 0 },
-				{ key = "snd_sprint_mult",      lbl = "Sprint Multiplier",    min = 1,    max = 2.2,  dec = 2 },
-				{ key = "snd_plant_time",       lbl = "Bomb Plant Time",      min = 2,    max = 10,   dec = 1 },
-				{ key = "snd_defuse_time",      lbl = "Bomb Defuse Time",     min = 3,    max = 12,   dec = 1 },
-			},
-			["Bots & AI"] = {
-				{ key = "snd_bot_count",        lbl = "Target Bot Count",     min = 0,    max = 24,   dec = 0 },
-				{ key = "snd_bot_skill",        lbl = "Global Bot Skill",     min = 1,    max = 10,   dec = 0 },
-			},
-			["Interface"] = {
-				{ key = "snd_announcer_volume", lbl = "Announcer Volume",     min = 0,    max = 1,    dec = 2 },
-				{ key = "snd_hud_scale",        lbl = "HUD Global Scale",     min = 0.75, max = 1.5,  dec = 2 },
-			}
-		}
-
-		for catName, settings in pairs(categories) do
-			local pnl = vgui.Create("DPanelList")
-			pnl:EnableVerticalScrollbar(true)
-			pnl:SetSpacing(5)
-			pnl:SetPadding(10)
-
-			for _, row in ipairs(settings) do
-				local cv  = GetConVar(row.key)
-				local cur = cv and cv:GetFloat() or row.min
-				local sl  = vgui.Create("DNumSlider")
-				sl:SetText(row.lbl)
-				sl:SetMinMax(row.min, row.max)
-				sl:SetDecimals(row.dec or 0)
-				sl:SetValue(cur)
-				sl.OnValueChanged = function(_, val)
-					net.Start("SND_SetCvar")
-						net.WriteString(row.key)
-						net.WriteString(tostring(val))
-					net.SendToServer()
-				end
-				pnl:AddItem(sl)
-			end
-			sheet:AddSheet(catName, pnl)
-		end
-	end
 end

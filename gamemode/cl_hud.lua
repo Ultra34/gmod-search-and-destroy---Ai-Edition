@@ -435,7 +435,7 @@ local function drawCallingCardPopup(sw, sh, sc)
 end
 
 net.Receive("SND_ShowCallingCard", function()
-	SND.Client.ActiveCallingCard = {
+	local card = {
 		name = net.ReadString(),
 		title = net.ReadString(),
 		matPath = net.ReadString(),
@@ -453,18 +453,22 @@ net.Receive("SND_ShowCallingCard", function()
 		endTime = CurTime() + 4
 	}
 
-    -- Pre-cache materials to prevent frame-lag and allow animation properties to be read
-    SND.Client.ActiveCallingCard.bannerMat = SND.GetIMaterial(SND.Client.ActiveCallingCard.matPath)
-    
-    if SND.Client.ActiveCallingCard.emblemMatPath ~= "steam" then
-        SND.Client.ActiveCallingCard.emblemMat = SND.GetIMaterial(SND.Client.ActiveCallingCard.emblemMatPath)
-    end
+	-- Pre-cache materials to prevent frame-lag and allow animation properties to be read
+	card.bannerMat = SND.GetIMaterial(card.matPath)
+	if card.emblemMatPath ~= "steam" then
+		card.emblemMat = SND.GetIMaterial(card.emblemMatPath)
+	end
+	if card.useTitleMat then
+		card.titleMat = SND.GetIMaterial(card.titleMatPath)
+	end
+
+	SND.Client.ActiveCallingCard = card
 
 	if not IsValid(cardAvatar) then
 		cardAvatar = vgui.Create("AvatarImage")
 		cardAvatar:SetPaintedManually(false)
 	end
-	cardAvatar:SetSteamID(SND.Client.ActiveCallingCard.sid64, 64)
+	cardAvatar:SetSteamID(card.sid64, 64)
 end)
 
 -- ── Main HUD ─────────────────────────────────────────────────────────────
