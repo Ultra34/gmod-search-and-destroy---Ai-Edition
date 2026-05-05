@@ -153,6 +153,12 @@ function SND.Bomb.ResetForRound()
 	stopBeepTimer()
 	timer.Remove("SND_ReassignBomb")
 
+	-- Networked clear: Force all clients to reset their carrier index
+	net.Start("SND_Bomb")
+		net.WriteUInt(1, 3)
+		net.WriteInt(-1, 16)
+	net.Broadcast()
+
 	for _, ply in ipairs(player.GetAll()) do
 		timer.Remove("SND_Plant_"  .. ply:EntIndex())
 		timer.Remove("SND_Defuse_" .. ply:EntIndex())
@@ -389,6 +395,16 @@ hook.Add("PlayerDeath", "SND_BombCarrierDeathFix", function(victim)
 	if SND.Bomb.State == SND.BOMB_STATE_CARRIED and victim == SND.Bomb.Carrier then
 		SND.Bomb.Carrier = nil
 		timer.Create("SND_ReassignBomb", 2, 1, function() SND.Bomb.AssignCarrier() end)
+	end
+end)
+
+-- Authoritative: If a player is no longer an attacker, they CANNOT have the bomb icon
+hook.Add("OnPlayerChangedTeam", "SND_BombTeamClearClient", function(ply, oldTeam, newTeam)
+	if newTeam ~= SND.TEAM_ATTACK then
+		net.Start("SND_Bomb")
+			net.WriteUInt(1, 3)
+			net.WriteInt(-1, 16)
+		net.Send(ply)
 	end
 end)
 

@@ -128,8 +128,11 @@ function SND.Round.StartNewRound()
 	SND.Round.Phase = SND.PHASE_FREEZE
 	SND.Round.Winner = SND.WIN_NONE
 
-	SND.Bomb.AssignCarrier()
+	-- 1. Balance teams first
 	SND.TeamBalance.MaybeShuffle()
+
+	-- 2. Assign carrier after the teams are settled
+	SND.Bomb.AssignCarrier()
 
 	local freeze = SND.Settings.Get("freeze_time", 6)
 	SND.Round.RoundTimerEnd = CurTime() + freeze + SND.Settings.Get("round_time", 120)

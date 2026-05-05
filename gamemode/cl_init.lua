@@ -33,7 +33,7 @@ net.Receive("SND_RoundState", function()
 
 	-- Clear bomb carrier whenever a round resets or moves to freeze
 	if phase == SND.PHASE_FREEZE then
-		SND.Client.BombCarrier = nil
+		SND.Client.BombCarrierIdx = -1
 	end
 
 	-- Force the crosshair toggle state to reset on phase changes
@@ -52,7 +52,7 @@ net.Receive("SND_Bomb", function()
 		SND.Bomb.PlantedSite     = nil
 		SND.Bomb.PlantTime       = nil
 	elseif t == 2 then -- Bomb planted
-		SND.Client.BombCarrier   = nil
+		SND.Client.BombCarrierIdx = -1
 		SND.Bomb.State           = SND.BOMB_STATE_PLANTED
 		SND.Bomb.PlantPos        = net.ReadVector()
 		SND.Bomb.PlantedSite     = net.ReadString()
