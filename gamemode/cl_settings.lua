@@ -103,8 +103,8 @@ function SND.OpenPersonalizationMenu()
 	local function drawFullPreview(pnl, w, h, av)
 		local cardH = w / 4
 		pnl:SetTall(cardH)
-		local sc_local = w / 480
-		local embSize = 64 * sc_local
+		local sc_local = w / 512
+		local embSize = 96 * sc_local
 		local embX_off = 15 * sc_local
 
 		-- Transparent hint-of-grey background
@@ -133,7 +133,7 @@ function SND.OpenPersonalizationMenu()
 				av:SetVisible(true)
 				av:SetPos(embX, embY)
 				av:SetSize(embSize, embSize)
-				av:SetPlayer(lp, 64)
+				av:SetPlayer(lp, 128)
 			end
 		else
 			if IsValid(av) then av:SetVisible(false) end
@@ -147,7 +147,7 @@ function SND.OpenPersonalizationMenu()
 		end
 
 		-- 3. Text Overlay
-		local textX = 120 * sc_local -- Start text to the right of the emblem
+		local textX = 125 * sc_local
 		
 		if showTitleCheck and showTitleCheck:GetChecked() and not (useTitleMatCheck and useTitleMatCheck:GetChecked()) then
 			local tTxt = titleEntry and titleEntry:GetText() or lp:GetNWString("SND_CardTitle", "New Recruit")

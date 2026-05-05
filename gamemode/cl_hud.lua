@@ -330,7 +330,7 @@ local function drawCallingCardPopup(sw, sh, sc)
 	if age < 0.5 then alpha = (age / 0.5) * 255 
 	elseif age > duration - 0.5 then alpha = ((duration - age) / 0.5) * 255 end
 
-	-- Authentic MW2 2009 Sizes: 512x128
+	-- Authentic MW2 2009 Dimensions
 	local w, h = 512 * sc, 128 * sc
 	local x = sw * 0.5 - w * 0.5
 	
@@ -352,13 +352,21 @@ local function drawCallingCardPopup(sw, sh, sc)
     surface.SetDrawColor(30, 30, 30, alpha * 0.7)
     surface.DrawRect(x, y, w, h)
 
-	-- ── MW2 Title Graphic (Top Strip) ────────────────────────────────────
-	-- This is now drawn as a strip in the top half, not a full background banner
+	-- Borders
+	surface.SetDrawColor(0, 0, 0, alpha * 0.8)
+	surface.DrawOutlinedRect(x, y, w, h, 2 * sc)
+
+	-- Positioning Anchors
+	local embSize = 96 * sc
+	local embX, embY = x + 12 * sc, y + (h - embSize) * 0.5
+	local textX = x + 125 * sc
+
+	-- ── MW2 Title Graphic (Beside Emblem) ────────────────────────────────
 	if card.showTitle and card.useTitleMat then 
 		surface.SetMaterial(MAT_WHITE)
 		local tMat = card.titleMat
 		if tMat and not (tMat:IsError() and not tostring(card.titleMatPath):match("[.gif|data/]")) then
-			local tW, tH = 256 * sc, 32 * sc -- New title graphic size
+			local tW, tH = 256 * sc, 32 * sc
 			surface.SetMaterial(tMat)
 			surface.SetDrawColor(255, 255, 255, alpha)
 
@@ -367,18 +375,9 @@ local function drawCallingCardPopup(sw, sh, sc)
 				if frames > 1 then tMat:SetInt("$frame", math.floor(CurTime() * 12) % frames) end
 			end
 
-			surface.DrawTexturedRect(textX, y + 35 * sc - (tH * 0.5), tW, tH) -- Positioned above name
+			surface.DrawTexturedRect(textX, y + 36 * sc - (tH * 0.5), tW, tH)
 		end
 	end
-
-	-- Borders
-	surface.SetDrawColor(0, 0, 0, alpha * 0.8)
-	surface.DrawOutlinedRect(x, y, w, h, 2 * sc)
-
-	-- Text Info
-	local embSize = 96 * sc -- MW2 emblem is 96x96, overlapping top and bottom
-	local embX, embY = x + 10 * sc, y + (h - embSize) * 0.5 -- Positioned to overlap
-	local textX = x + 120 * sc
 
 	-- Custom Title Text (Overlayed on Banner)
 	if card.showTitle and not card.useTitleMat then
@@ -388,7 +387,7 @@ local function drawCallingCardPopup(sw, sh, sc)
 	
 	-- Player Name (Team Colored)
     local tCol = team.GetColor(card.team or 0)
-	draw.SimpleText(card.name:upper(), "SND_BO3_Player", textX + 1, y + 93 * sc, Color(0, 0, 0, alpha), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER) -- Bottom half
+	draw.SimpleText(card.name:upper(), "SND_BO3_Player", textX + 1, y + 93 * sc, Color(0, 0, 0, alpha), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
 	draw.SimpleText(card.name:upper(), "SND_BO3_Player", textX, y + 92 * sc, Color(tCol.r, tCol.g, tCol.b, alpha), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER) -- Bottom half
 
 	-- Rank Icon (Far Right of banner)
