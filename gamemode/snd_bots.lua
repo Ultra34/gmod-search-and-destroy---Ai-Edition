@@ -156,7 +156,7 @@ function SND.Bots.EnsureCount()
 		bot:SetTeam(pickTeam())
 		
 		-- Automatic Banner Selection from Data Folders
-		local botTitles = {"Lone Wolf", "Shadow", "Elite", "Hunter", "Stalker"}
+		local botTitles = {"Lone Wolf", "Shadow", "Elite", "Hunter", "Stalker", "New Recruit"}
 		local botMats = {SND.Config.DefaultBotBanner or "vgui/white", "vgui/gradient-d", "vgui/gradient-u"}
 		
 		local customBanners = file.Find("snd_mwclassic/banners/*", "DATA")
@@ -168,12 +168,22 @@ function SND.Bots.EnsureCount()
 
 		bot:SetNWString("SND_CardTitle", table.Random(botTitles))
 		bot:SetNWString("SND_CardMat", table.Random(botMats))
+		
+		-- Bots default to showing title text, not using a title graphic
 		bot:SetNWBool("SND_ShowTitle", true)
 		bot:SetNWBool("SND_UseTitleMat", false)
 		bot:SetNWString("SND_TitleMat", "vgui/white")
 
 		-- Automatic Emblem Selection from Data Folders
 		local botEmblems = {SND.Config.DefaultBotEmblem or "vgui/icon_skull", "vgui/icon_star", "vgui/icon_target", "vgui/icon_crosshair"}
+		
+		local customTitles = file.Find("snd_mwclassic/titles/*", "DATA")
+		if #customTitles > 0 then
+			for _, f in ipairs(customTitles) do
+				table.insert(botTitles, "data/snd_mwclassic/titles/" .. f)
+			end
+		end
+
 		local customEmblems = file.Find("snd_mwclassic/emblems/*", "DATA")
 		if #customEmblems > 0 then
 			for _, f in ipairs(customEmblems) do 

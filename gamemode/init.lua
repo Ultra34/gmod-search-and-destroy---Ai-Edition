@@ -74,8 +74,8 @@ function GM:PlayerInitialSpawn(ply)
 	
 	-- Load Calling Card
 	ply:SetNWString("SND_CardTitle", ply:GetPData("snd_card_title", "New Recruit"))
-	local isBot = (ply:IsBot() or ply.SND_IsBot)
-	ply:SetNWString("SND_CardMat", ply:GetPData("snd_card_mat", isBot and (SND.Config.DefaultBotBanner or "") or ""))
+	local isBot = (ply:IsBot() or ply.SND_IsBot) -- Check if it's a bot
+	ply:SetNWString("SND_CardMat", ply:GetPData("snd_card_mat", isBot and (SND.Config.DefaultBotBanner or "") or "")) -- Default to transparent for players/bots
 	ply:SetNWBool("SND_ShowTitle", ply:GetPData("snd_show_title", "1") == "1")
 	ply:SetNWBool("SND_UseTitleMat", ply:GetPData("snd_use_title_mat", "0") == "1")
 	ply:SetNWString("SND_TitleMat", ply:GetPData("snd_title_mat", "vgui/white"))

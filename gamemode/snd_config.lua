@@ -154,7 +154,7 @@ SND.Config.Factions = {
 }
 
 -- ── Default Bot Identity ────────────────────────────────────────────────
-SND.Config.DefaultBotBanner = ""
+SND.Config.DefaultBotBanner = "" -- Transparent by default, relies on HUD's grey background
 SND.Config.DefaultBotEmblem = "data/snd_mwclassic/emblems/bot_emblem.png"
 
 -- ── Announcer ─────────────────────────────────────────────────────────────

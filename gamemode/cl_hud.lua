@@ -353,12 +353,11 @@ local function drawCallingCardPopup(sw, sh, sc)
     surface.DrawRect(x, y, w, h)
 
 	-- Draw Card Background (Material with transparency support)
-	surface.SetMaterial(MAT_WHITE) -- Reset state
+	surface.SetMaterial(MAT_WHITE) -- Reset material state
 	surface.SetDrawColor(255, 255, 255, alpha)
     local bannerMat = card.bannerMat
-    if bannerMat and not (bannerMat:IsError() and not tostring(card.matPath):find(".gif")) then
+    if bannerMat and not (bannerMat:IsError() and not tostring(card.matPath):find(".gif")) then -- Only check IsError for non-GIFs
         surface.SetMaterial(bannerMat)
-
 		-- Support for animated banner frames (VTF only)
 		if not tostring(card.matPath):find(".gif") then
 			local frames = bannerMat:GetInt("$numframes") or 1
@@ -384,10 +383,11 @@ local function drawCallingCardPopup(sw, sh, sc)
 	-- Custom Title Text (Overlayed on Banner)
 	if card.showTitle then
 		if card.useTitleMat then
-			surface.SetMaterial(MAT_WHITE)
+			surface.SetMaterial(MAT_WHITE) -- Reset material state
 			local tMat = card.titleMat
-			if tMat and not (tMat:IsError() and not tostring(card.titleMatPath):find(".gif")) then
-				local tW, tH = 256 * sc, 64 * sc
+			if tMat and not (tMat:IsError() and not tostring(card.titleMatPath):find(".gif")) then -- Only check IsError for non-GIFs
+				-- Adjusted size for title graphic to fit within the text area
+				local tW, tH = 160 * sc, 40 * sc 
 				surface.SetMaterial(tMat)
 				surface.SetDrawColor(255, 255, 255, alpha)
 
@@ -413,15 +413,15 @@ local function drawCallingCardPopup(sw, sh, sc)
 
 	-- Rank Icon (Far Right of banner)
 	local lvl = card.level or 1
-	local icon = (SND.Levels and SND.Levels.GetIcon) and SND.Levels.GetIcon(lvl) or nil
-	if icon then
+	local icon = (SND.Levels and SND.Levels.GetIcon) and SND.Levels.GetIcon(lvl)
+	if icon and not icon:IsError() then -- Check if icon is a valid material
 		surface.SetMaterial(icon)
 		surface.SetDrawColor(255, 255, 255, alpha)
 		surface.DrawTexturedRect(x + w - 48 * sc, y + h * 0.5 - 18 * sc, 36 * sc, 36 * sc)
 	end
 
 	if card.emblemMatPath == "steam" and not card.isBot and card.sid64 ~= "0" then
-		surface.SetMaterial(MAT_WHITE)
+		surface.SetMaterial(MAT_WHITE) -- Reset material state
 		if IsValid(cardAvatar) then
 			cardAvatar:SetVisible(true)
 			cardAvatar:SetPos(embX, embY)
@@ -431,8 +431,8 @@ local function drawCallingCardPopup(sw, sh, sc)
 	else
         if IsValid(cardAvatar) then cardAvatar:SetVisible(false) end
         local embMat = card.emblemMat
-		surface.SetMaterial(MAT_WHITE)
-        if embMat and not (embMat:IsError() and not tostring(card.emblemMatPath):find(".gif")) then
+		surface.SetMaterial(MAT_WHITE) -- Reset material state
+        if embMat and not (embMat:IsError() and not tostring(card.emblemMatPath):find(".gif")) then -- Only check IsError for non-GIFs
             surface.SetMaterial(embMat)
 
             -- Support for animated emblem frames (VTF only)

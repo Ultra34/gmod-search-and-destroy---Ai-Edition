@@ -150,7 +150,7 @@ function SND.OpenPersonalizationMenu()
 		if showTitleCheck and showTitleCheck:GetChecked() then
 			if useTitleMatCheck and useTitleMatCheck:GetChecked() then
 				local tPath = titleMatEntry and titleMatEntry:GetText() or lp:GetNWString("SND_TitleMat", "vgui/white")
-				local tMat = SND.GetIMaterial(tPath)
+				local tMat = SND.GetIMaterial(tPath) -- Use SND.GetIMaterial for GIF support
 				if tMat and not (tMat:IsError() and not tPath:find(".gif")) then
 					local tW, tH = 256 * sc_local, 64 * sc_local
 					local frames = tMat:GetInt("$numframes") or 1
