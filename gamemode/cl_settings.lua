@@ -147,18 +147,17 @@ function SND.OpenPersonalizationMenu()
 		end
 
 		-- 3. Text Overlay
-		local textX = embX_off + embSize + 15 * sc_local
-		local textY = cardH * 0.5
+		local textX = 120 * sc_local -- Start text to the right of the emblem
 		
 		if showTitleCheck and showTitleCheck:GetChecked() and not (useTitleMatCheck and useTitleMatCheck:GetChecked()) then
 			local tTxt = titleEntry and titleEntry:GetText() or lp:GetNWString("SND_CardTitle", "New Recruit")
-			draw.SimpleText(tTxt:upper(), "SND_BO3_Team", textX + 1, 33 * sc_local, Color(0, 0, 0), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
-			draw.SimpleText(tTxt:upper(), "SND_BO3_Team", textX, 32 * sc_local, Color(255, 210, 50), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+			draw.SimpleText(tTxt:upper(), "SND_BO3_Team", textX + 1, 36 * sc_local, Color(0, 0, 0), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER) -- Top half
+			draw.SimpleText(tTxt:upper(), "SND_BO3_Team", textX, 35 * sc_local, Color(255, 210, 50), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER) -- Top half
 		end
 
 		local tCol = team.GetColor(lp:Team())
-		draw.SimpleText(lp:Nick():upper(), "SND_BO3_Player", textX + 1, 97 * sc_local, Color(0, 0, 0), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
-		draw.SimpleText(lp:Nick():upper(), "SND_BO3_Player", textX, 96 * sc_local, Color(tCol.r, tCol.g, tCol.b), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+		draw.SimpleText(lp:Nick():upper(), "SND_BO3_Player", textX + 1, 93 * sc_local, Color(0, 0, 0), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER) -- Bottom half
+		draw.SimpleText(lp:Nick():upper(), "SND_BO3_Player", textX, 92 * sc_local, Color(tCol.r, tCol.g, tCol.b), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER) -- Bottom half
 
 		-- 4. Rank
 		local lvl = lp:GetNWInt("SND_Level", 1)
@@ -166,7 +165,7 @@ function SND.OpenPersonalizationMenu()
 		if icon then
 			surface.SetMaterial(icon)
 			surface.SetDrawColor(255, 255, 255)
-			surface.DrawTexturedRect(w - 50 * sc_local, cardH * 0.5 - 18 * sc_local, 36 * sc_local, 36 * sc_local)
+			surface.DrawTexturedRect(w - 55 * sc_local, cardH * 0.5 - 20 * sc_local, 40 * sc_local, 40 * sc_local) -- MW2 Rank Icon size and position
 		end
 
 		surface.SetDrawColor(255, 120, 0, 100)

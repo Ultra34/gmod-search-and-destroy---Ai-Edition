@@ -316,6 +316,27 @@ local function moveToward(bot, cmd, targetPos, speed)
 
 	if not isvector(moveDest) then moveDest = targetPos end
 
+	-- Proactive Wall Detection & Obstacle Avoidance
+	local eyePos = bot:EyePos()
+	local forward = bot:GetForward()
+	local wallTrace = util.TraceHull({
+		start = eyePos,
+		endpos = eyePos + forward * 48, -- Check 48 units in front
+		filter = bot,
+		mins = Vector(-16, -16, -16), -- Bot's hull size
+		maxs = Vector(16, 16, 16),
+		mask = MASK_PLAYERSOLID
+	})
+
+	if wallTrace.Hit and wallTrace.HitWorld then
+		-- If a wall is detected, try to jump or strafe
+		if CurTime() > ai.nextJump then
+			cmd:SetButtons(bit.bor(cmd:GetButtons(), IN_JUMP))
+			ai.nextJump = CurTime() + 1.2 -- Jump cooldown
+		end
+		cmd:SetSideMove(speed * (ai.strafeDir or 1)) -- Strafe to the side
+	end
+
 	local dist = (targetPos - myPos):Length()
 	if dist < 40 then return dist end
 

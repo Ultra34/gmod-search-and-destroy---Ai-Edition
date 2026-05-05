@@ -330,7 +330,7 @@ local function drawCallingCardPopup(sw, sh, sc)
 	if age < 0.5 then alpha = (age / 0.5) * 255 
 	elseif age > duration - 0.5 then alpha = ((duration - age) / 0.5) * 255 end
 
-	-- Authentic MW2 Sizes: 512x128 (Updated for 8:1 Title Graphics)
+	-- Authentic MW2 2009 Sizes: 512x128
 	local w, h = 512 * sc, 128 * sc
 	local x = sw * 0.5 - w * 0.5
 	
@@ -352,56 +352,55 @@ local function drawCallingCardPopup(sw, sh, sc)
     surface.SetDrawColor(30, 30, 30, alpha * 0.7)
     surface.DrawRect(x, y, w, h)
 
-	-- Draw Card Background (Material with transparency support)
-	surface.SetMaterial(MAT_WHITE) -- Reset material state
-	surface.SetDrawColor(255, 255, 255, alpha)
-    local bannerMat = card.bannerMat
-    if bannerMat and not (bannerMat:IsError() and not tostring(card.matPath):find(".gif")) then -- Only check IsError for non-GIFs
-        surface.SetMaterial(bannerMat)
-		-- Support for animated banner frames (VTF only)
-		if not tostring(card.matPath):find(".gif") then
-			local frames = bannerMat:GetInt("$numframes") or 1
-			if frames > 1 then
-				bannerMat:SetInt("$frame", math.floor(CurTime() * 12) % frames)
+	-- ── MW2 Title Graphic (Top Strip) ────────────────────────────────────
+	if card.showTitle and card.useTitleMat then
+		surface.SetMaterial(MAT_WHITE)
+		local tMat = card.titleMat
+		if tMat and not (tMat:IsError() and not tostring(card.titleMatPath):match("[.gif|data/]")) then
+			local tW, tH = 512 * sc, 64 * sc
+			surface.SetMaterial(tMat)
+			surface.SetDrawColor(255, 255, 255, alpha)
+
+			if not tostring(card.titleMatPath):match("[.gif|data/]") then
+				local frames = tMat:GetInt("$numframes") or 1
+				if frames > 1 then tMat:SetInt("$frame", math.floor(CurTime() * 12) % frames) end
 			end
+
+			surface.DrawTexturedRect(x, y, tW, tH)
 		end
-		-- Shifted to top half for stacked look
-        surface.DrawTexturedRect(x, y, w, h * 0.5)
-    end
+	end
 
 	-- Borders
 	surface.SetDrawColor(0, 0, 0, alpha * 0.8)
 	surface.DrawOutlinedRect(x, y, w, h, 2 * sc)
 
 	-- Text Info
-	local embSize = 80 * sc
-	local embX_off = 15 * sc
-	local embX, embY = x + embX_off, y + (h - embSize) * 0.5
-	local textX = x + embX_off + embSize + 20 * sc
-	local textY = y + h * 0.5
+	local embSize = 96 * sc -- MW2 emblem is 96x96, overlapping top and bottom
+	local embX, embY = x + 10 * sc, y + (h - embSize) * 0.5 -- Positioned to overlap
+	local textX = x + 120 * sc
 
 	-- Custom Title Text (Overlayed on Banner)
 	if card.showTitle and not card.useTitleMat then
-		draw.SimpleText(card.title:upper(), "SND_BO3_Team", textX + 1, y + 33 * sc, Color(0, 0, 0, alpha), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
-		draw.SimpleText(card.title:upper(), "SND_BO3_Team", textX, y + 32 * sc, Color(255, 210, 50, alpha), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+		draw.SimpleText(card.title:upper(), "SND_BO3_Team", textX + 1, y + 36 * sc, Color(0, 0, 0, alpha), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+		draw.SimpleText(card.title:upper(), "SND_BO3_Team", textX, y + 35 * sc, Color(255, 210, 50, alpha), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
     end
 	
 	-- Player Name (Team Colored)
     local tCol = team.GetColor(card.team or 0)
-	draw.SimpleText(card.name:upper(), "SND_BO3_Player", textX + 1, y + 97 * sc, Color(0, 0, 0, alpha), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
-	draw.SimpleText(card.name:upper(), "SND_BO3_Player", textX, y + 96 * sc, Color(tCol.r, tCol.g, tCol.b, alpha), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+	draw.SimpleText(card.name:upper(), "SND_BO3_Player", textX + 1, y + 93 * sc, Color(0, 0, 0, alpha), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+	draw.SimpleText(card.name:upper(), "SND_BO3_Player", textX, y + 92 * sc, Color(tCol.r, tCol.g, tCol.b, alpha), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
 
 	-- Rank Icon (Far Right of banner)
 	local lvl = card.level or 1
 	local icon = (SND.Levels and SND.Levels.GetIcon) and SND.Levels.GetIcon(lvl)
 	if icon and not icon:IsError() then -- Check if icon is a valid material
-		surface.SetMaterial(icon)
+		surface.SetMaterial(icon) -- Reset material state
 		surface.SetDrawColor(255, 255, 255, alpha)
-		surface.DrawTexturedRect(x + w - 48 * sc, y + h * 0.5 - 18 * sc, 36 * sc, 36 * sc)
+		surface.DrawTexturedRect(x + w - 55 * sc, y + h * 0.5 - 20 * sc, 40 * sc, 40 * sc) -- MW2 Rank Icon size and position
 	end
 
 	if card.emblemMatPath == "steam" and not card.isBot and card.sid64 ~= "0" then
-		surface.SetMaterial(MAT_WHITE)
+		surface.SetMaterial(MAT_WHITE) -- Reset material state
 		if IsValid(cardAvatar) then
 			cardAvatar:SetVisible(true)
 			cardAvatar:SetPos(embX, embY)
