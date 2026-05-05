@@ -63,6 +63,12 @@ local MAT_GRAD_U = Material("vgui/gradient-u")
 local MAT_GRAD_L = Material("vgui/gradient-l")
 local MAT_GRAD_R = Material("vgui/gradient-r")
 
+-- Helper to check if a path is a special format (GIF or Local Data)
+local function isSpecialPath(path)
+	local p = tostring(path):lower()
+	return p:EndsWith(".gif") or p:StartWith("http") or p:find("data/")
+end
+
 -- ── GIF & Web Material Support ────────────────────────────────────────────
 local gifPanels = {}
 function SND.GetIMaterial(path)
@@ -90,6 +96,9 @@ function SND.GetIMaterial(path)
             </html>
         ]])
 
+		-- Force internal update so the material exists immediately
+		p:InvalidateLayout(true)
+		
         gifPanels[path] = p
         return p:GetHTMLMaterial()
     end
@@ -415,12 +424,12 @@ local function drawCallingCardPopup(sw, sh, sc)
 	else
         if IsValid(cardAvatar) then cardAvatar:SetVisible(false) end
         local embMat = card.emblemMat
-		surface.SetMaterial(MAT_WHITE)
-        if embMat and not (embMat:IsError() and not tostring(card.emblemMatPath):match("[.gif|data/]")) then
+		surface.SetMaterial(MAT_WHITE) -- Reset material state
+        if embMat and (isSpecialPath(card.emblemMatPath) or not embMat:IsError()) then
             surface.SetMaterial(embMat)
 
             -- Support for animated emblem frames (Standard VTF only)
-            if not tostring(card.emblemMatPath):match("[.gif|data/]") then
+            if not isSpecialPath(card.emblemMatPath) then
                 local frames = embMat:GetInt("$numframes") or 1
                 if frames > 1 then
                     embMat:SetInt("$frame", math.floor(CurTime() * 12) % frames)
