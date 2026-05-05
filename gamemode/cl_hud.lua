@@ -386,8 +386,8 @@ local function drawCallingCardPopup(sw, sh, sc)
 			surface.SetMaterial(MAT_WHITE)
 			local tMat = card.titleMat
 			if tMat and not (tMat:IsError() and not tostring(card.titleMatPath):match("[.gif|data/]")) then
-				-- Adjusted size for title graphic to fit within the text area
-				local tW, tH = 160 * sc, 40 * sc 
+				-- Super wide and short (8:1 Aspect Ratio)
+				local tW, tH = 256 * sc, 32 * sc 
 				surface.SetMaterial(tMat)
 				surface.SetDrawColor(255, 255, 255, alpha)
 

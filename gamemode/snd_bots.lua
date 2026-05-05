@@ -155,34 +155,19 @@ function SND.Bots.EnsureCount()
 		bot.SND_AI    = newAI()
 		bot:SetTeam(pickTeam())
 		
-		-- Automatic Banner Selection from Data Folders
+		-- Forced Identity: Random Text Titles, Unified Background & Emblem
 		local botTitles = {"Lone Wolf", "Shadow", "Elite", "Hunter", "Stalker", "New Recruit"}
-		local botMats = {SND.Config.DefaultBotBanner or "vgui/white", "vgui/gradient-d", "vgui/gradient-u"}
-		
-		local customBanners = file.Find("snd_mwclassic/banners/*", "DATA")
-		if #customBanners > 0 then
-			for _, f in ipairs(customBanners) do 
-				table.insert(botMats, "data/snd_mwclassic/banners/" .. f)
-			end
-		end
-
 		bot:SetNWString("SND_CardTitle", table.Random(botTitles))
-		bot:SetNWString("SND_CardMat", table.Random(botMats))
+
+		-- Forced: MW2 transparent grey background
+		bot:SetNWString("SND_CardMat", SND.Config.DefaultBotBanner or "")
+		
+		-- Forced: Text-only titles
 		bot:SetNWBool("SND_ShowTitle", true)
+		bot:SetNWBool("SND_UseTitleMat", false)
+		bot:SetNWString("SND_TitleMat", "")
 
-		-- Check for custom title graphics (using banners)
-		local customBannerTitles = file.Find("snd_mwclassic/banners/*", "DATA")
-		if #customBannerTitles > 0 then
-			-- Randomly decide if bot uses a title graphic or text
-			local useMat = (math.random() < 0.5)
-			bot:SetNWBool("SND_UseTitleMat", useMat)
-			bot:SetNWString("SND_TitleMat", useMat and ("data/snd_mwclassic/banners/" .. table.Random(customBannerTitles)) or "vgui/white")
-		else
-			bot:SetNWBool("SND_UseTitleMat", false)
-			bot:SetNWString("SND_TitleMat", "vgui/white")
-		end
-
-		-- Force all bots to use the same default emblem
+		-- Forced: Unified team emblem
 		bot:SetNWString("SND_EmblemMat", SND.Config.DefaultBotEmblem or "vgui/icon_skull")
 
 		SND.Teams.ApplyFactionModel(bot)

@@ -152,7 +152,7 @@ function SND.OpenPersonalizationMenu()
 				local tPath = titleMatEntry and titleMatEntry:GetText() or lp:GetNWString("SND_TitleMat", "vgui/white")
 				local tMat = SND.GetIMaterial(tPath)
 				if tMat and not (tMat:IsError() and not tPath:match("[.gif|data/]")) then
-					local tW, tH = 256 * sc_local, 64 * sc_local
+					local tW, tH = 256 * sc_local, 32 * sc_local
 					local frames = tMat:GetInt("$numframes") or 1
 					if frames > 1 then tMat:SetInt("$frame", math.floor(CurTime() * 12) % frames) end
 					surface.SetMaterial(tMat)
