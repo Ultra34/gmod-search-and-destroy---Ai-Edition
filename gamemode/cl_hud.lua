@@ -352,33 +352,32 @@ local function drawCallingCardPopup(sw, sh, sc)
     surface.SetDrawColor(30, 30, 30, alpha * 0.7)
     surface.DrawRect(x, y, w, h)
 
-	-- ── MW2 Title Graphic (Top Strip Beside Emblem) ──────────────────────
-	if card.showTitle and card.useTitleMat then
-		surface.SetMaterial(MAT_WHITE) -- Reset state
+	-- Borders
+	surface.SetDrawColor(0, 0, 0, alpha * 0.8)
+	surface.DrawOutlinedRect(x, y, w, h, 2 * sc)
+
+	-- Positioning Anchors
+	local embSize = 96 * sc
+	local embX, embY = x + 12 * sc, y + (h - embSize) * 0.5
+	local textX = x + 125 * sc
+
+	-- ── MW2 Title Graphic (Top Strip) ────────────────────────────────────
+	if card.showTitle and card.useTitleMat then 
+		surface.SetMaterial(MAT_WHITE) -- Reset material state
 		surface.SetDrawColor(255, 255, 255, alpha)
 		local tMat = card.titleMat
 		if tMat and not (tMat:IsError() and not tostring(card.titleMatPath):match("[.gif|data/]")) then
-			local tW, tH = 512 * sc, 64 * sc
+			local tW, tH = 512 * sc, 64 * sc -- MW2 Standard Title Strip
 			surface.SetMaterial(tMat)
-			surface.SetDrawColor(255, 255, 255, alpha)
 
 			if not tostring(card.titleMatPath):match("[.gif|data/]") then
 				local frames = tMat:GetInt("$numframes") or 1
 				if frames > 1 then tMat:SetInt("$frame", math.floor(CurTime() * 12) % frames) end
 			end
 
-			surface.DrawTexturedRect(textX, y + 36 * sc - (tH * 0.5), tW, tH)
+			surface.DrawTexturedRect(x, y, tW, tH) -- Spans top half
 		end
 	end
-
-	-- Borders
-	surface.SetDrawColor(0, 0, 0, alpha * 0.8)
-	surface.DrawOutlinedRect(x, y, w, h, 2 * sc)
-
-	-- Text Info
-	local embSize = 96 * sc -- MW2 emblem is 96x96, overlapping top and bottom
-	local embX, embY = x + 10 * sc, y + (h - embSize) * 0.5 -- Positioned to overlap
-	local textX = x + 120 * sc
 
 	-- Custom Title Text (Overlayed on Banner)
 	if card.showTitle and not card.useTitleMat then

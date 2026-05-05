@@ -105,29 +105,28 @@ function SND.OpenPersonalizationMenu()
 		pnl:SetTall(cardH)
 		local sc_local = w / 512
 		local embSize = 96 * sc_local
-		local embX_off = 15 * sc_local
 
-		-- Transparent hint-of-grey background
+		-- 1. MW2 Style Background Strip (MW2 2009)
 		surface.SetDrawColor(30, 30, 30, 180)
 		surface.DrawRect(0, 0, w, cardH)
 
-		-- 1. Combined Strip Preview
+		-- 1. MW2 Strip Preview (Full Width Top)
 		if showTitleCheck and showTitleCheck:GetChecked() and useTitleMatCheck and useTitleMatCheck:GetChecked() then
 			local tPath = titleMatEntry and titleMatEntry:GetText() or lp:GetNWString("SND_TitleMat", "vgui/white")
 			local tMat = SND.GetIMaterial(tPath)
 			if tMat and not (tMat:IsError() and not tPath:match("[.gif|data/]")) then
-					local tW, tH = 256 * sc_local, 32 * sc_local -- New title graphic size
+				local tW, tH = w, 64 * sc_local
 				local frames = tMat:GetInt("$numframes") or 1
 				if frames > 1 then tMat:SetInt("$frame", math.floor(CurTime() * 12) % frames) end
 				surface.SetMaterial(tMat)
 				surface.SetDrawColor(255, 255, 255)
-				surface.DrawTexturedRect(0, 0, w, tH) -- Match HUD Top-Align
+				surface.DrawTexturedRect(0, 0, tW, tH)
 			end
 		end
 
 		-- 2. Emblem
 		local ePath = embPathEntry and embPathEntry:GetText() or lp:GetNWString("SND_EmblemMat", "steam")
-		local embX, embY = embX_off, (cardH - embSize) * 0.5
+		local embX, embY = 12 * sc_local, (cardH - embSize) * 0.5
 		if ePath == "steam" then
 			if IsValid(av) then
 				av:SetVisible(true)
@@ -138,10 +137,11 @@ function SND.OpenPersonalizationMenu()
 		else
 			if IsValid(av) then av:SetVisible(false) end
 			local eMat = SND.GetIMaterial(ePath)
-			if eMat and not (eMat:IsError() and not ePath:find(".gif")) then
+			if eMat and not (eMat:IsError() and not tostring(ePath):match("[.gif|data/]")) then
 				local frames = eMat:GetInt("$numframes") or 1
 				if frames > 1 then eMat:SetInt("$frame", math.floor(CurTime() * 12) % frames) end
 				surface.SetMaterial(eMat)
+				surface.SetDrawColor(255, 255, 255)
 				surface.DrawTexturedRect(embX, embY, embSize, embSize)
 			end
 		end
@@ -151,13 +151,13 @@ function SND.OpenPersonalizationMenu()
 		
 		if showTitleCheck and showTitleCheck:GetChecked() and not (useTitleMatCheck and useTitleMatCheck:GetChecked()) then
 			local tTxt = titleEntry and titleEntry:GetText() or lp:GetNWString("SND_CardTitle", "New Recruit")
-			draw.SimpleText(tTxt:upper(), "SND_BO3_Team", textX + 1, 36 * sc_local, Color(0, 0, 0), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER) -- Top half
-			draw.SimpleText(tTxt:upper(), "SND_BO3_Team", textX, 35 * sc_local, Color(255, 210, 50), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER) -- Top half
+			draw.SimpleText(tTxt:upper(), "SND_BO3_Team", textX + 1, 36 * sc_local, Color(0, 0, 0), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+			draw.SimpleText(tTxt:upper(), "SND_BO3_Team", textX, 35 * sc_local, Color(255, 210, 50), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
 		end
 
 		local tCol = team.GetColor(lp:Team())
-		draw.SimpleText(lp:Nick():upper(), "SND_BO3_Player", textX + 1, 93 * sc_local, Color(0, 0, 0), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER) -- Bottom half
-		draw.SimpleText(lp:Nick():upper(), "SND_BO3_Player", textX, 92 * sc_local, Color(tCol.r, tCol.g, tCol.b), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER) -- Bottom half
+		draw.SimpleText(lp:Nick():upper(), "SND_BO3_Player", textX + 1, 93 * sc_local, Color(0, 0, 0), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+		draw.SimpleText(lp:Nick():upper(), "SND_BO3_Player", textX, 92 * sc_local, Color(tCol.r, tCol.g, tCol.b), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
 
 		-- 4. Rank
 		local lvl = lp:GetNWInt("SND_Level", 1)
@@ -165,7 +165,7 @@ function SND.OpenPersonalizationMenu()
 		if icon then
 			surface.SetMaterial(icon)
 			surface.SetDrawColor(255, 255, 255)
-			surface.DrawTexturedRect(w - 55 * sc_local, cardH * 0.5 - 20 * sc_local, 40 * sc_local, 40 * sc_local) -- MW2 Rank Icon size and position
+			surface.DrawTexturedRect(w - 55 * sc_local, cardH * 0.5 - 20 * sc_local, 40 * sc_local, 40 * sc_local)
 		end
 
 		surface.SetDrawColor(255, 120, 0, 100)

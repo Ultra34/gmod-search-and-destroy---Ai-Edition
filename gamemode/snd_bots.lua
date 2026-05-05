@@ -167,8 +167,13 @@ function SND.Bots.EnsureCount()
 		bot:SetNWBool("SND_UseTitleMat", false)
 		bot:SetNWString("SND_TitleMat", "")
 
-		-- Forced: Unified team emblem
-		bot:SetNWString("SND_EmblemMat", SND.Config.DefaultBotEmblem or "vgui/icon_skull")
+		-- Forced: Unified team emblem with fallback check
+		local botEmb = SND.Config.DefaultBotEmblem or "data/snd_mwclassic/emblems/bot_emblem.png"
+		if not file.Exists(botEmb:gsub("^data/", ""), "DATA") then
+			botEmb = "vgui/icon_skull" -- Robust engine fallback
+		end
+		
+		bot:SetNWString("SND_EmblemMat", botEmb)
 
 		SND.Teams.ApplyFactionModel(bot)
 		bot:Spawn()
