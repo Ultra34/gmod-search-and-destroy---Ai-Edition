@@ -121,7 +121,7 @@ function SND.OpenPersonalizationMenu()
 				if frames > 1 then tMat:SetInt("$frame", math.floor(CurTime() * 12) % frames) end
 				surface.SetMaterial(tMat)
 				surface.SetDrawColor(255, 255, 255)
-				surface.DrawTexturedRect(0, (cardH - tH) * 0.5, w, tH)
+				surface.DrawTexturedRect(0, 0, w, tH) -- Match HUD Top-Align
 			end
 		end
 
@@ -152,13 +152,13 @@ function SND.OpenPersonalizationMenu()
 		
 		if showTitleCheck and showTitleCheck:GetChecked() and not (useTitleMatCheck and useTitleMatCheck:GetChecked()) then
 			local tTxt = titleEntry and titleEntry:GetText() or lp:GetNWString("SND_CardTitle", "New Recruit")
-			draw.SimpleText(tTxt:upper(), "SND_BO3_Team", textX + 1, textY - 11 * sc_local, Color(0, 0, 0), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
-			draw.SimpleText(tTxt:upper(), "SND_BO3_Team", textX, textY - 12 * sc_local, Color(255, 210, 50), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+			draw.SimpleText(tTxt:upper(), "SND_BO3_Team", textX + 1, 33 * sc_local, Color(0, 0, 0), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+			draw.SimpleText(tTxt:upper(), "SND_BO3_Team", textX, 32 * sc_local, Color(255, 210, 50), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
 		end
 
 		local tCol = team.GetColor(lp:Team())
-		draw.SimpleText(lp:Nick():upper(), "SND_BO3_Player", textX + 1, textY + 13 * sc_local, Color(0, 0, 0), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
-		draw.SimpleText(lp:Nick():upper(), "SND_BO3_Player", textX, textY + 12 * sc_local, Color(tCol.r, tCol.g, tCol.b), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+		draw.SimpleText(lp:Nick():upper(), "SND_BO3_Player", textX + 1, 97 * sc_local, Color(0, 0, 0), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+		draw.SimpleText(lp:Nick():upper(), "SND_BO3_Player", textX, 96 * sc_local, Color(tCol.r, tCol.g, tCol.b), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
 
 		-- 4. Rank
 		local lvl = lp:GetNWInt("SND_Level", 1)
