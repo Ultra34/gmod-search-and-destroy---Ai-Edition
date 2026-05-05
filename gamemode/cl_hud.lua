@@ -68,8 +68,8 @@ local gifPanels = {}
 function SND.GetIMaterial(path)
     if not path or path == "" or path == "steam" then return nil end
 
-    local isAnimated = path:lower():EndsWith(".gif") or path:lower():StartWith("http")
-    if isAnimated then
+    local needsBridge = path:lower():EndsWith(".gif") or path:lower():StartWith("http") or path:lower():StartWith("data/")
+    if needsBridge then
         if gifPanels[path] and IsValid(gifPanels[path]) then 
             return gifPanels[path]:GetHTMLMaterial() 
         end
@@ -383,15 +383,15 @@ local function drawCallingCardPopup(sw, sh, sc)
 	-- Custom Title Text (Overlayed on Banner)
 	if card.showTitle then
 		if card.useTitleMat then
-			surface.SetMaterial(MAT_WHITE) -- Reset material state
+			surface.SetMaterial(MAT_WHITE)
 			local tMat = card.titleMat
-			if tMat and not (tMat:IsError() and not tostring(card.titleMatPath):find(".gif")) then -- Only check IsError for non-GIFs
+			if tMat and not (tMat:IsError() and not tostring(card.titleMatPath):match("[.gif|data/]")) then
 				-- Adjusted size for title graphic to fit within the text area
 				local tW, tH = 160 * sc, 40 * sc 
 				surface.SetMaterial(tMat)
 				surface.SetDrawColor(255, 255, 255, alpha)
 
-				if not tostring(card.titleMatPath):find(".gif") then
+				if not tostring(card.titleMatPath):match("[.gif|data/]") then
 					local frames = tMat:GetInt("$numframes") or 1
 					if frames > 1 then tMat:SetInt("$frame", math.floor(CurTime() * 12) % frames) end
 				end
@@ -421,7 +421,7 @@ local function drawCallingCardPopup(sw, sh, sc)
 	end
 
 	if card.emblemMatPath == "steam" and not card.isBot and card.sid64 ~= "0" then
-		surface.SetMaterial(MAT_WHITE) -- Reset material state
+		surface.SetMaterial(MAT_WHITE)
 		if IsValid(cardAvatar) then
 			cardAvatar:SetVisible(true)
 			cardAvatar:SetPos(embX, embY)
@@ -431,12 +431,12 @@ local function drawCallingCardPopup(sw, sh, sc)
 	else
         if IsValid(cardAvatar) then cardAvatar:SetVisible(false) end
         local embMat = card.emblemMat
-		surface.SetMaterial(MAT_WHITE) -- Reset material state
-        if embMat and not (embMat:IsError() and not tostring(card.emblemMatPath):find(".gif")) then -- Only check IsError for non-GIFs
+		surface.SetMaterial(MAT_WHITE)
+        if embMat and not (embMat:IsError() and not tostring(card.emblemMatPath):match("[.gif|data/]")) then
             surface.SetMaterial(embMat)
 
-            -- Support for animated emblem frames (VTF only)
-            if not tostring(card.emblemMatPath):find(".gif") then
+            -- Support for animated emblem frames (Standard VTF only)
+            if not tostring(card.emblemMatPath):match("[.gif|data/]") then
                 local frames = embMat:GetInt("$numframes") or 1
                 if frames > 1 then
                     embMat:SetInt("$frame", math.floor(CurTime() * 12) % frames)

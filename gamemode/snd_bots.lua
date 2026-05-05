@@ -168,29 +168,22 @@ function SND.Bots.EnsureCount()
 
 		bot:SetNWString("SND_CardTitle", table.Random(botTitles))
 		bot:SetNWString("SND_CardMat", table.Random(botMats))
-		
-		-- Bots default to showing title text, not using a title graphic
 		bot:SetNWBool("SND_ShowTitle", true)
-		bot:SetNWBool("SND_UseTitleMat", false)
-		bot:SetNWString("SND_TitleMat", "vgui/white")
 
-		-- Automatic Emblem Selection from Data Folders
-		local botEmblems = {SND.Config.DefaultBotEmblem or "vgui/icon_skull", "vgui/icon_star", "vgui/icon_target", "vgui/icon_crosshair"}
-		
-		local customTitles = file.Find("snd_mwclassic/titles/*", "DATA")
-		if #customTitles > 0 then
-			for _, f in ipairs(customTitles) do
-				table.insert(botTitles, "data/snd_mwclassic/titles/" .. f)
-			end
+		-- Check for custom title graphics (using banners)
+		local customBannerTitles = file.Find("snd_mwclassic/banners/*", "DATA")
+		if #customBannerTitles > 0 then
+			-- Randomly decide if bot uses a title graphic or text
+			local useMat = (math.random() < 0.5)
+			bot:SetNWBool("SND_UseTitleMat", useMat)
+			bot:SetNWString("SND_TitleMat", useMat and ("data/snd_mwclassic/banners/" .. table.Random(customBannerTitles)) or "vgui/white")
+		else
+			bot:SetNWBool("SND_UseTitleMat", false)
+			bot:SetNWString("SND_TitleMat", "vgui/white")
 		end
 
-		local customEmblems = file.Find("snd_mwclassic/emblems/*", "DATA")
-		if #customEmblems > 0 then
-			for _, f in ipairs(customEmblems) do 
-				table.insert(botEmblems, "data/snd_mwclassic/emblems/" .. f)
-			end
-		end
-		bot:SetNWString("SND_EmblemMat", table.Random(botEmblems))
+		-- Force all bots to use the same default emblem
+		bot:SetNWString("SND_EmblemMat", SND.Config.DefaultBotEmblem or "vgui/icon_skull")
 
 		SND.Teams.ApplyFactionModel(bot)
 		bot:Spawn()

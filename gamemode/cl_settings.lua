@@ -150,8 +150,8 @@ function SND.OpenPersonalizationMenu()
 		if showTitleCheck and showTitleCheck:GetChecked() then
 			if useTitleMatCheck and useTitleMatCheck:GetChecked() then
 				local tPath = titleMatEntry and titleMatEntry:GetText() or lp:GetNWString("SND_TitleMat", "vgui/white")
-				local tMat = SND.GetIMaterial(tPath) -- Use SND.GetIMaterial for GIF support
-				if tMat and not (tMat:IsError() and not tPath:find(".gif")) then
+				local tMat = SND.GetIMaterial(tPath)
+				if tMat and not (tMat:IsError() and not tPath:match("[.gif|data/]")) then
 					local tW, tH = 256 * sc_local, 64 * sc_local
 					local frames = tMat:GetInt("$numframes") or 1
 					if frames > 1 then tMat:SetInt("$frame", math.floor(CurTime() * 12) % frames) end
@@ -206,8 +206,8 @@ function SND.OpenPersonalizationMenu()
 	local titleMatList = vgui.Create("DComboBox")
 	titleMatList:SetValue("Select Title Graphic...")
 	cardPnl:AddItem(titleMatList)
-	for _, filename in ipairs(file.Find("snd_mwclassic/titles/*", "DATA")) do
-		titleMatList:AddChoice(filename, "data/snd_mwclassic/titles/" .. filename)
+	for _, filename in ipairs(file.Find("snd_mwclassic/banners/*", "DATA")) do
+		titleMatList:AddChoice(filename, "data/snd_mwclassic/banners/" .. filename)
 	end
 
 	titleMatEntry = vgui.Create("DTextEntry")
