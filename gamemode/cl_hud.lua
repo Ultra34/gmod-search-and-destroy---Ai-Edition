@@ -353,11 +353,12 @@ local function drawCallingCardPopup(sw, sh, sc)
     surface.DrawRect(x, y, w, h)
 
 	-- ── MW2 Title Graphic (Top Strip) ────────────────────────────────────
-	if card.showTitle and card.useTitleMat then
+	-- This is now drawn as a strip in the top half, not a full background banner
+	if card.showTitle and card.useTitleMat then 
 		surface.SetMaterial(MAT_WHITE)
 		local tMat = card.titleMat
 		if tMat and not (tMat:IsError() and not tostring(card.titleMatPath):match("[.gif|data/]")) then
-			local tW, tH = 512 * sc, 64 * sc
+			local tW, tH = 256 * sc, 32 * sc -- New title graphic size
 			surface.SetMaterial(tMat)
 			surface.SetDrawColor(255, 255, 255, alpha)
 
@@ -366,7 +367,7 @@ local function drawCallingCardPopup(sw, sh, sc)
 				if frames > 1 then tMat:SetInt("$frame", math.floor(CurTime() * 12) % frames) end
 			end
 
-			surface.DrawTexturedRect(x, y, tW, tH)
+			surface.DrawTexturedRect(textX, y + 35 * sc - (tH * 0.5), tW, tH) -- Positioned above name
 		end
 	end
 
@@ -381,14 +382,14 @@ local function drawCallingCardPopup(sw, sh, sc)
 
 	-- Custom Title Text (Overlayed on Banner)
 	if card.showTitle and not card.useTitleMat then
-		draw.SimpleText(card.title:upper(), "SND_BO3_Team", textX + 1, y + 36 * sc, Color(0, 0, 0, alpha), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
-		draw.SimpleText(card.title:upper(), "SND_BO3_Team", textX, y + 35 * sc, Color(255, 210, 50, alpha), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+		draw.SimpleText(card.title:upper(), "SND_BO3_Team", textX + 1, y + 36 * sc, Color(0, 0, 0, alpha), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER) -- Top half
+		draw.SimpleText(card.title:upper(), "SND_BO3_Team", textX, y + 35 * sc, Color(255, 210, 50, alpha), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER) -- Top half
     end
 	
 	-- Player Name (Team Colored)
     local tCol = team.GetColor(card.team or 0)
-	draw.SimpleText(card.name:upper(), "SND_BO3_Player", textX + 1, y + 93 * sc, Color(0, 0, 0, alpha), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
-	draw.SimpleText(card.name:upper(), "SND_BO3_Player", textX, y + 92 * sc, Color(tCol.r, tCol.g, tCol.b, alpha), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+	draw.SimpleText(card.name:upper(), "SND_BO3_Player", textX + 1, y + 93 * sc, Color(0, 0, 0, alpha), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER) -- Bottom half
+	draw.SimpleText(card.name:upper(), "SND_BO3_Player", textX, y + 92 * sc, Color(tCol.r, tCol.g, tCol.b, alpha), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER) -- Bottom half
 
 	-- Rank Icon (Far Right of banner)
 	local lvl = card.level or 1
