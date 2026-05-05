@@ -98,6 +98,7 @@ function SND.GetIMaterial(path)
 end
 
 local MAT_WHITE = Material("vgui/white")
+local MAT_BOMB  = Material("vgui/hud/weapon_c4")
 
 -- ── Calling Card State ────────────────────────────────────────────────────
 SND.Client.ActiveCallingCard = SND.Client.ActiveCallingCard or nil
@@ -649,22 +650,16 @@ hook.Add("HUDPaint", "SND_HUD", function()
 	-- ── Bomb info (bottom-center, hide from defenders) ────────────────────
 	local lpTeam = lp:Team()
 	if phase == SND.PHASE_LIVE and lpTeam == SND.TEAM_ATTACK then
-		local bombLine = nil
 		local carrierIdx = SND.Client.BombCarrierIdx or -1
 		local carrier = Entity(carrierIdx)
 
-		if IsValid(carrier) and carrierIdx ~= -1 then
-			if carrier == lp then
-				bombLine = "YOU HAVE THE BOMB — PLANT AT A OR B"
-			else
-				bombLine = carrier:Nick():upper() .. " HAS THE BOMB"
-			end
-		end
-
-		if bombLine then
-			draw.SimpleText(bombLine, "Trebuchet24", sw * 0.5, sh - 104 * sc,
-				C_BOMB, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER
-			)
+		-- Only show the HUD icon if the local player is the carrier
+		if IsValid(carrier) and carrierIdx ~= -1 and carrier == lp then
+			local bSize = 48 * sc
+			local pulse = 1 + math.sin(CurTime() * 6) * 0.1
+			surface.SetMaterial(MAT_BOMB)
+			surface.SetDrawColor(C_BOMB.r, C_BOMB.g, C_BOMB.b, 200)
+			surface.DrawTexturedRect(sw * 0.5 - (bSize * pulse) * 0.5, sh - 130 * sc, bSize * pulse, bSize * pulse)
 		end
 	end
 
@@ -723,18 +718,31 @@ hook.Add("HUDPaint", "SND_HUD", function()
 		local vNick = entry.victimNick
 		surface.SetFont("Trebuchet24")
 		local twV, _ = surface.GetTextSize(vNick)
-		draw.SimpleText(vNick, "Trebuchet24", currentDrawX, currentY, col(victimCol.r, victimCol.g, victimCol.b, alpha), TEXT_ALIGN_RIGHT, TEXT_ALIGN_TOP)
-		currentDrawX = currentDrawX - twV - 10 * sc
 
 		-- Draw Weapon Name (or icon placeholder)
 		local weaponText = " (" .. entry.weaponName .. ") "
 		local twW, _ = surface.GetTextSize(weaponText)
-		draw.SimpleText(weaponText, "Trebuchet24", currentDrawX, currentY, col(C_DIM.r, C_DIM.g, C_DIM.b, alpha), TEXT_ALIGN_RIGHT, TEXT_ALIGN_TOP)
-		currentDrawX = currentDrawX - twW - 10 * sc
 
 		-- Draw Attacker Nick
 		local aNick = entry.attackerNick
+		local twA = 0
+		if aNick ~= "" then twA, _ = surface.GetTextSize(aNick) end
+
+		-- Background box for visibility on bright maps
+		local rowW = twV + twW + (aNick ~= "" and (twA + 10 * sc) or 0) + 10 * sc
+		surface.SetDrawColor(0, 0, 0, alpha * 0.45)
+		surface.DrawRect(kfX - rowW, currentY, rowW + 5 * sc, kfLineHeight - 4 * sc)
+
+		draw.SimpleText(vNick, "Trebuchet24", currentDrawX + 1, currentY + 1, col(0, 0, 0, alpha), TEXT_ALIGN_RIGHT, TEXT_ALIGN_TOP)
+		draw.SimpleText(vNick, "Trebuchet24", currentDrawX, currentY, col(victimCol.r, victimCol.g, victimCol.b, alpha), TEXT_ALIGN_RIGHT, TEXT_ALIGN_TOP)
+		currentDrawX = currentDrawX - twV - 10 * sc
+
+		draw.SimpleText(weaponText, "Trebuchet24", currentDrawX + 1, currentY + 1, col(0, 0, 0, alpha), TEXT_ALIGN_RIGHT, TEXT_ALIGN_TOP)
+		draw.SimpleText(weaponText, "Trebuchet24", currentDrawX, currentY, col(C_DIM.r, C_DIM.g, C_DIM.b, alpha), TEXT_ALIGN_RIGHT, TEXT_ALIGN_TOP)
+		currentDrawX = currentDrawX - twW - 10 * sc
+
 		if aNick ~= "" then
+			draw.SimpleText(aNick, "Trebuchet24", currentDrawX + 1, currentY + 1, col(0, 0, 0, alpha), TEXT_ALIGN_RIGHT, TEXT_ALIGN_TOP)
 			draw.SimpleText(aNick, "Trebuchet24", currentDrawX, currentY, col(attackerCol.r, attackerCol.g, attackerCol.b, alpha), TEXT_ALIGN_RIGHT, TEXT_ALIGN_TOP)
 		end
 	end

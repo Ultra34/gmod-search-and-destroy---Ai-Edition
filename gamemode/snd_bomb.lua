@@ -224,6 +224,7 @@ function SND.Bomb.TryPlant(ply)
 	local plantTime  = SND.Settings.Get("plant_time", 5)
 	ply.SND_Planting = true
 	local endTime    = CurTime() + plantTime
+	ply.SND_NextPlantBeep = 0
 
 	-- Cache the intended plant position at the start of the plant action
 	-- so it doesn't jump around if the player looks away
@@ -254,6 +255,12 @@ function SND.Bomb.TryPlant(ply)
 			SND.Bomb.CancelAction(ply, "plant")
 			ply:ChatPrint("[SND] Plant cancelled — left the bomb site.")
 			return
+		end
+
+		-- Play keypad button noises while planting
+		if CurTime() > (ply.SND_NextPlantBeep or 0) then
+			ply:EmitSound("weapons/c4/c4_click.wav", 65, math.random(92, 108), 0.6)
+			ply.SND_NextPlantBeep = CurTime() + 0.3
 		end
 
 		if CurTime() >= endTime then

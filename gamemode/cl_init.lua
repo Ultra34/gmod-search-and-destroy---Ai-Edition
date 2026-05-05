@@ -17,6 +17,8 @@ SND.Bomb = SND.Bomb or {}
 SND.Round.RoundTimerEnd = 0
 SND.Client.HalftimeTime = -1
 
+local MAT_BOMB = Material("vgui/hud/weapon_c4")
+
 net.Receive("SND_RoundState", function()
 	local phase = net.ReadUInt(3)
 	SND.Client.Phase = phase
@@ -219,6 +221,15 @@ local function createScoreboard()
 			surface.DrawRect(70 * sc, 8 * sc, 3 * sc, h - 16 * sc)
 
 			draw.SimpleText(ply:Nick():upper(), "SND_BO3_Player", 80 * sc, h/2, txtCol, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+
+			-- Bomb Carrier Icon on Leaderboard
+			if SND.Client.BombCarrierIdx == ply:EntIndex() then
+				surface.SetFont("SND_BO3_Player")
+				local nw, _ = surface.GetTextSize(ply:Nick():upper())
+				surface.SetMaterial(MAT_BOMB)
+				surface.SetDrawColor(255, 200, 60, 255)
+				surface.DrawTexturedRect(80 * sc + nw + 10 * sc, h/2 - 11 * sc, 22 * sc, 22 * sc)
+			end
 
 			-- Stats (BO3 justified alignment)
 			draw.SimpleText(ply:Frags() * 100, "SND_BO3_Player", w-280 * sc, h/2, txtCol, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
