@@ -98,7 +98,11 @@ function SND.GetIMaterial(path)
 end
 
 local MAT_WHITE = Material("vgui/white")
-local MAT_BOMB  = Material("vgui/hud/weapon_c4")
+local MAT_BOMB  = Material("vgui/hud/weapon_c4", "smooth mips")
+-- Fallback if CS:S is not mounted
+if MAT_BOMB:IsError() then
+	MAT_BOMB = Material("vgui/white")
+end
 
 -- ── Calling Card State ────────────────────────────────────────────────────
 SND.Client.ActiveCallingCard = SND.Client.ActiveCallingCard or nil
@@ -933,6 +937,11 @@ hook.Add("HUDPaint", "SND_BombProgressBar", function()
 end)
 
 -- ── Disable default GMod Death Notice ─────────────────────────────────────
+hook.Add("HUDDrawTargetID", "SND_ForceRemoveHoverText", function()
+	-- Returning false here removes the "Target: Name" text used by Sandbox
+	return false
+end)
+
 hook.Add("HUDShouldDraw", "SND_DisableDefaultKillFeed", function(name)
 	if name == "CHudDeathNotice" or name == "CHudWeaponSelection" or name == "CHudHistoryResource" or name == "CHudHealth" or name == "CHudBattery" or name == "CHudAmmo" or name == "CHudTargetID" then
 		return false
