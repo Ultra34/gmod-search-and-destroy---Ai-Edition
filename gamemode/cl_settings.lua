@@ -111,15 +111,18 @@ function SND.OpenPersonalizationMenu()
 		surface.SetDrawColor(30, 30, 30, 180)
 		surface.DrawRect(0, 0, w, cardH)
 
-		-- 1. Banner
-		local bPath = pathEntry and pathEntry:GetText() or lp:GetNWString("SND_CardMat", "vgui/white")
-		local bMat = SND.GetIMaterial(bPath)
-		surface.SetDrawColor(255, 255, 255)
-		if bMat and not (bMat:IsError() and not bPath:find(".gif")) then
-			local frames = bMat:GetInt("$numframes") or 1
-			if frames > 1 then bMat:SetInt("$frame", math.floor(CurTime() * 12) % frames) end
-			surface.SetMaterial(bMat)
-			surface.DrawTexturedRect(0, 0, w, cardH)
+		-- 1. Combined Strip Preview
+		if showTitleCheck and showTitleCheck:GetChecked() and useTitleMatCheck and useTitleMatCheck:GetChecked() then
+			local tPath = titleMatEntry and titleMatEntry:GetText() or lp:GetNWString("SND_TitleMat", "vgui/white")
+			local tMat = SND.GetIMaterial(tPath)
+			if tMat and not (tMat:IsError() and not tPath:match("[.gif|data/]")) then
+				local tW, tH = 512 * sc_local, 64 * sc_local
+				local frames = tMat:GetInt("$numframes") or 1
+				if frames > 1 then tMat:SetInt("$frame", math.floor(CurTime() * 12) % frames) end
+				surface.SetMaterial(tMat)
+				surface.SetDrawColor(255, 255, 255)
+				surface.DrawTexturedRect(0, (cardH - tH) * 0.5, w, tH)
+			end
 		end
 
 		-- 2. Emblem
@@ -146,24 +149,11 @@ function SND.OpenPersonalizationMenu()
 		-- 3. Text Overlay
 		local textX = embX_off + embSize + 15 * sc_local
 		local textY = cardH * 0.5
-
-		if showTitleCheck and showTitleCheck:GetChecked() then
-			if useTitleMatCheck and useTitleMatCheck:GetChecked() then
-				local tPath = titleMatEntry and titleMatEntry:GetText() or lp:GetNWString("SND_TitleMat", "vgui/white")
-				local tMat = SND.GetIMaterial(tPath)
-				if tMat and not (tMat:IsError() and not tPath:match("[.gif|data/]")) then
-					local tW, tH = 256 * sc_local, 32 * sc_local
-					local frames = tMat:GetInt("$numframes") or 1
-					if frames > 1 then tMat:SetInt("$frame", math.floor(CurTime() * 12) % frames) end
-					surface.SetMaterial(tMat)
-					surface.SetDrawColor(255, 255, 255)
-					surface.DrawTexturedRect(textX, textY - tH * 0.5 - 12 * sc_local, tW, tH)
-				end
-			else
-				local tTxt = titleEntry and titleEntry:GetText() or lp:GetNWString("SND_CardTitle", "New Recruit")
-				draw.SimpleText(tTxt:upper(), "SND_BO3_Team", textX + 1, textY - 11 * sc_local, Color(0, 0, 0), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
-				draw.SimpleText(tTxt:upper(), "SND_BO3_Team", textX, textY - 12 * sc_local, Color(255, 210, 50), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
-			end
+		
+		if showTitleCheck and showTitleCheck:GetChecked() and not (useTitleMatCheck and useTitleMatCheck:GetChecked()) then
+			local tTxt = titleEntry and titleEntry:GetText() or lp:GetNWString("SND_CardTitle", "New Recruit")
+			draw.SimpleText(tTxt:upper(), "SND_BO3_Team", textX + 1, textY - 11 * sc_local, Color(0, 0, 0), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+			draw.SimpleText(tTxt:upper(), "SND_BO3_Team", textX, textY - 12 * sc_local, Color(255, 210, 50), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
 		end
 
 		local tCol = team.GetColor(lp:Team())
@@ -188,23 +178,12 @@ function SND.OpenPersonalizationMenu()
 	cardPnl:SetPadding(15)
 	cardPnl:SetSpacing(15)
 
-	local bannerList = vgui.Create("DComboBox")
-	bannerList:SetValue("Select Banner Image...")
-	cardPnl:AddItem(bannerList)
-	for _, filename in ipairs(file.Find("snd_mwclassic/banners/*", "DATA")) do
-		bannerList:AddChoice(filename, "data/snd_mwclassic/banners/" .. filename)
-	end
-
 	titleEntry = vgui.Create("DTextEntry")
 	titleEntry:SetText(lp:GetNWString("SND_CardTitle", "New Recruit"))
 	cardPnl:AddItem(titleEntry)
 
-	pathEntry = vgui.Create("DTextEntry")
-	pathEntry:SetText(lp:GetNWString("SND_CardMat", "vgui/white"))
-	cardPnl:AddItem(pathEntry)
-
 	local titleMatList = vgui.Create("DComboBox")
-	titleMatList:SetValue("Select Title Graphic...")
+	titleMatList:SetValue("Select Banner Graphic (512x64)...")
 	cardPnl:AddItem(titleMatList)
 	for _, filename in ipairs(file.Find("snd_mwclassic/banners/*", "DATA")) do
 		titleMatList:AddChoice(filename, "data/snd_mwclassic/banners/" .. filename)
@@ -225,7 +204,6 @@ function SND.OpenPersonalizationMenu()
 	cardPnl:AddItem(showTitleCheck)
 
 	titleMatList.OnSelect = function(_, _, _, data) titleMatEntry:SetText(data) end
-	bannerList.OnSelect = function(_, _, _, data) pathEntry:SetText(data) end
 
 	local saveBtn = vgui.Create("DButton")
 	saveBtn:SetText("SAVE IDENTITY")
@@ -236,7 +214,7 @@ function SND.OpenPersonalizationMenu()
 		net.Start("SND_SetTitleMat") net.WriteString(titleMatEntry:GetText()) net.SendToServer()
 		net.Start("SND_SetCallingCard")
 			net.WriteString(titleEntry:GetText())
-			net.WriteString(pathEntry:GetText())
+			net.WriteString("") -- Background banner now forced to transparent
 		net.SendToServer()
 		surface.PlaySound("buttons/button14.wav")
 	end

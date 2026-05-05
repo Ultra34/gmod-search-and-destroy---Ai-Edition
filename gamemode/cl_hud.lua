@@ -330,8 +330,8 @@ local function drawCallingCardPopup(sw, sh, sc)
 	if age < 0.5 then alpha = (age / 0.5) * 255 
 	elseif age > duration - 0.5 then alpha = ((duration - age) / 0.5) * 255 end
 
-	-- Authentic MW2 Sizes: 480x120
-	local w, h = 480 * sc, 120 * sc
+	-- Authentic MW2 Sizes: 512x128 (Updated for 8:1 Title Graphics)
+	local w, h = 512 * sc, 128 * sc
 	local x = sw * 0.5 - w * 0.5
 	
 	-- MW2 Style: Slide up from the absolute bottom center
@@ -374,36 +374,16 @@ local function drawCallingCardPopup(sw, sh, sc)
 	surface.DrawOutlinedRect(x, y, w, h, 2 * sc)
 
 	-- Text Info
-	local embSize = 64 * sc
+	local embSize = 80 * sc
 	local embX_off = 15 * sc
 	local embX, embY = x + embX_off, y + (h - embSize) * 0.5
-	local textX = x + embX_off + embSize + 15 * sc -- Generous gap to prevent overlap
+	local textX = x + embX_off + embSize + 20 * sc
 	local textY = y + h * 0.5
 
 	-- Custom Title Text (Overlayed on Banner)
-	if card.showTitle then
-		if card.useTitleMat then
-			surface.SetMaterial(MAT_WHITE)
-			local tMat = card.titleMat
-			if tMat and not (tMat:IsError() and not tostring(card.titleMatPath):match("[.gif|data/]")) then
-				-- Super wide and short (8:1 Aspect Ratio)
-				local tW, tH = 256 * sc, 32 * sc 
-				surface.SetMaterial(tMat)
-				surface.SetDrawColor(255, 255, 255, alpha)
-
-				if not tostring(card.titleMatPath):match("[.gif|data/]") then
-					local frames = tMat:GetInt("$numframes") or 1
-					if frames > 1 then tMat:SetInt("$frame", math.floor(CurTime() * 12) % frames) end
-				end
-
-				surface.DrawTexturedRect(textX, textY - tH * 0.5 - 12 * sc, tW, tH)
-			else
-				draw.SimpleText(card.title:upper(), "SND_BO3_Team", textX, textY - 12 * sc, Color(255, 210, 50, alpha), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
-			end
-		else
-			draw.SimpleText(card.title:upper(), "SND_BO3_Team", textX + 1, textY - 11 * sc, Color(0, 0, 0, alpha), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
-			draw.SimpleText(card.title:upper(), "SND_BO3_Team", textX, textY - 12 * sc, Color(255, 210, 50, alpha), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
-		end
+	if card.showTitle and not card.useTitleMat then
+		draw.SimpleText(card.title:upper(), "SND_BO3_Team", textX + 1, textY - 11 * sc, Color(0, 0, 0, alpha), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+		draw.SimpleText(card.title:upper(), "SND_BO3_Team", textX, textY - 12 * sc, Color(255, 210, 50, alpha), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
     end
 	
 	-- Player Name (Team Colored)
