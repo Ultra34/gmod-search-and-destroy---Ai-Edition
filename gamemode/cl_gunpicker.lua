@@ -167,14 +167,21 @@ function SND.GunPicker.Open()
 			grid:SetTall(200)
 
 			for _, class in ipairs(pool) do
-				local icon = grid:Add("SpawnIcon")
+				local wrapper = grid:Add("DPanel") -- Add a DPanel wrapper to the layout
+				wrapper:SetSize(64, 64) -- Match the size of the SpawnIcon
+				wrapper.Paint = function(self, w, h)
+					if data[slotKey] == class then
+						draw.RoundedBox(0, 0, 0, w, h, Color(255, 120, 0, 150)) -- Draw background on the wrapper
+					end
+				end
+
+				local icon = vgui.Create("SpawnIcon", wrapper) -- Create SpawnIcon inside the wrapper
 				icon:SetModel(getWeaponModel(class))
 				icon:SetTooltip(friendlyName(class))
 				icon:SetSize(64, 64)
-				
-				if data[slotKey] == class then icon:SetBackgroundColor(Color(255, 120, 0, 150)) end
+				icon:Dock(FILL) -- Make SpawnIcon fill the wrapper
 
-				icon.DoClick = function()
+				wrapper.DoClick = function() -- Click handler on the wrapper
 					net.Start("SND_GunPickerChoose")
 						net.WriteString(slotKey)
 						net.WriteString(class)
