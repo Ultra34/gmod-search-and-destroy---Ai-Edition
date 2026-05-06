@@ -24,7 +24,6 @@ SND.Settings.Defaults = {
 	mapvote_time     = 20,
 	announcer_volume = 1,
 	hud_scale        = 1,
-	loading_url      = "", -- Example: "https://yourdomain.com/loading/index.html"
 }
 
 if SERVER then

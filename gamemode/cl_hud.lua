@@ -589,13 +589,17 @@ hook.Add("HUDPaint", "SND_HUD", function()
 			end
 		end
 
-		local rx, ry = sw - 100 * sc, sh - 100 * sc
+		local waitW, waitH = 300 * sc, 80 * sc
+		local wx, wy = sw * 0.5 - waitW * 0.5, sh * 0.2
+		
+		pill(wx, wy, waitW, waitH, col(0, 0, 0, 180))
+		surface.SetDrawColor(255, 120, 0, 255)
+		surface.DrawRect(wx, wy, waitW, 2 * sc)
+
+		draw.SimpleText("WAITING FOR PLAYERS", "SND_BO3_Header", sw * 0.5, wy + 25 * sc, Color(200, 200, 200), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
 		local readyCol = (ready >= humans and humans > 0) and C_GREEN or Color(255, 210, 50)
-		
-		-- Standard simple HUD text for pre-game
-		draw.SimpleText(ready .. " / " .. humans .. " PLAYERS READY", "SND_BO3_Score", rx, ry, readyCol, TEXT_ALIGN_RIGHT, TEXT_ALIGN_BOTTOM)
-		draw.SimpleText("WAITING FOR HUMAN PLAYERS TO SELECT LOADOUT", "SND_BO3_Header", rx, ry + 15 * sc, Color(150, 150, 150), TEXT_ALIGN_RIGHT, TEXT_ALIGN_TOP)
-		
+		draw.SimpleText(ready .. " / " .. humans .. " READY", "SND_BO3_Score", sw * 0.5, wy + 55 * sc, readyCol, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+
 		return -- Block regular HUD scores during waiting
 	end
 

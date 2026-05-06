@@ -58,23 +58,6 @@ function GM:Initialize()
 	RunConsoleCommand("sv_allow_p2p", "1")
 	RunConsoleCommand("sv_lan", "0") -- Ensure server is public for Steam networking
 
-	-- Apply the Loading URL from SND settings if defined
-	local lurl = SND.Settings.GetString("loading_url", "")
-	if lurl and lurl ~= "" then
-		-- Appends standard GMod parameters so your webpage gets the details
-		RunConsoleCommand("sv_loadingurl", lurl .. "?steamid=%s&mapname=%m")
-	end
-
-	-- ── Auto-Update Loading URL when ConVar changes ───────────────────────
-	cvars.AddChangeCallback("snd_loading_url", function(convar, old, new)
-		if new and new ~= "" then
-			RunConsoleCommand("sv_loadingurl", new .. "?steamid=%s&mapname=%m")
-			print("[SND] Loading URL automatically updated to: " .. new)
-		else
-			RunConsoleCommand("sv_loadingurl", "")
-		end
-	end, "SND_UpdateLoadingURL")
-
 	self.BaseClass.Initialize(self)
 	SND.Config.LoadDataFile()
 	team.SetUp(SND.TEAM_ATTACK, SND.Config.Factions.attack.name or "Attackers", Color(180, 90, 60))
