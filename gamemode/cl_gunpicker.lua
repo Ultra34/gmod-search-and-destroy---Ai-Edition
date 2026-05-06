@@ -309,3 +309,14 @@ net.Receive("SND_GunPickerOpen", function()
 
 	SND.GunPicker.Open()
 end)
+
+function SND.GunPicker.Close()
+	if IsValid(pickerFrame) then
+		pickerFrame:Remove()
+		pickerFrame = nil
+	end
+end
+
+concommand.Add("snd_gunpicker", function()
+	SND.GunPicker.Open()
+end)

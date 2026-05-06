@@ -4,6 +4,7 @@ include("cl_hud.lua")
 include("snd_movement.lua")
 include("cl_crosshair_menu.lua")
 include("cl_settings.lua")
+include("cl_gunpicker.lua")
 include("cl_levels.lua")
 
 SND = SND or {}

@@ -4,6 +4,7 @@ AddCSLuaFile("cl_init.lua")           -- Client entry
 AddCSLuaFile("cl_hud.lua")            -- HUD & Visuals
 AddCSLuaFile("cl_settings.lua")       -- SuperAdmin UI
 AddCSLuaFile("cl_levels.lua")         -- XP/Rank Client
+AddCSLuaFile("cl_gunpicker.lua")      -- Loadout UI
 AddCSLuaFile("cl_crosshair_menu.lua") -- Crosshair UI
 AddCSLuaFile("snd_settings.lua")      -- Replicated ConVars
 AddCSLuaFile("snd_bot_anim.lua")      -- Animation Fixes
