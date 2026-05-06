@@ -242,8 +242,8 @@ local function createScoreboard()
 				surface.SetMaterial(MAT_BOMB)
 				surface.SetDrawColor(255, 200, 60, 255)
 				surface.DrawTexturedRect(80 * sc + nw + 12 * sc, h/2 - iconSize/2, iconSize, iconSize)
-				
-				draw.SimpleText("BOMB", "SND_BO3_Header", 80 * sc + nw + 12 * sc + iconSize + 4 * sc, h/2, Color(255, 200, 60, 255), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+
+				draw.SimpleText("BOMB CARRIER", "SND_BO3_Header", 80 * sc + nw + 12 * sc + iconSize + 4 * sc, h/2, Color(255, 210, 0, 255), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
 			end
 
 			-- Stats (BO3 justified alignment)

@@ -692,10 +692,13 @@ hook.Add("HUDPaint", "SND_HUD", function()
 		local carrierIdx = SND.Client.BombCarrierIdx or -1
 		local carrier = Entity(carrierIdx)
 
-		-- Only show the HUD text if the local player is the carrier
-		if IsValid(carrier) and carrierIdx ~= -1 and carrier == lp then
-			local pulse = 180 + math.sin(CurTime() * 6) * 75
-			draw.SimpleText("YOU HAVE THE BOMB", "SND_BO3_Team", sw * 0.5, sh - 130 * sc, col(C_BOMB.r, C_BOMB.g, C_BOMB.b, pulse), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+		if IsValid(carrier) and carrierIdx ~= -1 then
+			if carrier == lp then
+				local pulse = 180 + math.sin(CurTime() * 6) * 75
+				draw.SimpleText("YOU HAVE THE BOMB", "SND_BO3_Team", sw * 0.5, sh - 130 * sc, col(C_BOMB.r, C_BOMB.g, C_BOMB.b, pulse), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+			else
+				draw.SimpleText("CARRIER: " .. carrier:Nick():upper(), "SND_BO3_Header", sw * 0.5, sh - 120 * sc, col(C_BOMB.r, C_BOMB.g, C_BOMB.b, 200), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+			end
 		end
 	end
 
@@ -822,6 +825,15 @@ hook.Add("HUDPaint", "SND_HUD", function()
 
 		local teamColor = (target:Team() == SND.TEAM_ATTACK) and C_ATTACK or C_DEFEND
 		draw.SimpleText(target:Nick(), "Trebuchet24", scr.x, scr.y, Color(teamColor.r, teamColor.g, teamColor.b, alpha), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+
+		-- 3D Overhead Bomb Carrier Indicator
+		if SND.Client.BombCarrierIdx == target:EntIndex() then
+			local pulse = 200 + math.sin(CurTime() * 8) * 55
+			surface.SetMaterial(MAT_BOMB)
+			surface.SetDrawColor(255, 200, 60, alpha)
+			surface.DrawTexturedRect(scr.x - 12 * sc, scr.y - 45 * sc, 24 * sc, 24 * sc)
+			draw.SimpleText("BOMB", "SND_BO3_Header", scr.x, scr.y - 55 * sc, Color(255, 200, 60, alpha), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+		end
 	end
 
 	-- ── XP Popups ────────────────────────────────────────────────────────
