@@ -51,7 +51,7 @@ local function drawRing(pos, radius, col, segments, alphaMult)
 end
 
 -- ── Off-screen arrow helper ────────────────────────────────────────────────
-local function drawOffscreenArrow(worldPos, col)
+local function drawOffscreenArrow(worldPos, col, alphaMult)
 	local scrW, scrH = ScrW(), ScrH()
 	local cx, cy     = scrW * 0.5, scrH * 0.5
 	local sx, sy, vis = worldPos:ToScreen()
@@ -78,7 +78,7 @@ local function drawOffscreenArrow(worldPos, col)
 	local left  = { x = ax + math.cos(ang + 2.4) * size * 0.6, y = ay + math.sin(ang + 2.4) * size * 0.6 }
 	local right = { x = ax + math.cos(ang - 2.4) * size * 0.6, y = ay + math.sin(ang - 2.4) * size * 0.6 }
 
-	surface.SetDrawColor(col.r, col.g, col.b, 200)
+	surface.SetDrawColor(col.r, col.g, col.b, 200 * alphaMult)
 	surface.DrawPoly({ tip, left, right })
 	return true
 end
@@ -176,7 +176,7 @@ hook.Add("HUDPaint", "SND_SiteHUD", function()
 		local sx, sy, vis = labelPos:ToScreen()
 
 		-- Off-screen arrow
-		local offscreen = drawOffscreenArrow(labelPos, col)
+		local offscreen = drawOffscreenArrow(labelPos, col, visibility)
 
 		if not offscreen then
 			-- Distance fade: fully visible up to 2000 units, fades to 30% at 5000
@@ -192,7 +192,7 @@ hook.Add("HUDPaint", "SND_SiteHUD", function()
 			local pulse = isPlanted and (math.abs(math.sin(CurTime() * 5)) * 0.5 + 0.5) or 1
 			draw.SimpleText(
 				site.id,
-				"DermaLarge",
+				"SND_BO3_Score",
 				sx, sy,
 				Color(col.r, col.g, col.b, alpha * pulse),
 				TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER
@@ -201,7 +201,7 @@ hook.Add("HUDPaint", "SND_SiteHUD", function()
 			-- "SITE" sub-label
 			draw.SimpleText(
 				"SITE",
-				"Trebuchet18",
+				"SND_BO3_Header",
 				sx, sy + 20,
 				Color(220, 220, 220, alpha * 0.7),
 				TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER
