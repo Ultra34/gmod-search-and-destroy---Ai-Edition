@@ -149,10 +149,30 @@ hook.Add("HUDPaint", "SND_SiteHUD", function()
 	local plantedId   = SND.Bomb and SND.Bomb.PlantedSite
 	local plantTime   = SND.Bomb and SND.Bomb.PlantTime
 
+	local startTime = SND.Client and SND.Client.PhaseStartTime or 0
+	local showDuration = 7   -- Seconds to show sites at full opacity
+	local fadeDuration = 1.5 -- Seconds to fade out
+
+	local proximityRadius = 800 -- Distance to make site show up again
+	local proximityFade   = 200 -- Distance to fade in when approaching
+
 	for _, site in ipairs(SND.Client.Sites) do
 		local col         = siteColor(site)
 		local isPlanted   = bombPlanted and plantedId == site.id
 		local labelPos    = site.pos + Vector(0, 0, 90)
+		local dist        = lp:GetPos():Distance(site.pos)
+
+		-- Smooth time-based fade
+		local timeAlpha = 1 - math.Clamp((CurTime() - (startTime + showDuration)) / fadeDuration, 0, 1)
+		
+		-- Proximity-based visibility
+		local proximityAlpha = 1 - math.Clamp((dist - proximityRadius) / proximityFade, 0, 1)
+
+		local visibility = isPlanted and 1 or math.max(timeAlpha, proximityAlpha)
+
+		-- If invisible, skip
+		if visibility <= 0 then continue end
+
 		local sx, sy, vis = labelPos:ToScreen()
 
 		-- Off-screen arrow
