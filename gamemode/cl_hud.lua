@@ -116,6 +116,7 @@ local MAT_BOMB  = Material("vgui/hud/weapon_c4", "smooth mips")
 if MAT_BOMB:IsError() then -- If CS:S C4 model is not available
 	MAT_BOMB = Material("icon16/bomb.png") -- Use a generic bomb icon
 end
+local loadingPanel = nil
 
 -- ── Calling Card State ────────────────────────────────────────────────────
 SND.Client.ActiveCallingCard = SND.Client.ActiveCallingCard or nil
@@ -580,47 +581,6 @@ hook.Add("HUDPaint", "SND_HUD", function()
 
 	-- ── WAITING FOR PLAYERS COUNTER ───────────────────────────────────────
 	if phase == SND.PHASE_WAIT then
-		-- 1. Fullscreen Background
-		surface.SetDrawColor(0, 0, 0, 255)
-		surface.DrawRect(0, 0, sw, sh)
-		
-		-- Try to draw map thumbnail (blurred map look)
-		local thumb = Material("maps/thumb/" .. game.GetMap() .. ".png")
-		if thumb and not thumb:IsError() then
-			surface.SetMaterial(thumb)
-			surface.SetDrawColor(180, 180, 180, 255)
-			surface.DrawTexturedRect(0, 0, sw, sh)
-		end
-		
-		-- Dim Dark Overlay
-		surface.SetDrawColor(0, 0, 0, 200)
-		surface.DrawRect(0, 0, sw, sh)
-
-		-- 2. MW2 Stylized Left Side Text
-		local lx = 100 * sc
-		local ly = sh * 0.35
-		
-		-- Gamemode (Search & Destroy)
-		draw.SimpleText("SEARCH AND DESTROY", "SND_BO3_Header", lx, ly, Color(255, 180, 0), TEXT_ALIGN_LEFT, TEXT_ALIGN_BOTTOM)
-		
-		-- Map Name (Massive & Italic)
-		local mapName = game.GetMap():gsub("^ttt_", ""):gsub("^snd_", ""):gsub("^de_", ""):upper()
-		draw.SimpleText(mapName, "SND_MW2_MapName", lx - 5 * sc, ly - 5 * sc, Color(255, 255, 255), TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
-		
-		-- Faction vs Faction
-		local fly = ly + 120 * sc
-		local facA = team.GetName(SND.TEAM_ATTACK):upper()
-		local facB = team.GetName(SND.TEAM_DEFEND):upper()
-		
-		surface.SetFont("SND_BO3_Team")
-		local twA, _ = surface.GetTextSize(facA)
-		local twVS, _ = surface.GetTextSize(" VS ")
-		
-		draw.SimpleText(facA, "SND_BO3_Team", lx, fly, C_ATTACK, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
-		draw.SimpleText(" VS ", "SND_BO3_Team", lx + twA, fly, Color(255, 255, 255), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
-		draw.SimpleText(facB, "SND_BO3_Team", lx + twA + twVS, fly, C_DEFEND, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
-
-		-- 3. Ready Count (Bottom Right Style)
 		local humans = 0
 		local ready = 0
 		for _, p in ipairs(player.GetAll()) do
@@ -630,13 +590,76 @@ hook.Add("HUDPaint", "SND_HUD", function()
 			end
 		end
 
-		local rx, ry = sw - 100 * sc, sh - 100 * sc
-		local readyCol = (ready >= humans and humans > 0) and C_GREEN or Color(255, 210, 50)
+		if not IsValid(loadingPanel) then
+			loadingPanel = vgui.Create("DHTML")
+			loadingPanel:SetSize(sw, sh)
+			loadingPanel:SetMouseInputEnabled(false)
+			loadingPanel:SetKeyboardInputEnabled(false)
+
+			local mapClean = game.GetMap():gsub("^ttt_", ""):gsub("^snd_", ""):gsub("^de_", ""):upper()
+			local facA = team.GetName(SND.TEAM_ATTACK):upper()
+			local facB = team.GetName(SND.TEAM_DEFEND):upper()
+			local colA = string.format("rgb(%d,%d,%d)", C_ATTACK.r, C_ATTACK.g, C_ATTACK.b)
+			local colB = string.format("rgb(%d,%d,%d)", C_DEFEND.r, C_DEFEND.g, C_DEFEND.b)
+
+			local html = [[
+				<html>
+				<head>
+				<style>
+					body { margin:0; padding:0; overflow:hidden; background: black; font-family: 'Verdana', sans-serif; color: white; text-transform: uppercase; zoom: ]] .. sc .. [[; }
+					.bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; filter: brightness(0.4) contrast(1.1); }
+					.overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle, transparent 20%, rgba(0,0,0,0.8) 100%); }
+					.content { position: absolute; left: 100px; top: 35%; }
+					.gamemode { font-size: 24px; color: #ffb400; font-weight: bold; letter-spacing: 2px; margin-bottom: -15px; }
+					.map { font-size: 110px; font-weight: 900; font-style: italic; letter-spacing: -4px; margin-left: -5px; }
+					.factions { font-size: 32px; font-weight: bold; margin-top: 20px; }
+					.team-a { color: ]] .. colA .. [[; }
+					.team-b { color: ]] .. colB .. [[; }
+					.vs { color: white; margin: 0 20px; font-size: 24px; opacity: 0.8; }
+					.status { position: absolute; right: 80px; bottom: 80px; text-align: right; }
+					.ready-count { font-size: 56px; font-weight: 900; letter-spacing: -2px; }
+					.sub-status { font-size: 18px; color: #aaaaaa; margin-top: 5px; font-weight: bold; }
+				</style>
+				</head>
+				<body>
+					<img class="bg" src="asset://garrysmod/maps/thumb/]] .. game.GetMap() .. [[.png" onerror="this.style.display='none'">
+					<div class="overlay"></div>
+					<div class="content">
+						<div class="gamemode">SEARCH AND DESTROY</div>
+						<div class="map">]] .. mapClean .. [[</div>
+						<div class="factions">
+							<span class="team-a">]] .. facA .. [[</span>
+							<span class="vs">VS</span>
+							<span class="team-b">]] .. facB .. [[</span>
+						</div>
+					</div>
+					<div class="status">
+						<div id="ready" class="ready-count">0 / 0 PLAYERS READY</div>
+						<div class="sub-status">WAITING FOR HUMAN PLAYERS TO SELECT LOADOUT</div>
+					</div>
+				</body>
+				</html>
+			]]
+			loadingPanel:SetHTML(html)
+		end
+
+		loadingPanel:SetVisible(true)
+		loadingPanel:SetSize(sw, sh)
 		
-		draw.SimpleText(ready .. " / " .. humans .. " PLAYERS READY", "SND_BO3_Score", rx, ry, readyCol, TEXT_ALIGN_RIGHT, TEXT_ALIGN_BOTTOM)
-		draw.SimpleText("WAITING FOR HUMAN PLAYERS TO SELECT LOADOUT", "SND_BO3_Header", rx, ry + 15 * sc, Color(150, 150, 150), TEXT_ALIGN_RIGHT, TEXT_ALIGN_TOP)
-		
-		return -- Block regular HUD drawing during this fullscreen phase
+		local rCol = (ready >= humans and humans > 0) and "#50dc64" or "#ffd232"
+		loadingPanel:RunJavascript([[
+			var el = document.getElementById('ready');
+			if (el) {
+				el.innerText = ']] .. ready .. [[ / ]] .. humans .. [[ PLAYERS READY';
+				el.style.color = ']] .. rCol .. [[';
+			}
+		]])
+
+		return
+	else
+		if IsValid(loadingPanel) and loadingPanel:IsVisible() then
+			loadingPanel:SetVisible(false)
+		end
 	end
 
 	if phase == SND.PHASE_FREEZE then
