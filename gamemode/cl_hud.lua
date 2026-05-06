@@ -601,41 +601,50 @@ hook.Add("HUDPaint", "SND_HUD", function()
 			local facB = team.GetName(SND.TEAM_DEFEND):upper()
 			local colA = string.format("rgb(%d,%d,%d)", C_ATTACK.r, C_ATTACK.g, C_ATTACK.b)
 			local colB = string.format("rgb(%d,%d,%d)", C_DEFEND.r, C_DEFEND.g, C_DEFEND.b)
+			local steamid = lp:SteamID64()
+			local name = lp:Nick()
 
 			local html = [[
 				<html>
 				<head>
 				<style>
-					body { margin:0; padding:0; overflow:hidden; background: black; font-family: 'Verdana', sans-serif; color: white; text-transform: uppercase; zoom: ]] .. sc .. [[; }
-					.bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; filter: brightness(0.4) contrast(1.1); }
-					.overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle, transparent 20%, rgba(0,0,0,0.8) 100%); }
-					.content { position: absolute; left: 100px; top: 35%; }
-					.gamemode { font-size: 24px; color: #ffb400; font-weight: bold; letter-spacing: 2px; margin-bottom: -15px; }
-					.map { font-size: 110px; font-weight: 900; font-style: italic; letter-spacing: -4px; margin-left: -5px; }
-					.factions { font-size: 32px; font-weight: bold; margin-top: 20px; }
+					body { margin:0; padding:0; overflow:hidden; background: black; font-family: 'Segoe UI', Verdana, sans-serif; color: white; text-transform: uppercase; zoom: ]] .. sc .. [[; }
+					.bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; filter: brightness(0.35) blur(2px); transform: scale(1.1); }
+					.overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.85) 100%); }
+					.content { position: absolute; left: 80px; bottom: 120px; text-shadow: 0 4px 10px rgba(0,0,0,0.8); }
+					.gamemode { font-size: 28px; color: #ffb400; font-weight: 800; letter-spacing: 3px; margin-bottom: -10px; }
+					.map { font-size: 130px; font-weight: 900; font-style: italic; letter-spacing: -6px; line-height: 0.9; }
+					.factions { font-size: 26px; font-weight: 700; margin-top: 15px; opacity: 0.9; }
 					.team-a { color: ]] .. colA .. [[; }
 					.team-b { color: ]] .. colB .. [[; }
-					.vs { color: white; margin: 0 20px; font-size: 24px; opacity: 0.8; }
-					.status { position: absolute; right: 80px; bottom: 80px; text-align: right; }
-					.ready-count { font-size: 56px; font-weight: 900; letter-spacing: -2px; }
-					.sub-status { font-size: 18px; color: #aaaaaa; margin-top: 5px; font-weight: bold; }
+					.vs { color: white; margin: 0 15px; opacity: 0.6; }
+					.details { position: absolute; right: 80px; top: 60px; text-align: right; opacity: 0.5; font-size: 14px; letter-spacing: 1px; }
+					.footer { position: fixed; bottom: 60px; left: 0; width: 100%; display: flex; flex-direction: column; align-items: center; }
+					.bar-bg { width: 400px; height: 4px; background: rgba(255,255,255,0.1); overflow: hidden; border-radius: 2px; }
+					.bar-fill { width: 0%; height: 100%; background: #ffb400; transition: width 0.5s ease-out; box-shadow: 0 0 15px rgba(255,180,0,0.5); }
+					.ready-text { margin-top: 15px; font-size: 16px; font-weight: 700; letter-spacing: 2px; color: #ffd232; }
 				</style>
 				</head>
 				<body>
 					<img class="bg" src="asset://garrysmod/maps/thumb/]] .. game.GetMap() .. [[.png" onerror="this.style.display='none'">
 					<div class="overlay"></div>
+					<div class="details">
+						PLAYER: ]] .. name .. [[<br>
+						ID: ]] .. steamid .. [[<br>
+						LOC: ]] .. mapClean .. [[
+					</div>
 					<div class="content">
 						<div class="gamemode">SEARCH AND DESTROY</div>
 						<div class="map">]] .. mapClean .. [[</div>
 						<div class="factions">
 							<span class="team-a">]] .. facA .. [[</span>
-							<span class="vs">VS</span>
+							<span class="vs">/</span>
 							<span class="team-b">]] .. facB .. [[</span>
 						</div>
 					</div>
-					<div class="status">
-						<div id="ready" class="ready-count">0 / 0 PLAYERS READY</div>
-						<div class="sub-status">WAITING FOR HUMAN PLAYERS TO SELECT LOADOUT</div>
+					<div class="footer">
+						<div class="bar-bg"><div id="bar" class="bar-fill"></div></div>
+						<div id="ready" class="ready-text">WAITING FOR PLAYERS...</div>
 					</div>
 				</body>
 				</html>
@@ -644,14 +653,19 @@ hook.Add("HUDPaint", "SND_HUD", function()
 		end
 
 		loadingPanel:SetVisible(true)
+		loadingPanel:MoveToBack()
 		loadingPanel:SetSize(sw, sh)
 		
-		local rCol = (ready >= humans and humans > 0) and "#50dc64" or "#ffd232"
+		local frac = (humans > 0) and (ready / humans) or 0
+		local rCol = (ready >= humans and humans > 0) and "#50dc64" or "#ffb400"
 		loadingPanel:RunJavascript([[
-			var el = document.getElementById('ready');
-			if (el) {
-				el.innerText = ']] .. ready .. [[ / ]] .. humans .. [[ PLAYERS READY';
-				el.style.color = ']] .. rCol .. [[';
+			var txt = document.getElementById('ready');
+			var bar = document.getElementById('bar');
+			if (txt && bar) {
+				txt.innerText = ']] .. ready .. [[ / ]] .. humans .. [[ PLAYERS READY';
+				txt.style.color = ']] .. rCol .. [[';
+				bar.style.width = ']] .. (frac * 100) .. [[%';
+				bar.style.background = ']] .. rCol .. [[';
 			}
 		]])
 
