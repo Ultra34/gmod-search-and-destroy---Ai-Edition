@@ -34,6 +34,19 @@ local function siteColor(site)
 	return site.id == "A" and COL_A or COL_B
 end
 
+-- ── Diamond Drawing Helper ────────────────────────────────────────────────
+local function drawDiamond(x, y, size, col)
+	local pts = {
+		{ x = x, y = y - size },         -- Top
+		{ x = x + size, y = y },         -- Right
+		{ x = x, y = y + size },         -- Bottom
+		{ x = x - size, y = y }          -- Left
+	}
+	surface.SetDrawColor(col.r, col.g, col.b, col.a)
+	draw.NoTexture()
+	surface.DrawPoly(pts)
+end
+
 -- ── Ground ring (drawn in 3D) ─────────────────────────────────────────────
 local function drawRing(pos, radius, col, segments, alphaMult)
 	segments = segments or 32
@@ -85,55 +98,7 @@ end
 
 -- ── Main render hook ──────────────────────────────────────────────────────
 hook.Add("PostDrawTranslucentRenderables", "SND_SiteMarkers", function()
-	if not SND.Client.Sites or #SND.Client.Sites == 0 then return end
-	local lp = LocalPlayer()
-	if not IsValid(lp) then return end
-
-	-- Only show markers during live / freeze phases
-	local phase = SND.Client and SND.Client.Phase
-	if phase ~= SND.PHASE_LIVE and phase ~= SND.PHASE_FREEZE then return end
-
-	local bombPlanted = SND.Bomb and SND.Bomb.State == SND.BOMB_STATE_PLANTED
-	local plantedId   = SND.Bomb and SND.Bomb.PlantedSite
-
-	local startTime = SND.Client and SND.Client.PhaseStartTime or 0
-	local showDuration = 7   -- Seconds to show sites at full opacity
-	local fadeDuration = 1.5 -- Seconds to fade out
-
-	local proximityRadius = 800 -- Distance to make site show up again
-	local proximityFade   = 200 -- Distance to fade in when approaching
-
-	for _, site in ipairs(SND.Client.Sites) do
-		local col     = siteColor(site)
-		local isThisBombSite = bombPlanted and plantedId == site.id
-		local dist = lp:GetPos():Distance(site.pos)
-
-		-- Smooth time-based fade
-		local timeAlpha = 1 - math.Clamp((CurTime() - (startTime + showDuration)) / fadeDuration, 0, 1)
-		
-		-- Proximity-based visibility
-		local proximityAlpha = 1 - math.Clamp((dist - proximityRadius) / proximityFade, 0, 1)
-
-		local visibility = isThisBombSite and 1 or math.max(timeAlpha, proximityAlpha)
-
-		-- If invisible, skip
-		if visibility <= 0 then continue end
-
-		-- Ground ring (always visible, faint)
-		drawRing(site.pos, site.radius, col, 40, visibility)
-
-		-- Pulsing planted ring
-		if isThisBombSite then
-			local pulse = math.abs(math.sin(CurTime() * 4)) * 0.7 + 0.3
-			local pc    = Color(col.r, col.g, col.b, math.floor(pulse * 180))
-			drawRing(site.pos, site.radius * 0.5, pc, 32)
-		end
-
-		-- 3D floating label
-		local labelPos = site.pos + Vector(0, 0, 80)
-
-		-- Background billboard (drawn via 2D overlay below)
-	end
+    -- 3D render logic disabled in favor of full HUD markers for better through-wall visibility
 end)
 
 -- ── 2D overlay: floating letters + countdown ──────────────────────────────
@@ -142,6 +107,9 @@ hook.Add("HUDPaint", "SND_SiteHUD", function()
 	local lp = LocalPlayer()
 	if not IsValid(lp) then return end
 
+    -- ONLY ATTACKERS SEE BOMB SITES THROUGH WALLS/HUD
+    if lp:Team() ~= SND.TEAM_ATTACK then return end
+
 	local phase = SND.Client and SND.Client.Phase
 	if phase ~= SND.PHASE_LIVE and phase ~= SND.PHASE_FREEZE then return end
 
@@ -149,63 +117,47 @@ hook.Add("HUDPaint", "SND_SiteHUD", function()
 	local plantedId   = SND.Bomb and SND.Bomb.PlantedSite
 	local plantTime   = SND.Bomb and SND.Bomb.PlantTime
 
-	local startTime = SND.Client and SND.Client.PhaseStartTime or 0
-	local showDuration = 7   -- Seconds to show sites at full opacity
-	local fadeDuration = 1.5 -- Seconds to fade out
-
-	local proximityRadius = 800 -- Distance to make site show up again
-	local proximityFade   = 200 -- Distance to fade in when approaching
-
 	for _, site in ipairs(SND.Client.Sites) do
 		local col         = siteColor(site)
 		local isPlanted   = bombPlanted and plantedId == site.id
 		local labelPos    = site.pos + Vector(0, 0, 90)
 		local dist        = lp:GetPos():Distance(site.pos)
+		local meters      = math.floor(dist / 52.49) -- Source units to meters
 
-		-- Smooth time-based fade
-		local timeAlpha = 1 - math.Clamp((CurTime() - (startTime + showDuration)) / fadeDuration, 0, 1)
-		
-		-- Proximity-based visibility
-		local proximityAlpha = 1 - math.Clamp((dist - proximityRadius) / proximityFade, 0, 1)
-
-		local visibility = isPlanted and 1 or math.max(timeAlpha, proximityAlpha)
-
-		-- If invisible, skip
-		if visibility <= 0 then continue end
+        -- For Attackers, we keep visibility at 1 (always on) so they can find the objective
+		local visibility = 1 
 
 		local sx, sy, vis = labelPos:ToScreen()
 
 		-- Off-screen arrow
-		local offscreen = drawOffscreenArrow(labelPos, col, visibility)
+		local isOffscreen = drawOffscreenArrow(labelPos, col, visibility)
 
-		if not offscreen then
+		if not isOffscreen then
 			-- Distance fade: fully visible up to 2000 units, fades to 30% at 5000
 			local alpha  = math.Clamp(1 - (dist - 2000) / 3000, 0.30, 1) * 255 * visibility
 
-			-- Outer dark pill background
-			local txtW, txtH = 52, 36
-			local bx, by = sx - txtW * 0.5, sy - txtH * 0.5
+			-- 1. Diamond Background (BO3/Modern Warfare style)
+			local diamondSize = 28
+			-- Pulsing effect for the diamond when the bomb is planted
+			local pulse = isPlanted and (math.abs(math.sin(CurTime() * 5)) * 0.3 + 0.7) or 1
+			
+			-- Black shadow diamond
+			drawDiamond(sx + 2, sy + 2, diamondSize, Color(0, 0, 0, alpha * 0.5))
+			-- Team-colored diamond
+			drawDiamond(sx, sy, diamondSize, Color(col.r, col.g, col.b, alpha * 0.8 * pulse))
 
-			draw.RoundedBox(8, bx - 2, by - 2, txtW + 4, txtH + 4, Color(0, 0, 0, alpha * 0.6))
-
-			-- Coloured site letter, big and bold
-			local pulse = isPlanted and (math.abs(math.sin(CurTime() * 5)) * 0.5 + 0.5) or 1
+			-- 2. Site Letter (A or B)
 			draw.SimpleText(
 				site.id,
 				"SND_BO3_Score",
 				sx, sy,
-				Color(col.r, col.g, col.b, alpha * pulse),
+				Color(255, 255, 255, alpha),
 				TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER
 			)
 
-			-- "SITE" sub-label
-			draw.SimpleText(
-				"SITE",
-				"SND_BO3_Header",
-				sx, sy + 20,
-				Color(220, 220, 220, alpha * 0.7),
-				TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER
-			)
+			-- 3. Distance Counter
+			local distText = meters .. "m"
+			draw.SimpleText(distText, "SND_BO3_Header", sx, sy + diamondSize + 5, Color(255, 255, 255, alpha), TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
 
 			-- If planted here: countdown timer below the label
 			if isPlanted and plantTime then
