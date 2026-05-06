@@ -541,26 +541,11 @@ hook.Add("HUDPaint", "SND_HUD", function()
 			local vis = scr.visible
 			local isOffscreen = SND.DrawSiteOffscreenArrow(labelPos, col, 1)
 
-			-- Force rendering if within screen bounds, even if 'visible' flag is false (behind geometry)
-			local forcedVis = (sx > 0 and sx < sw and sy > 0 and sy < sh)
-			if (vis or forcedVis) and not isOffscreen then
-				local alpha = math.Clamp(1 - (dist - 2000) / 3000, 0.3, 1) * 255
-				local diamondSize = 28 * sc
-				local pulse = isPlanted and (math.abs(math.sin(CurTime() * 5)) * 0.3 + 0.7) or 1
-				
-				SND.DrawSiteDiamond(sx + 2, sy + 2, diamondSize, Color(0, 0, 0, alpha * 0.5))
-				SND.DrawSiteDiamond(sx, sy, diamondSize, Color(col.r, col.g, col.b, alpha * 0.8 * pulse))
-
-				draw.SimpleText(
-					site.id,
-					"SND_BO3_Score",
-					sx, sy,
-					Color(255, 255, 255, alpha),
-					TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER
-				)
-
+			if not isOffscreen then
+				-- Keep distance and timer on HUD for better readability at range
+				local alpha = math.Clamp(1 - (dist - 2000) / 3000, 0.4, 1) * 255
 				local distText = meters .. "m"
-				draw.SimpleText(distText, "SND_BO3_Header", sx, sy + diamondSize + 5 * sc, Color(255, 255, 255, alpha), TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
+				draw.SimpleText(distText, "SND_BO3_Header", sx, sy + 20 * sc, Color(255, 255, 255, alpha), TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
 
 				if isPlanted and plantTime then
 					local remaining = math.max(0, 45 - (CurTime() - plantTime))

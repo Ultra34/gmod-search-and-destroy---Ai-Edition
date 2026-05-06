@@ -72,3 +72,41 @@ function SND.GetSiteColor(siteId)
 	end
 	return siteId == "A" and COL_A or COL_B
 end
+
+-- ── 3D2D World Markers ───────────────────────────────────────────────────
+hook.Add("PostDrawTranslucentRenderables", "SND_Site3D2D", function()
+	local lp = LocalPlayer()
+	if not IsValid(lp) or lp:Team() ~= SND.TEAM_ATTACK then return end
+
+	local phase = SND.Client and SND.Client.Phase or SND.PHASE_WAIT
+	if phase ~= SND.PHASE_LIVE and phase ~= SND.PHASE_FREEZE then return end
+
+	local sites = SND.Client.Sites or {}
+	if #sites == 0 then return end
+
+	-- Calculate a billboard angle that faces the player but stays upright
+	local eyeAng = lp:EyeAngles()
+	local drawAng = Angle(0, eyeAng.y - 90, 90)
+
+	for _, site in ipairs(sites) do
+		local col = SND.GetSiteColor(site.id)
+		local pos = site.pos + Vector(0, 0, 95) -- Floating height
+
+		-- cam.Start3D2D handles the transformation into world-space
+		cam.Start3D2D(pos, drawAng, 0.08)
+			-- Objective markers are typically visible through walls for attackers
+			render.OverrideDepthEnable(true, false)
+			
+			local diamondSize = 140
+			local isPlanted = SND.Bomb and SND.Bomb.PlantedSite == site.id
+			local pulse = isPlanted and (math.abs(math.sin(CurTime() * 5)) * 0.3 + 0.7) or 1
+			
+			SND.DrawSiteDiamond(2, 2, diamondSize, Color(0, 0, 0, 150)) -- Shadow
+			SND.DrawSiteDiamond(0, 0, diamondSize, Color(col.r, col.g, col.b, 200 * pulse))
+
+			draw.SimpleText(site.id, "SND_MW2_3D2D", 0, 0, Color(255, 255, 255, 255), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+			
+			render.OverrideDepthEnable(false, false)
+		cam.End3D2D()
+	end
+end)
