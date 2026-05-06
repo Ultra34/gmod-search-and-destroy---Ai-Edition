@@ -38,6 +38,7 @@ file.CreateDir("snd_mwclassic/titles")
 print("[SND] Calling Card & Emblem System initialized successfully.")
 
 util.AddNetworkString("SND_ShowCallingCard")
+util.AddNetworkString("SND_KillFeed")
 util.AddNetworkString("SND_SetEmblem")
 util.AddNetworkString("SND_SetCallingCard")
 util.AddNetworkString("SND_SetShowTitle")
