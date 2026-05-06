@@ -525,41 +525,12 @@ hook.Add("HUDPaint", "SND_HUD", function()
 
 	-- ── Bomb Site Markers (Attacker Only) ─────────────────────────────────
 	if lp:Team() == SND.TEAM_ATTACK and (phase == SND.PHASE_LIVE or phase == SND.PHASE_FREEZE) then
-		local bombPlanted = SND.Bomb and SND.Bomb.State == SND.BOMB_STATE_PLANTED
-		local plantedId   = SND.Bomb and SND.Bomb.PlantedSite
-		local plantTime   = SND.Bomb and SND.Bomb.PlantTime
-
 		for _, site in ipairs(SND.Client.Sites or {}) do
-			local col         = SND.GetSiteColor(site.id)
-			local isPlanted   = bombPlanted and plantedId == site.id
-			local labelPos    = site.pos + Vector(0, 0, 90)
-			local dist        = lp:GetPos():Distance(site.pos)
-			local meters      = math.floor(dist / 52.49)
-
-			local scr = labelPos:ToScreen()
-			local sx, sy = scr.x, scr.y
-			local vis = scr.visible
-			local isOffscreen = SND.DrawSiteOffscreenArrow(labelPos, col, 1)
-
-			if not isOffscreen then
-				-- Keep distance and timer on HUD for better readability at range
-				local alpha = math.Clamp(1 - (dist - 2000) / 3000, 0.4, 1) * 255
-				local distText = meters .. "m"
-				draw.SimpleText(distText, "SND_BO3_Header", sx, sy + 20 * sc, Color(255, 255, 255, alpha), TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
-
-				if isPlanted and plantTime then
-					local remaining = math.max(0, 45 - (CurTime() - plantTime))
-					local timeStr   = string.format("%.1f", remaining)
-					local urgency   = remaining < 10 and Color(255, 60, 40, alpha) or Color(255, 210, 40, alpha)
-					draw.SimpleText(
-						timeStr,
-						"Trebuchet18",
-						sx, sy + 36 * sc,
-						urgency,
-						TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER
-					)
-				end
-			end
+			local col = SND.GetSiteColor(site.id)
+			local labelPos = site.pos + Vector(0, 0, 95)
+			
+			-- Draw off-screen arrows (purely 2D logic to point to the 3D objective)
+			SND.DrawSiteOffscreenArrow(labelPos, col, 1)
 		end
 	end
 

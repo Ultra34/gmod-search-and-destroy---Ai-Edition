@@ -90,7 +90,9 @@ hook.Add("PostDrawTranslucentRenderables", "SND_Site3D2D", function()
 
 	for _, site in ipairs(sites) do
 		local col = SND.GetSiteColor(site.id)
-		local pos = site.pos + Vector(0, 0, 95) -- Floating height
+		local pos = site.pos + Vector(0, 0, 95) -- Anchor point in world
+		local dist = lp:GetPos():Distance(site.pos)
+		local meters = math.floor(dist / 52.49)
 
 		-- cam.Start3D2D handles the transformation into world-space
 		cam.Start3D2D(pos, drawAng, 0.08)
@@ -105,6 +107,18 @@ hook.Add("PostDrawTranslucentRenderables", "SND_Site3D2D", function()
 			SND.DrawSiteDiamond(0, 0, diamondSize, Color(col.r, col.g, col.b, 200 * pulse))
 
 			draw.SimpleText(site.id, "SND_MW2_3D2D", 0, 0, Color(255, 255, 255, 255), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+			
+			-- Render Distance using cam-space coordinates
+			draw.SimpleText(meters .. "M", "SND_BO3_Score", 0, diamondSize + 10, Color(255, 255, 255, 200), TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
+
+			-- Render bomb timer in world-space
+			if isPlanted and SND.Bomb.PlantTime then
+				local remaining = math.max(0, 45 - (CurTime() - SND.Bomb.PlantTime))
+				local timeStr   = string.format("%.1f", remaining)
+				local urgency   = remaining < 10 and Color(255, 60, 40) or Color(255, 210, 40)
+				
+				draw.SimpleText(timeStr, "SND_MW2_3D2D", 0, diamondSize + 120, urgency, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
+			end
 			
 			render.OverrideDepthEnable(false, false)
 		cam.End3D2D()
