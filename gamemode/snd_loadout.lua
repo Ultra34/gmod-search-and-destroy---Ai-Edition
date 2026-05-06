@@ -160,27 +160,29 @@ function SND.Loadout.Apply(ply)
 	end
 end
 
--- ── Open gun picker for everyone at the start of freeze ──────────────────
-function SND.Loadout.OpenPickerForAll()
+function SND.Loadout.SendLoadoutData(ply)
 	local primaries   = SND.Config.Mw2ePrimaries   or {}
 	local secondaries = SND.Config.Mw2eSecondaries  or {}
-	local map = game.GetMap()
 
+	net.Start("SND_GunPickerOpen")
+		net.WriteUInt(#primaries, 8)
+		for _, c in ipairs(primaries)   do net.WriteString(c) end
+		net.WriteUInt(#secondaries, 8)
+		for _, c in ipairs(secondaries)  do net.WriteString(c) end
+		-- Send all 10 slots for the client to cache
+		for i = 1, 10 do
+			local data = SND.Loadout.GetSlotData(ply, i)
+			net.WriteString(data.primary)
+			net.WriteString(data.secondary)
+			net.WriteString(data.loadoutName) -- Send loadout name
+		end
+	net.Send(ply)
+end
+
+function SND.Loadout.OpenPickerForAll()
 	for _, ply in ipairs(player.GetAll()) do
 		if IsValid(ply) and not ply.SND_IsBot then
-			net.Start("SND_GunPickerOpen")
-				net.WriteUInt(#primaries, 8)
-				for _, c in ipairs(primaries)   do net.WriteString(c) end
-				net.WriteUInt(#secondaries, 8)
-				for _, c in ipairs(secondaries)  do net.WriteString(c) end
-				-- Send all 10 slots for the client to cache
-				for i = 1, 10 do
-					local data = SND.Loadout.GetSlotData(ply, i)
-					net.WriteString(data.primary)
-					net.WriteString(data.secondary)
-					net.WriteString(data.loadoutName) -- Send loadout name
-				end
-			net.Send(ply)
+			SND.Loadout.SendLoadoutData(ply)
 		end
 	end
 end

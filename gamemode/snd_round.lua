@@ -230,7 +230,7 @@ hook.Add("PlayerInitialSpawn", "SND_RoundTrack", function(ply)
 		-- Open the loadout menu for the player immediately on join
 		if not ply:IsBot() then
 			timer.Simple(1, function()
-				if IsValid(ply) then SND.Loadout.OpenPickerForAll() end
+				if IsValid(ply) then SND.Loadout.SendLoadoutData(ply) end
 			end)
 		end
 	end)

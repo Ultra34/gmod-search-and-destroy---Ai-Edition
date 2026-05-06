@@ -1,5 +1,5 @@
 --[[ Gun Picker — shown during freeze time so players can choose their loadout ]]
---[[ Loadout Manager — Persistent 10-slot system with Ready Up ]]
+--[[ Loadout Manager — 10-slot persistent system with Ready Up logic ]]
 -- Add to init.lua:   AddCSLuaFile("cl_gunpicker.lua")
 -- Add to cl_init.lua: include("cl_gunpicker.lua")
 
@@ -68,12 +68,13 @@ function SND.GunPicker.Open()
 	end
 
 	-- ── Frame ─────────────────────────────────────────────────────────────
-	local W, H = 800, 650 -- Increased height to accommodate loadout name editor
+	local W, H = 800, 600
 	local f = vgui.Create("DFrame")
 	f:SetTitle("") -- Custom title drawing
 	f:SetSize(W, H)
 	f:Center()
 	f:MakePopup()
+	f:SetBackgroundBlur(true)
 	f.btnMaxim:SetVisible(false) -- Hide default minimize/maximize buttons
 	f.btnMinim:SetVisible(false)
 	pickerFrame = f
@@ -285,16 +286,6 @@ function SND.GunPicker.Open()
 	end
 end
 
-function SND.GunPicker.Close()
-	if IsValid(pickerFrame) then
-		pickerFrame:Remove()
-		pickerFrame = nil
-		loadoutNameEntry = nil -- Clear reference
-		saveNameButton = nil -- Clear reference
-	end
-end
-
--- ── Network: server sends weapon list when round freeze starts ────────────
 net.Receive("SND_GunPickerOpen", function()
 	local nPri = net.ReadUInt(8)
 	local primaries = {}
@@ -307,143 +298,14 @@ net.Receive("SND_GunPickerOpen", function()
 	SND.GunPicker.Primaries = primaries
 	SND.GunPicker.Secondaries = secondaries
 	
-	-- Read 10 slots of persistent data
 	SND.GunPicker.Slots = {}
 	for i = 1, 10 do
 		SND.GunPicker.Slots[i] = {
 			primary = net.ReadString(),
 			secondary = net.ReadString(),
-			loadoutName = net.ReadString() -- Read the loadout name here
+			loadoutName = net.ReadString()
 		}
 	end
 
-	SND.GunPicker.Open()
-end)
-
--- Close panel when round goes live (freeze ends)
-net.Receive("SND_RoundState", function()
-	local phase = net.ReadUInt(3)
-	local winner = net.ReadUInt(4)
-	SND.Client = SND.Client or {}
-	SND.Client.AttackScore = net.ReadUInt(8)
-	SND.Client.DefendScore = net.ReadUInt(8)
-	SND.Client.Phase = phase
-	SND.Client.Winner = winner
-end)
-
--- ── Rebind: open picker manually ─────────────────────────────────────────
-concommand.Add("snd_gunpicker", function()
-	SND.GunPicker.Open()
-end)
-
-		local list = vgui.Create("DPanelList", scroll)
-		list:Dock(FILL)
-		list:EnableVerticalScrollbar(false)
-
-		local selectedPanel = nil  -- track which button is highlighted
-
-		for _, class in ipairs(pool) do
-			local row = vgui.Create("DButton", list)
-			row:SetTall(38)
-			row:SetText("")
-			list:AddItem(row)
-
-			-- Store class on the panel for later reference
-			row.weaponClass = class
-
-			-- Highlight if already chosen
-			local alreadyChosen = (SND.GunPicker.Chosen and SND.GunPicker.Chosen[slotKey] == class)
-			row.selected = alreadyChosen
-			if alreadyChosen then selectedPanel = row end
-
-			row.Paint = function(self, w, h)
-				local bg = self.selected and Color(60, 120, 60, 200)
-				            or (self:IsHovered() and Color(55, 60, 75, 200)
-				            or Color(35, 38, 48, 200))
-				draw.RoundedBox(4, 2, 2, w-4, h-4, bg)
-				draw.SimpleText(friendlyName(class), "Trebuchet18", 12, h/2,
-				    Color(220,220,220), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
-				if self.selected then
-					draw.SimpleText("Selected", "Trebuchet18", w - 12, h/2,
-					    Color(120,220,120), TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)
-				end
-			end
-
-			row.DoClick = function(self)
-				-- Deselect previous
-				if IsValid(selectedPanel) then
-					selectedPanel.selected = false
-				end
-				self.selected = true
-				selectedPanel = self
-
-				-- Store choice locally
-				SND.GunPicker.Chosen = SND.GunPicker.Chosen or {}
-				SND.GunPicker.Chosen[slotKey] = class
-
-				-- Send to server
-				net.Start("SND_GunPickerChoose")
-					net.WriteString(slotKey)    -- "primary" or "secondary"
-					net.WriteString(class)
-				net.SendToServer()
-
-				LocalPlayer():ChatPrint("[SND] " .. label .. " set to: " .. friendlyName(class))
-			end
-		end
-
-		scroll:SetPanelVisible(list, true)
-		sheet:AddSheet(label, scroll, "icon16/gun.png")
-	end
-
-	makeTab("Primary",   primaries,   "primary")
-	makeTab("Secondary", secondaries, "secondary")
-
-	-- ── Close / Done button ───────────────────────────────────────────────
-	local done = vgui.Create("DButton", f)
-	done:SetText("Done")
-	done:SetSize(100, 28)
-	done:Dock(BOTTOM)
-	done:DockMargin(4, 2, 4, 4)
-	done.DoClick = function()
-		f:Close()
-	end
-end
-
-function SND.GunPicker.Close()
-	if IsValid(pickerFrame) then
-		pickerFrame:Remove()
-		pickerFrame = nil
-	end
-end
-
--- ── Network: server sends weapon list when round freeze starts ────────────
-net.Receive("SND_GunPickerOpen", function()
-	local nPri = net.ReadUInt(8)
-	local primaries = {}
-	for i = 1, nPri do primaries[i] = net.ReadString() end
-
-	local nSec = net.ReadUInt(8)
-	local secondaries = {}
-	for i = 1, nSec do secondaries[i] = net.ReadString() end
-
-	SND.GunPicker.Primaries   = primaries
-	SND.GunPicker.Secondaries = secondaries
-	SND.GunPicker.Chosen      = nil  -- reset choices for new round
-
-	SND.GunPicker.Open()
-end)
-
--- Close panel when round goes live (freeze ends)
-net.Receive("SND_RoundState", function()
-	local phase = net.ReadUInt(3)
-	local winner = net.ReadUInt(4)
-	SND.Client        = SND.Client or {}
-	SND.Client.AttackScore = net.ReadUInt(8)
-	SND.Client.DefendScore = net.ReadUInt(8)
-	SND.Client.Phase  = phase
-	SND.Client.Winner = winner
-end)
-
-concommand.Add("snd_gunpicker", function()
 	SND.GunPicker.Open()
 end)
