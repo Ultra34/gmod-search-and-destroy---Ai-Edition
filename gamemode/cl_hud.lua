@@ -692,13 +692,10 @@ hook.Add("HUDPaint", "SND_HUD", function()
 		local carrierIdx = SND.Client.BombCarrierIdx or -1
 		local carrier = Entity(carrierIdx)
 
-		-- Only show the HUD icon if the local player is the carrier
+		-- Only show the HUD text if the local player is the carrier
 		if IsValid(carrier) and carrierIdx ~= -1 and carrier == lp then
-			local bSize = 48 * sc
-			local pulse = 1 + math.sin(CurTime() * 6) * 0.1
-			surface.SetMaterial(MAT_BOMB)
-			surface.SetDrawColor(C_BOMB.r, C_BOMB.g, C_BOMB.b, 200)
-			surface.DrawTexturedRect(sw * 0.5 - (bSize * pulse) * 0.5, sh - 130 * sc, bSize * pulse, bSize * pulse)
+			local pulse = 180 + math.sin(CurTime() * 6) * 75
+			draw.SimpleText("YOU HAVE THE BOMB", "SND_BO3_Team", sw * 0.5, sh - 130 * sc, col(C_BOMB.r, C_BOMB.g, C_BOMB.b, pulse), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
 		end
 	end
 

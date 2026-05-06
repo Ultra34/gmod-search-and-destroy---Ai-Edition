@@ -32,7 +32,7 @@ net.Receive("SND_RoundState", function()
 	SND.Client.DefendScore = net.ReadUInt(8)
 	SND.Round.RoundTimerEnd = net.ReadDouble()
 
-	if phase == SND.PHASE_LIVE then
+	if phase == SND.PHASE_LIVE or phase == SND.PHASE_POST then
 		if SND.GunPicker and SND.GunPicker.Close then
 			SND.GunPicker.Close()
 		end
@@ -233,13 +233,17 @@ local function createScoreboard()
 
 			draw.SimpleText(ply:Nick():upper(), "SND_BO3_Player", 80 * sc, h/2, txtCol, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
 
-			-- Bomb Carrier Icon on Leaderboard
+			-- Bomb Carrier Indicator on Leaderboard (Logo + Text)
 			if SND.Client.BombCarrierIdx == ply:EntIndex() then
 				surface.SetFont("SND_BO3_Player")
 				local nw, _ = surface.GetTextSize(ply:Nick():upper())
+				
+				local iconSize = 18 * sc
 				surface.SetMaterial(MAT_BOMB)
 				surface.SetDrawColor(255, 200, 60, 255)
-				surface.DrawTexturedRect(80 * sc + nw + 10 * sc, h/2 - 11 * sc, 22 * sc, 22 * sc)
+				surface.DrawTexturedRect(80 * sc + nw + 12 * sc, h/2 - iconSize/2, iconSize, iconSize)
+				
+				draw.SimpleText("BOMB", "SND_BO3_Header", 80 * sc + nw + 12 * sc + iconSize + 4 * sc, h/2, Color(255, 200, 60, 255), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
 			end
 
 			-- Stats (BO3 justified alignment)
