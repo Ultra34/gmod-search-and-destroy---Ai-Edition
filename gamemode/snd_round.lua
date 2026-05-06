@@ -205,10 +205,18 @@ end
 
 function SND.Round.FirstSpawn()
 	if SND.Round.MatchStarted then return end
+	
+	-- Verify everyone is ready before starting the very first round
+	local ready = true
+	for _, ply in ipairs(player.GetAll()) do
+		if not ply:IsBot() and not ply.SND_IsBot and not ply.SND_IsReady then
+			ready = false break
+		end
+	end
+	if not ready then return end
+
 	SND.Round.MatchStarted = true
-	timer.Simple(1, function()
-		SND.Round.StartNewRound()
-	end)
+	SND.Round.StartNewRound()
 end
 
 hook.Add("PlayerInitialSpawn", "SND_RoundTrack", function(ply)
@@ -218,8 +226,12 @@ hook.Add("PlayerInitialSpawn", "SND_RoundTrack", function(ply)
 			if not p.SND_IsBot then humans = humans + 1 end
 		end
 		SND.Bots.EnsureCount()
-		if humans + SND.Bots.CountBots() > 0 then
-			SND.Round.FirstSpawn()
+		
+		-- Open the loadout menu for the player immediately on join
+		if not ply:IsBot() then
+			timer.Simple(1, function()
+				if IsValid(ply) then SND.Loadout.OpenPickerForAll() end
+			end)
 		end
 	end)
 end)

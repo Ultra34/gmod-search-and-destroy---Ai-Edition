@@ -154,6 +154,7 @@ function SND.Bots.EnsureCount()
 		bot.SND_IsBot = true
 		bot.SND_AI    = newAI()
 		bot:SetTeam(pickTeam())
+		bot.SND_IsReady = true -- Bots are always ready
 		
 		-- Forced Identity: Random Text Titles, Unified Background & Emblem
 		local botTitles = {"Lone Wolf", "Shadow", "Elite", "Hunter", "Stalker", "New Recruit"}

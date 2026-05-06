@@ -1,5 +1,5 @@
 --[[ Gun Picker — shown during freeze time so players can choose their loadout ]]
--- NEW FILE: gamemode/cl_gunpicker.lua
+--[[ Loadout Manager — Persistent 10-slot system with Ready Up ]]
 -- Add to init.lua:   AddCSLuaFile("cl_gunpicker.lua")
 -- Add to cl_init.lua: include("cl_gunpicker.lua")
 
@@ -37,17 +37,25 @@ local DISPLAY_NAMES = {
 	["arc9_mw2e_m93r"]        = "Beretta 93R",
 }
 
+local function getWeaponModel(class)
+	local swep = weapons.Get(class)
+	return swep and swep.WorldModel or "models/weapons/w_pist_usp.mdl"
+end
+
 local function friendlyName(class)
 	return DISPLAY_NAMES[class] or class
 end
 
 -- ── State ─────────────────────────────────────────────────────────────────
 local pickerFrame = nil
+SND.GunPicker.Slots = SND.GunPicker.Slots or {}
+local isReady = false
 
 -- ── Open the picker panel ─────────────────────────────────────────────────
 function SND.GunPicker.Open()
-	-- Close any existing panel first
 	if IsValid(pickerFrame) then pickerFrame:Remove() end
+
+	local activeSlot = LocalPlayer():GetNWInt("SND_ActiveLoadoutSlot", 1)
 
 	local primaries   = SND.GunPicker.Primaries   or {}
 	local secondaries = SND.GunPicker.Secondaries  or {}
@@ -189,13 +197,8 @@ net.Receive("SND_RoundState", function()
 	SND.Client.DefendScore = net.ReadUInt(8)
 	SND.Client.Phase  = phase
 	SND.Client.Winner = winner
-
-	if phase == SND.PHASE_LIVE then
-		SND.GunPicker.Close()
-	end
 end)
 
--- ── Rebind: open picker manually ─────────────────────────────────────────
 concommand.Add("snd_gunpicker", function()
 	SND.GunPicker.Open()
 end)

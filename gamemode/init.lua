@@ -42,6 +42,9 @@ util.AddNetworkString("SND_SetCallingCard")
 util.AddNetworkString("SND_SetShowTitle")
 util.AddNetworkString("SND_SetTitleMat")
 util.AddNetworkString("SND_SetUseTitleMat")
+util.AddNetworkString("SND_PlayerReady")
+util.AddNetworkString("SND_SelectLoadoutSlot")
+util.AddNetworkString("SND_SyncReadyState")
 
 DEFINE_BASECLASS("gamemode_base")
 
@@ -70,6 +73,7 @@ function GM:PlayerInitialSpawn(ply)
 	if not ply.SND_Joined then
 		ply.SND_Joined = true
 		ply:SetTeam(math.random(1, 2) == 1 and SND.TEAM_ATTACK or SND.TEAM_DEFEND)
+		ply.SND_IsReady = false
 	end
 	
 	-- Load Calling Card

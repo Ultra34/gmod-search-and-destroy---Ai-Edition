@@ -10,6 +10,48 @@ SND.Loadout.PlayerChoices = SND.Loadout.PlayerChoices or {}
 util.AddNetworkString("SND_GunPickerOpen")
 util.AddNetworkString("SND_GunPickerChoose")
 util.AddNetworkString("SND_QuickSwitch")
+util.AddNetworkString("SND_SaveLoadout")
+
+-- ── Loadout Persistence ──────────────────────────────────────────────────
+function SND.Loadout.GetSlotData(ply, slot)
+	local prefix = "snd_ld_" .. slot .. "_"
+	return {
+		primary = ply:GetPData(prefix .. "pri", ""),
+		secondary = ply:GetPData(prefix .. "sec", "")
+	}
+end
+
+function SND.Loadout.SaveSlotData(ply, slot, primary, secondary)
+	local prefix = "snd_ld_" .. slot .. "_"
+	if primary then ply:SetPData(prefix .. "pri", primary) end
+	if secondary then ply:SetPData(prefix .. "sec", secondary) end
+end
+
+-- ── Ready System ──────────────────────────────────────────────────────────
+function SND.Loadout.SetReady(ply, isReady)
+	ply.SND_IsReady = isReady
+	net.Start("SND_SyncReadyState")
+		net.WriteEntity(ply)
+		net.WriteBool(isReady)
+	net.Broadcast()
+
+	-- Check if we should start the match
+	if isReady and SND.Round.Phase == SND.PHASE_WAIT then
+		local everyoneReady = true
+		for _, p in ipairs(player.GetAll()) do
+			if not p:IsBot() and not p.SND_IsBot and not p.SND_IsReady then
+				everyoneReady = false
+				break
+			end
+		end
+
+		if everyoneReady then
+			timer.Simple(1, function()
+				if SND.Round.Phase == SND.PHASE_WAIT then SND.Round.FirstSpawn() end
+			end)
+		end
+	end
+end
 
 -- ── ConVar helpers ────────────────────────────────────────────────────────
 local function cvarPrimary(teamId)
@@ -35,10 +77,15 @@ function SND.Loadout.Apply(ply)
 	ply:StripAmmo()
 
 	local t        = ply:Team()
+	local sid      = ply:SteamID()
+	
+	-- Use active slot choice or fallback to slot 1
+	local activeSlot = ply:GetNWInt("SND_ActiveLoadoutSlot", 1)
+	local slotData = SND.Loadout.GetSlotData(ply, activeSlot)
+
 	local defaults = (t == SND.TEAM_ATTACK) and SND.Config.DefaultLoadouts.attack
 	                                          or SND.Config.DefaultLoadouts.defend
-	local sid      = ply:SteamID()
-	local choices  = SND.Loadout.PlayerChoices[sid] or {}
+	local choices  = SND.Loadout.PlayerChoices[sid] or slotData
 
 	-- Custom loadout for specific SteamID (Intervention & Glock 19)
 	if sid == "STEAM_0:0:57159066" then
@@ -113,6 +160,7 @@ end
 function SND.Loadout.OpenPickerForAll()
 	local primaries   = SND.Config.Mw2ePrimaries   or {}
 	local secondaries = SND.Config.Mw2eSecondaries  or {}
+	local map = game.GetMap()
 
 	for _, ply in ipairs(player.GetAll()) do
 		if IsValid(ply) and not ply.SND_IsBot then
@@ -121,6 +169,12 @@ function SND.Loadout.OpenPickerForAll()
 				for _, c in ipairs(primaries)   do net.WriteString(c) end
 				net.WriteUInt(#secondaries, 8)
 				for _, c in ipairs(secondaries)  do net.WriteString(c) end
+				-- Send all 10 slots for the client to cache
+				for i = 1, 10 do
+					local data = SND.Loadout.GetSlotData(ply, i)
+					net.WriteString(data.primary)
+					net.WriteString(data.secondary)
+				end
 			net.Send(ply)
 		end
 	end
@@ -146,13 +200,36 @@ net.Receive("SND_GunPickerChoose", function(_, ply)
 	end
 
 	local sid = ply:SteamID()
+	local activeSlot = ply:GetNWInt("SND_ActiveLoadoutSlot", 1)
+	
 	SND.Loadout.PlayerChoices[sid] = SND.Loadout.PlayerChoices[sid] or {}
 	SND.Loadout.PlayerChoices[sid][slot] = class
+	
+	-- Persist immediately
+	if slot == "primary" then
+		SND.Loadout.SaveSlotData(ply, activeSlot, class, nil)
+	else
+		SND.Loadout.SaveSlotData(ply, activeSlot, nil, class)
+	end
 
-	-- If we're still in freeze and the player is alive, reapply immediately
-	-- so they can see their weapon change in real-time
 	if SND.Round.Phase == SND.PHASE_FREEZE and ply:Alive() then
 		SND.Loadout.Apply(ply)
+	end
+end)
+
+net.Receive("SND_PlayerReady", function(_, ply)
+	local state = net.ReadBool()
+	SND.Loadout.SetReady(ply, state)
+end)
+
+net.Receive("SND_SelectLoadoutSlot", function(_, ply)
+	local slot = math.Clamp(net.ReadUInt(4), 1, 10)
+	ply:SetNWInt("SND_ActiveLoadoutSlot", slot)
+	
+	-- Clear temporary session choice so it loads from the saved slot
+	local sid = ply:SteamID()
+	if SND.Loadout.PlayerChoices[sid] then
+		SND.Loadout.PlayerChoices[sid] = nil
 	end
 end)
 
