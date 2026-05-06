@@ -16,7 +16,7 @@ hook.Add("StartCommand", "SND_FreezeInput", function(ply, cmd)
 	if phase == SND.PHASE_WAIT or phase == SND.PHASE_FREEZE or phase == SND.PHASE_POST then
 		-- Block all action inputs to prevent shooting, reloading, or planting
 		-- Intercepting buttons in StartCommand is more reliable for blocking weapon fire
-		local blocked = bit.bor(IN_ATTACK, IN_ATTACK2, IN_RELOAD, IN_USE)
+		local blocked = bit.bor(IN_ATTACK, IN_ATTACK2, IN_RELOAD, IN_USE, IN_CONTEXT_MENU)
 		cmd:SetButtons(bit.band(cmd:GetButtons(), bit.bnot(blocked)))
 		cmd:ClearMovement()
 	end
