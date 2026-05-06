@@ -142,12 +142,18 @@ function SND.Loadout.Apply(ply)
 end
 
 function SND.Loadout.SendLoadoutData(ply)
-	local primaries   = SND.Config.Mw2ePrimaries   or {}
-	local secondaries = SND.Config.Mw2eSecondaries  or {}
+	local groups      = SND.Config.WeaponGroups or {}
+	local secondaries = SND.Config.Mw2eSecondaries or {}
 
 	net.Start("SND_GunPickerOpen")
-		net.WriteUInt(#primaries, 8)
-		for _, c in ipairs(primaries)   do net.WriteString(c) end
+		-- Send Categorized Primary Groups
+		net.WriteUInt(#groups, 8)
+		for _, g in ipairs(groups) do
+			net.WriteString(g.name)
+			net.WriteUInt(#g.weapons, 8)
+			for _, class in ipairs(g.weapons) do net.WriteString(class) end
+		end
+
 		net.WriteUInt(#secondaries, 8)
 		for _, c in ipairs(secondaries)  do net.WriteString(c) end
 		-- Send all 10 slots for the client to cache
@@ -239,11 +245,6 @@ net.Receive("SND_SaveLoadoutName", function(_, ply)
 	local name = net.ReadString()
 	SND.Loadout.SaveSlotData(ply, slot, nil, nil, name) -- Only update the name
 	ply:ChatPrint("[SND] Loadout " .. slot .. " named: " .. name)
-end)
-
--- ── Hook: open picker when freeze starts (called from snd_round.lua) ──────
-hook.Add("SND_RoundStart_Freeze", "SND_OpenGunPicker", function()
-	SND.Loadout.OpenPickerForAll()
 end)
 
 -- ── Clear choices between matches (optional — keep across rounds by default) ──

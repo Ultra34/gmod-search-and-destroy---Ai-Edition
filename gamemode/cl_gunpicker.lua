@@ -59,10 +59,10 @@ local saveNameButton = nil
 function SND.GunPicker.Open()
 	if IsValid(pickerFrame) then pickerFrame:Remove() end -- Close any existing panel
 
-	local primaries = SND.GunPicker.Primaries or {}
+	local groups = SND.GunPicker.PrimaryGroups or {}
 	local secondaries = SND.GunPicker.Secondaries or {}
 
-	if #primaries == 0 and #secondaries == 0 then
+	if #groups == 0 and #secondaries == 0 then
 		LocalPlayer():ChatPrint("[SND] No weapon list received yet — try again in a moment.")
 		return
 	end
@@ -96,9 +96,9 @@ function SND.GunPicker.Open()
 	local scrollSidebar = vgui.Create("DScrollPanel", sidebar)
 	scrollSidebar:Dock(FILL)
 
-	local content = vgui.Create("DPanel", f)
+	local content = vgui.Create("DScrollPanel", f)
 	content:Dock(FILL)
-	content:DockMargin(5, 60, 10, 10) -- Adjusted margin for title and bottom buttons
+	content:DockMargin(5, 60, 10, 70) -- Bottom margin increased to clear buttons
 	content.Paint = nil
 
 	local function rebuildContent()
@@ -153,18 +153,18 @@ function SND.GunPicker.Open()
 		local data = SND.GunPicker.Slots[activeSlot] or { primary = "", secondary = "", loadoutName = "LOADOUT " .. activeSlot }
 		loadoutNameEntry:SetText(data.loadoutName)
 
-		local function createGrid(title, pool, slotKey)
+		local function createGrid(title, pool, slotKey, headerFont, headerCol, leftMargin)
 			local lbl = vgui.Create("DLabel", content)
 			lbl:SetText(title:upper())
-			lbl:SetFont("SND_BO3_Header")
+			lbl:SetFont(headerFont or "SND_BO3_Header")
+			if headerCol then lbl:SetTextColor(headerCol) end
 			lbl:Dock(TOP)
-			lbl:DockMargin(0, 10, 0, 5)
+			lbl:DockMargin(leftMargin or 0, 10, 0, 5)
 
 			local grid = vgui.Create("DIconLayout", content)
 			grid:Dock(TOP)
 			grid:SetSpaceX(5)
 			grid:SetSpaceY(5)
-			grid:SetTall(200)
 
 			for _, class in ipairs(pool) do
 				local wrapper = grid:Add("DPanel") -- Add a DPanel wrapper to the layout
@@ -194,9 +194,24 @@ function SND.GunPicker.Open()
 					rebuildContent()
 				end
 			end
+
+			-- Force the grid to calculate its height based on children so the ScrollPanel knows how far to scroll
+			grid:InvalidateLayout(true)
+			grid:SizeToChildren(false, true)
 		end
 
-		createGrid("Primary Weapons", primaries, "primary")
+		if #groups > 0 then
+			local lbl = vgui.Create("DLabel", content)
+			lbl:SetText("PRIMARY WEAPONS")
+			lbl:SetFont("SND_BO3_Header")
+			lbl:Dock(TOP)
+			lbl:DockMargin(0, 10, 0, 5)
+
+			for _, g in ipairs(groups) do
+				createGrid(g.name, g.weapons, "primary", "DermaDefaultBold", Color(180, 180, 180), 10)
+			end
+		end
+
 		createGrid("Secondary Weapons", secondaries, "secondary")
 	end
 
@@ -295,15 +310,21 @@ function SND.GunPicker.Open()
 end
 
 net.Receive("SND_GunPickerOpen", function()
-	local nPri = net.ReadUInt(8)
-	local primaries = {}
-	for i = 1, nPri do primaries[i] = net.ReadString() end
+	local nGroups = net.ReadUInt(8)
+	local groups = {}
+	for i = 1, nGroups do
+		local name = net.ReadString()
+		local count = net.ReadUInt(8)
+		local weapons = {}
+		for j = 1, count do weapons[j] = net.ReadString() end
+		groups[i] = { name = name, weapons = weapons }
+	end
 
 	local nSec = net.ReadUInt(8)
 	local secondaries = {}
 	for i = 1, nSec do secondaries[i] = net.ReadString() end
 
-	SND.GunPicker.Primaries = primaries
+	SND.GunPicker.PrimaryGroups = groups
 	SND.GunPicker.Secondaries = secondaries
 	
 	SND.GunPicker.Slots = {}

@@ -79,10 +79,20 @@ local LAUNCHERS = {
 	"iw4_m79",
 }
 
+-- Categorized Primary weapons for UI display
+SND.Config.WeaponGroups = {
+	{ name = "Assault Rifles", weapons = AR },
+	{ name = "Light Machine Guns", weapons = LMG },
+	{ name = "Sub-Machine Guns", weapons = SMG },
+	{ name = "Shotguns", weapons = SG },
+	{ name = "Sniper Rifles", weapons = SR },
+	{ name = "Miscellaneous", weapons = MISC },
+}
+
 -- ── Merged primary pool (everything that isn't a pistol or launcher) ──────
 SND.Config.Mw2ePrimaries = {}
-for _, t in ipairs({ AR, LMG, SMG, SG, SR, MISC }) do
-	for _, v in ipairs(t) do
+for _, group in ipairs(SND.Config.WeaponGroups) do
+	for _, v in ipairs(group.weapons) do
 		table.insert(SND.Config.Mw2ePrimaries, v)
 	end
 end

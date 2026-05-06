@@ -32,15 +32,10 @@ net.Receive("SND_RoundState", function()
 	SND.Client.DefendScore = net.ReadUInt(8)
 	SND.Round.RoundTimerEnd = net.ReadDouble()
 
-	if phase == SND.PHASE_LIVE or phase == SND.PHASE_POST then
+	if phase == SND.PHASE_FREEZE or phase == SND.PHASE_LIVE or phase == SND.PHASE_POST then
 		if SND.GunPicker and SND.GunPicker.Close then
 			SND.GunPicker.Close()
 		end
-	end
-
-	-- Clear bomb carrier whenever a round resets or moves to freeze
-	if phase == SND.PHASE_FREEZE then
-		SND.Client.BombCarrierIdx = -1
 	end
 
 	-- Force the crosshair toggle state to reset on phase changes

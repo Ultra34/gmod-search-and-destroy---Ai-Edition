@@ -688,7 +688,7 @@ hook.Add("HUDPaint", "SND_HUD", function()
 
 	-- ── Bomb info (bottom-center, hide from defenders) ────────────────────
 	local lpTeam = lp:Team()
-	if phase == SND.PHASE_LIVE and lpTeam == SND.TEAM_ATTACK then
+	if (phase == SND.PHASE_LIVE or phase == SND.PHASE_FREEZE) and lpTeam == SND.TEAM_ATTACK then
 		local carrierIdx = SND.Client.BombCarrierIdx or -1
 		local carrier = Entity(carrierIdx)
 
