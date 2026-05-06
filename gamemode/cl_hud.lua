@@ -966,6 +966,26 @@ hook.Add("HUDPaint", "SND_HUD", function()
 	end
 end)
 
+-- ── Dropped Bomb Halo (Attacker Only) ────────────────────────────────────
+hook.Add("PreDrawHalos", "SND_DroppedBombHalo", function()
+	local lp = LocalPlayer()
+	if not IsValid(lp) or lp:Team() ~= SND.TEAM_ATTACK then return end
+
+	local droppedBombs = {}
+	for _, ent in ipairs(ents.FindByClass("prop_physics")) do
+		if ent:GetNWBool("SND_IsDroppedBomb") then
+			table.insert(droppedBombs, ent)
+		end
+	end
+
+	if #droppedBombs > 0 then
+		local pulse = math.abs(math.sin(CurTime() * 4))
+		local color = Color(255, 200, 60, 150 + (pulse * 105))
+		-- Pulse the width and color; visible through walls for attackers
+		halo.Add(droppedBombs, color, 2 + (pulse * 2), 2 + (pulse * 2), 1, true, true)
+	end
+end)
+
 -- ── Plant/defuse progress bar (driven by SND_BombProgress) ───────────────
 local BombProg = { kind = 0, who = nil, total = 0, started = 0 }
 

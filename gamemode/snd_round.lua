@@ -128,6 +128,14 @@ function SND.Round.StartNewRound()
 	SND.Round.Phase = SND.PHASE_FREEZE
 	SND.Round.Winner = SND.WIN_NONE
 
+	-- Cleanup world: remove dropped weapons and clear blood decals for all clients
+	for _, ent in ipairs(ents.GetAll()) do
+		if ent:IsWeapon() and ent.SND_Dropped then
+			ent:Remove()
+		end
+	end
+	BroadcastLua("render.ClearDecals()")
+
 	-- 1. Balance teams first
 	SND.TeamBalance.MaybeShuffle()
 

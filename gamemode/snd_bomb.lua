@@ -128,6 +128,7 @@ local function spawnBombProp(pos, isPhysics)
 
 	if isPhysics then
 		e:SetCollisionGroup(COLLISION_GROUP_WEAPON)
+		e:SetNWBool("SND_IsDroppedBomb", true)
 	else
 	-- Make it non-solid to players so they don't get stuck on it,
 	-- but keep it visible
