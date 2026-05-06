@@ -120,6 +120,7 @@ surface.CreateFont("SND_BO3_Team", { font = "Verdana", size = 18, weight = 900, 
 surface.CreateFont("SND_BO3_Score", { font = "Verdana", size = 32, weight = 900, antialias = true })
 surface.CreateFont("SND_BO3_Header", { font = "Verdana", size = 13, weight = 700, uppercase = true, antialias = true })
 surface.CreateFont("SND_BO3_Player", { font = "Verdana", size = 17, weight = 400, antialias = true })
+surface.CreateFont("SND_MW2_MapName", { font = "Verdana", size = 100, weight = 900, italic = true, antialias = true })
 
 local scoreboard = nil
 

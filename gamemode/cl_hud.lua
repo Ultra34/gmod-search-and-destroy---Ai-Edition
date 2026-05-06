@@ -580,6 +580,47 @@ hook.Add("HUDPaint", "SND_HUD", function()
 
 	-- ── WAITING FOR PLAYERS COUNTER ───────────────────────────────────────
 	if phase == SND.PHASE_WAIT then
+		-- 1. Fullscreen Background
+		surface.SetDrawColor(0, 0, 0, 255)
+		surface.DrawRect(0, 0, sw, sh)
+		
+		-- Try to draw map thumbnail (blurred map look)
+		local thumb = Material("maps/thumb/" .. game.GetMap() .. ".png")
+		if thumb and not thumb:IsError() then
+			surface.SetMaterial(thumb)
+			surface.SetDrawColor(180, 180, 180, 255)
+			surface.DrawTexturedRect(0, 0, sw, sh)
+		end
+		
+		-- Dim Dark Overlay
+		surface.SetDrawColor(0, 0, 0, 200)
+		surface.DrawRect(0, 0, sw, sh)
+
+		-- 2. MW2 Stylized Left Side Text
+		local lx = 100 * sc
+		local ly = sh * 0.35
+		
+		-- Gamemode (Search & Destroy)
+		draw.SimpleText("SEARCH AND DESTROY", "SND_BO3_Header", lx, ly, Color(255, 180, 0), TEXT_ALIGN_LEFT, TEXT_ALIGN_BOTTOM)
+		
+		-- Map Name (Massive & Italic)
+		local mapName = game.GetMap():gsub("^ttt_", ""):gsub("^snd_", ""):gsub("^de_", ""):upper()
+		draw.SimpleText(mapName, "SND_MW2_MapName", lx - 5 * sc, ly - 5 * sc, Color(255, 255, 255), TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
+		
+		-- Faction vs Faction
+		local fly = ly + 120 * sc
+		local facA = team.GetName(SND.TEAM_ATTACK):upper()
+		local facB = team.GetName(SND.TEAM_DEFEND):upper()
+		
+		surface.SetFont("SND_BO3_Team")
+		local twA, _ = surface.GetTextSize(facA)
+		local twVS, _ = surface.GetTextSize(" VS ")
+		
+		draw.SimpleText(facA, "SND_BO3_Team", lx, fly, C_ATTACK, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+		draw.SimpleText(" VS ", "SND_BO3_Team", lx + twA, fly, Color(255, 255, 255), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+		draw.SimpleText(facB, "SND_BO3_Team", lx + twA + twVS, fly, C_DEFEND, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+
+		-- 3. Ready Count (Bottom Right Style)
 		local humans = 0
 		local ready = 0
 		for _, p in ipairs(player.GetAll()) do
@@ -589,18 +630,13 @@ hook.Add("HUDPaint", "SND_HUD", function()
 			end
 		end
 
-		local waitW, waitH = 300 * sc, 80 * sc
-		local wx, wy = sw * 0.5 - waitW * 0.5, sh * 0.2
-		
-		pill(wx, wy, waitW, waitH, col(0, 0, 0, 180))
-		surface.SetDrawColor(255, 120, 0, 255)
-		surface.DrawRect(wx, wy, waitW, 2 * sc)
-
-		draw.SimpleText("WAITING FOR PLAYERS", "SND_BO3_Header", sw * 0.5, wy + 25 * sc, Color(200, 200, 200), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+		local rx, ry = sw - 100 * sc, sh - 100 * sc
 		local readyCol = (ready >= humans and humans > 0) and C_GREEN or Color(255, 210, 50)
-		draw.SimpleText(ready .. " / " .. humans .. " READY", "SND_BO3_Score", sw * 0.5, wy + 55 * sc, readyCol, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
 		
-		return -- Don't draw scores/timer yet
+		draw.SimpleText(ready .. " / " .. humans .. " PLAYERS READY", "SND_BO3_Score", rx, ry, readyCol, TEXT_ALIGN_RIGHT, TEXT_ALIGN_BOTTOM)
+		draw.SimpleText("WAITING FOR HUMAN PLAYERS TO SELECT LOADOUT", "SND_BO3_Header", rx, ry + 15 * sc, Color(150, 150, 150), TEXT_ALIGN_RIGHT, TEXT_ALIGN_TOP)
+		
+		return -- Block regular HUD drawing during this fullscreen phase
 	end
 
 	if phase == SND.PHASE_FREEZE then
