@@ -181,11 +181,14 @@ function SND.GunPicker.Open()
 				icon:SetSize(64, 64)
 				icon:Dock(FILL) -- Make SpawnIcon fill the wrapper
 
-				wrapper.DoClick = function() -- Click handler on the wrapper
+				-- SpawnIcons handle their own mouse events, so we must use icon.DoClick
+				icon.DoClick = function()
 					net.Start("SND_GunPickerChoose")
 						net.WriteString(slotKey)
 						net.WriteString(class)
 					net.SendToServer()
+					
+					SND.GunPicker.Slots[activeSlot] = SND.GunPicker.Slots[activeSlot] or {}
 					SND.GunPicker.Slots[activeSlot][slotKey] = class
 					surface.PlaySound("buttons/button14.wav")
 					rebuildContent()
