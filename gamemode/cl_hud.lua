@@ -348,8 +348,8 @@ local function drawCallingCardPopup(sw, sh, sc)
 	if age < 0.5 then alpha = (age / 0.5) * 255 
 	elseif age > duration - 0.5 then alpha = ((duration - age) / 0.5) * 255 end
 
-	-- Resized Larger Banner: 640x160
-	local w, h = 640 * sc, 160 * sc
+	-- Extra Large Banner: 800x200
+	local w, h = 800 * sc, 200 * sc
 	local x = sw * 0.5 - w * 0.5
 	
 	-- MW2 Style: Slide up from the absolute bottom center
@@ -375,9 +375,9 @@ local function drawCallingCardPopup(sw, sh, sc)
 	surface.DrawOutlinedRect(x, y, w, h, 2 * sc)
 
 	-- Positioning Anchors
-	local embSize = 120 * sc
-	local embX, embY = x + 15 * sc, y + (h - embSize) * 0.5
-	local textX = x + 150 * sc
+	local embSize = 160 * sc
+	local embX, embY = x + 20 * sc, y + (h - embSize) * 0.5
+	local textX = x + 200 * sc
 
 	-- ── MW2 Title Graphic (Top Strip) ────────────────────────────────────
 	if card.showTitle and card.useTitleMat then 
@@ -385,7 +385,7 @@ local function drawCallingCardPopup(sw, sh, sc)
 		surface.SetDrawColor(255, 255, 255, alpha)
 		local tMat = card.titleMat
 		if tMat and not (tMat:IsError() and not tostring(card.titleMatPath):match("[.gif|data/]")) then
-			local tW, tH = 640 * sc, 88 * sc -- Resized Title Strip
+			local tW, tH = 800 * sc, 100 * sc -- Large Title Strip
 			surface.SetMaterial(tMat)
 
 			if not tostring(card.titleMatPath):match("[.gif|data/]") then
@@ -393,20 +393,20 @@ local function drawCallingCardPopup(sw, sh, sc)
 				if frames > 1 then tMat:SetInt("$frame", math.floor(CurTime() * 12) % frames) end
 			end
 
-			surface.DrawTexturedRect(x, y + 2 * sc, tW, tH) -- Repositioned perfectly
+			surface.DrawTexturedRect(x, y, tW, tH) -- Reverted to top-anchor
 		end
 	end
 
 	-- Custom Title Text (Overlayed on Banner)
 	if card.showTitle and not card.useTitleMat then
-		draw.SimpleText(card.title:upper(), "SND_BO3_Team", textX + 1, y + 45 * sc, Color(0, 0, 0, alpha), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
-		draw.SimpleText(card.title:upper(), "SND_BO3_Team", textX, y + 44 * sc, Color(255, 210, 50, alpha), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+		draw.SimpleText(card.title:upper(), "SND_BO3_Team", textX + 1, y + 50 * sc, Color(0, 0, 0, alpha), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+		draw.SimpleText(card.title:upper(), "SND_BO3_Team", textX, y + 49 * sc, Color(255, 210, 50, alpha), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
     end
 	
 	-- Player Name (Team Colored)
     local tCol = team.GetColor(card.team or 0)
-	draw.SimpleText(card.name:upper(), "SND_BO3_Player", textX + 1, y + 115 * sc, Color(0, 0, 0, alpha), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
-	draw.SimpleText(card.name:upper(), "SND_BO3_Player", textX, y + 114 * sc, Color(tCol.r, tCol.g, tCol.b, alpha), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+	draw.SimpleText(card.name:upper(), "SND_BO3_Player", textX + 1, y + 150 * sc, Color(0, 0, 0, alpha), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+	draw.SimpleText(card.name:upper(), "SND_BO3_Player", textX, y + 149 * sc, Color(tCol.r, tCol.g, tCol.b, alpha), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
 
 	-- Rank Icon (Far Right of banner)
 	local lvl = card.level or 1
@@ -414,7 +414,7 @@ local function drawCallingCardPopup(sw, sh, sc)
 	if icon and not icon:IsError() then -- Check if icon is a valid material
 		surface.SetMaterial(icon) -- Reset material state
 		surface.SetDrawColor(255, 255, 255, alpha)
-		surface.DrawTexturedRect(x + w - 55 * sc, y + h * 0.5 - 20 * sc, 40 * sc, 40 * sc) -- MW2 Rank Icon size and position
+		surface.DrawTexturedRect(x + w - 75 * sc, y + h * 0.5 - 25 * sc, 50 * sc, 50 * sc) -- Large Rank Icon
 	end
 
 	if card.emblemMatPath == "steam" and not card.isBot and card.sid64 ~= "0" then
@@ -541,8 +541,10 @@ hook.Add("HUDPaint", "SND_HUD", function()
 			local vis = scr.visible
 			local isOffscreen = SND.DrawSiteOffscreenArrow(labelPos, col, 1)
 
-			if (vis or (sx > 0 and sx < sw and sy > 0 and sy < sh)) and not isOffscreen then
-				local alpha = math.Clamp(1 - (dist - 2000) / 3000, 0.50, 1) * 255 -- Forced visibility scaling
+			-- Force rendering if within screen bounds, even if 'visible' flag is false (behind geometry)
+			local forcedVis = (sx > 0 and sx < sw and sy > 0 and sy < sh)
+			if (vis or forcedVis) and not isOffscreen then
+				local alpha = math.Clamp(1 - (dist - 2000) / 3000, 0.3, 1) * 255
 				local diamondSize = 28 * sc
 				local pulse = isPlanted and (math.abs(math.sin(CurTime() * 5)) * 0.3 + 0.7) or 1
 				
