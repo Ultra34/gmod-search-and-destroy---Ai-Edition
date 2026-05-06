@@ -32,20 +32,21 @@ end)
 
 -- ── Aggressive Fire Block (Server & Client) ──────────────────────────────
 hook.Add("Think", "SND_FreezeFireLock", function()
-	local phase = SERVER and SND.Round.Phase or (SND.Client and SND.Client.Phase)
-	if phase ~= SND.PHASE_WAIT and phase ~= SND.PHASE_FREEZE and phase ~= SND.PHASE_POST then return end
+	local phase = SERVER and SND.Round.Phase or (SND.Client and SND.Client.Phase) or SND.PHASE_WAIT
 
 	for _, ply in ipairs(player.GetAll()) do
+		-- Always stop breathing sounds if dead or round is over
+		if not ply:Alive() or phase == SND.PHASE_POST then
+			ply:StopSound("player/breathe1.wav")
+		end
+
+		if phase ~= SND.PHASE_WAIT and phase ~= SND.PHASE_FREEZE and phase ~= SND.PHASE_POST then continue end
 		if not ply:Alive() then continue end
+
 		local wep = ply:GetActiveWeapon()
 		if IsValid(wep) then
 			wep:SetNextPrimaryFire(CurTime() + 0.1)
 			wep:SetNextSecondaryFire(CurTime() + 0.1)
-		end
-		
-		-- Stop breathing sounds if dead or phase ends
-		if not ply:Alive() or phase == SND.PHASE_POST then
-			ply:StopSound("player/breathe1.wav")
 		end
 	end
 end)

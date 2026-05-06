@@ -67,6 +67,7 @@ function SND.Round.EndRound(reason)
 	end
 
 	SND.Announcer.OnRoundEnd(reason)
+	hook.Run("SND_RoundEnd", reason)
 	SND.Bomb.ResetForRound()
 
 	-- Sync phase to clients immediately
@@ -134,7 +135,7 @@ function SND.Round.StartNewRound()
 			ent:Remove()
 		end
 	end
-	BroadcastLua("render.ClearDecals()")
+	BroadcastLua("LocalPlayer():ConCommand('r_cleardecals')")
 
 	-- 1. Balance teams first
 	SND.TeamBalance.MaybeShuffle()
@@ -169,6 +170,7 @@ function SND.Round.StartNewRound()
 	net.Broadcast()
 
 	SND.Announcer.RoundFreeze()
+	hook.Run("SND_RoundStart_Freeze")
 
 	for _, ply in ipairs(player.GetAll()) do
 		ply:Spawn()

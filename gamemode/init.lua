@@ -43,7 +43,6 @@ util.AddNetworkString("SND_SetCallingCard")
 util.AddNetworkString("SND_SetShowTitle")
 util.AddNetworkString("SND_SetTitleMat")
 util.AddNetworkString("SND_SetUseTitleMat")
-util.AddNetworkString("SND_KillFeed")
 util.AddNetworkString("SND_PlayerReady")
 util.AddNetworkString("SND_SelectLoadoutSlot")
 util.AddNetworkString("SND_SyncReadyState")
@@ -53,11 +52,6 @@ util.AddNetworkString("SND_ClearLoadoutSlot")
 DEFINE_BASECLASS("gamemode_base")
 
 function GM:Initialize()
-	-- ── Steam Networking & Hosting Setup ──────────────────────────────────
-	-- Automatically enable Steam P2P for easy hosting without port forwarding
-	RunConsoleCommand("sv_allow_p2p", "1")
-	RunConsoleCommand("sv_lan", "0") -- Ensure server is public for Steam networking
-
 	self.BaseClass.Initialize(self)
 	SND.Config.LoadDataFile()
 	team.SetUp(SND.TEAM_ATTACK, SND.Config.Factions.attack.name or "Attackers", Color(180, 90, 60))
@@ -143,14 +137,6 @@ function GM:PlayerDeath(victim, inflictor, attacker)
 	SND.Round.OnPlayerDeath(victim, attacker)
 	SND.Announcer.OnDeathContext(victim, attacker)
 
-	-- Drop weapons on death (works for bots and players)
-	for _, wep in ipairs(victim:GetWeapons()) do
-		if IsValid(wep) then
-			wep.SND_Dropped = true -- Mark for manual pickup
-			victim:DropWeapon(wep)
-		end
-	end
-
 	if IsValid(attacker) and attacker:IsPlayer() and attacker ~= victim then
 		-- 1. Send Attacker's Identity to Victim (The person who killed you)
 		net.Start("SND_ShowCallingCard")
@@ -222,10 +208,6 @@ function GM:PlayerCanPickupWeapon(ply, wep)
 	if SND.Round.Phase ~= SND.PHASE_LIVE and SND.Round.Phase ~= SND.PHASE_FREEZE then
 		return false
 	end
-	-- Block automatic pickup for dropped weapons unless explicitly forced via swap logic
-	if wep.SND_Dropped and not ply.SND_ForcedPickup then
-		return false
-	end
 	return true
 end
 
@@ -278,13 +260,13 @@ end)
 local function performQuickThrow(ply)
 	if ply.SND_IsQuickThrowing then return end
 	local lethal = ply:GetNWString("SND_Lethal", "")
-	if lethal == "" or not ply:HasWeapon(lethal) then return end
+	if lethal == "" then return end
 
 	local current = ply:GetActiveWeapon()
 	if not IsValid(current) or current:GetClass() == lethal then return end
-	
-	local oldWepClass = current:GetClass()
+
 	ply.SND_IsQuickThrowing = true
+	local oldWep = current:GetClass()
 
 	ply:SelectWeapon(lethal)
 
@@ -299,50 +281,11 @@ local function performQuickThrow(ply)
 	-- Switch back to previous weapon after throw animation
 	timer.Simple(1.1, function()
 		if IsValid(ply) and ply:Alive() then
-			if ply:HasWeapon(oldWepClass) then ply:SelectWeapon(oldWepClass) end
+			ply:SelectWeapon(oldWep)
 		end
 		ply.SND_IsQuickThrowing = false
 	end)
 end
-
--- ── Weapon Pickup/Swap Logic ──────────────────────────────────────────────
-hook.Add("PlayerButtonDown", "SND_WeaponPickup", function(ply, btn)
-	if btn ~= KEY_E then return end
-	if not IsValid(ply) or not ply:Alive() then return end
-	if SND.Round.Phase ~= SND.PHASE_LIVE and SND.Round.Phase ~= SND.PHASE_FREEZE then return end
-
-	local tr = ply:GetEyeTrace()
-	local ent = tr.Entity
-	-- Allow pickup within 120 units
-	if IsValid(ent) and ent:IsWeapon() and ent.SND_Dropped and tr.StartPos:DistToSqr(tr.HitPos) < 14400 then
-		local class = ent:GetClass()
-		local isPri = table.HasValue(SND.Config.Mw2ePrimaries or {}, class)
-		local isSec = table.HasValue(SND.Config.Mw2eSecondaries or {}, class)
-		
-		if not isPri and not isSec then return end -- Ignore unknown weapon types
-
-		-- Identify current weapon in the corresponding slot to drop it
-		local slotKey = isPri and "SND_Primary" or "SND_Secondary"
-		local currentWep = ply:GetWeapon(ply:GetNWString(slotKey, ""))
-
-		if IsValid(currentWep) then
-			currentWep.SND_Dropped = true
-			ply:DropWeapon(currentWep)
-		end
-
-		-- Enable forced pickup to bypass the standard touch-block
-		ply.SND_ForcedPickup = true
-		ply:PickupWeapon(ent)
-		ply.SND_ForcedPickup = false
-
-		-- Update the Networked String so the inventory HUD and logic remain in sync
-		ply:SetNWString(slotKey, class)
-		
-		-- Select the new weapon immediately
-		ply:SelectWeapon(class)
-		ply:EmitSound("items/ammo_pickup.wav", 65, 100)
-	end
-end)
 
 hook.Add("PlayerButtonDown", "SND_GrenadeKey_SV", function(ply, btn)
 	if btn == KEY_G then
