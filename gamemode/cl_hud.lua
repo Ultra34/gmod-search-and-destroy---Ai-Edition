@@ -348,8 +348,8 @@ local function drawCallingCardPopup(sw, sh, sc)
 	if age < 0.5 then alpha = (age / 0.5) * 255 
 	elseif age > duration - 0.5 then alpha = ((duration - age) / 0.5) * 255 end
 
-	-- Authentic MW2 2009 Sizes: 512x128
-	local w, h = 512 * sc, 128 * sc
+	-- Resized Larger Banner: 640x160
+	local w, h = 640 * sc, 160 * sc
 	local x = sw * 0.5 - w * 0.5
 	
 	-- MW2 Style: Slide up from the absolute bottom center
@@ -375,9 +375,9 @@ local function drawCallingCardPopup(sw, sh, sc)
 	surface.DrawOutlinedRect(x, y, w, h, 2 * sc)
 
 	-- Positioning Anchors
-	local embSize = 96 * sc
-	local embX, embY = x + 12 * sc, y + (h - embSize) * 0.5
-	local textX = x + 125 * sc
+	local embSize = 120 * sc
+	local embX, embY = x + 15 * sc, y + (h - embSize) * 0.5
+	local textX = x + 150 * sc
 
 	-- ── MW2 Title Graphic (Top Strip) ────────────────────────────────────
 	if card.showTitle and card.useTitleMat then 
@@ -385,7 +385,7 @@ local function drawCallingCardPopup(sw, sh, sc)
 		surface.SetDrawColor(255, 255, 255, alpha)
 		local tMat = card.titleMat
 		if tMat and not (tMat:IsError() and not tostring(card.titleMatPath):match("[.gif|data/]")) then
-			local tW, tH = 512 * sc, 72 * sc -- Lengthened Title Strip
+			local tW, tH = 640 * sc, 88 * sc -- Resized Title Strip
 			surface.SetMaterial(tMat)
 
 			if not tostring(card.titleMatPath):match("[.gif|data/]") then
@@ -399,14 +399,14 @@ local function drawCallingCardPopup(sw, sh, sc)
 
 	-- Custom Title Text (Overlayed on Banner)
 	if card.showTitle and not card.useTitleMat then
-		draw.SimpleText(card.title:upper(), "SND_BO3_Team", textX + 1, y + 36 * sc, Color(0, 0, 0, alpha), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
-		draw.SimpleText(card.title:upper(), "SND_BO3_Team", textX, y + 35 * sc, Color(255, 210, 50, alpha), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+		draw.SimpleText(card.title:upper(), "SND_BO3_Team", textX + 1, y + 45 * sc, Color(0, 0, 0, alpha), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+		draw.SimpleText(card.title:upper(), "SND_BO3_Team", textX, y + 44 * sc, Color(255, 210, 50, alpha), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
     end
 	
 	-- Player Name (Team Colored)
     local tCol = team.GetColor(card.team or 0)
-	draw.SimpleText(card.name:upper(), "SND_BO3_Player", textX + 1, y + 93 * sc, Color(0, 0, 0, alpha), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
-	draw.SimpleText(card.name:upper(), "SND_BO3_Player", textX, y + 92 * sc, Color(tCol.r, tCol.g, tCol.b, alpha), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+	draw.SimpleText(card.name:upper(), "SND_BO3_Player", textX + 1, y + 115 * sc, Color(0, 0, 0, alpha), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+	draw.SimpleText(card.name:upper(), "SND_BO3_Player", textX, y + 114 * sc, Color(tCol.r, tCol.g, tCol.b, alpha), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
 
 	-- Rank Icon (Far Right of banner)
 	local lvl = card.level or 1
@@ -537,10 +537,11 @@ hook.Add("HUDPaint", "SND_HUD", function()
 			local meters      = math.floor(dist / 52.49)
 
 			local scr = labelPos:ToScreen()
-			local sx, sy, vis = scr.x, scr.y, scr.visible
+			local sx, sy = scr.x, scr.y
+			local vis = scr.visible
 			local isOffscreen = SND.DrawSiteOffscreenArrow(labelPos, col, 1)
 
-			if vis and not isOffscreen then
+			if (vis or (sx > 0 and sx < sw and sy > 0 and sy < sh)) and not isOffscreen then
 				local alpha = math.Clamp(1 - (dist - 2000) / 3000, 0.50, 1) * 255 -- Forced visibility scaling
 				local diamondSize = 28 * sc
 				local pulse = isPlanted and (math.abs(math.sin(CurTime() * 5)) * 0.3 + 0.7) or 1

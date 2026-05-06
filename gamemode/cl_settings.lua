@@ -101,10 +101,10 @@ function SND.OpenPersonalizationMenu()
 	local titleEntry, pathEntry, embPathEntry, showTitleCheck, useTitleMatCheck, titleMatEntry
 
 	local function drawFullPreview(pnl, w, h, av)
-		local cardH = w / 4
+		local cardH = w * 0.25 -- Maintains the 4:1 ratio for the larger banner
 		pnl:SetTall(cardH)
-		local sc_local = w / 512
-		local embSize = 96 * sc_local
+		local sc_local = w / 640
+		local embSize = 120 * sc_local
 
 		-- 1. MW2 Style Background Strip (MW2 2009)
 		surface.SetDrawColor(30, 30, 30, 180)
@@ -112,7 +112,7 @@ function SND.OpenPersonalizationMenu()
 
 		-- 2. Emblem
 		local ePath = embPathEntry and embPathEntry:GetText() or lp:GetNWString("SND_EmblemMat", "steam")
-		local embX, embY = 12 * sc_local, (cardH - embSize) * 0.5
+		local embX, embY = 15 * sc_local, (cardH - embSize) * 0.5
 		if ePath == "steam" then
 			if IsValid(av) then
 				av:SetVisible(true)
@@ -133,14 +133,14 @@ function SND.OpenPersonalizationMenu()
 		end
 
 		-- 3. Text Overlay
-		local textX = 125 * sc_local
+		local textX = 150 * sc_local
 
 		-- 4. MW2 Strip Preview (Beside Emblem)
 		if showTitleCheck and showTitleCheck:GetChecked() and useTitleMatCheck and useTitleMatCheck:GetChecked() then
 			local tPath = titleMatEntry and titleMatEntry:GetText() or lp:GetNWString("SND_TitleMat", "vgui/white")
 			local tMat = SND.GetIMaterial(tPath)
 			if tMat and not (tMat:IsError() and not tPath:match("[.gif|data/]")) then
-				local tW, tH = 512 * sc_local, 72 * sc_local -- Matches lengthened HUD graphics
+				local tW, tH = 640 * sc_local, 88 * sc_local -- Resized Strip
 				local frames = tMat:GetInt("$numframes") or 1
 				if frames > 1 then tMat:SetInt("$frame", math.floor(CurTime() * 12) % frames) end
 				surface.SetMaterial(tMat)
@@ -151,13 +151,13 @@ function SND.OpenPersonalizationMenu()
 		
 		if showTitleCheck and showTitleCheck:GetChecked() and not (useTitleMatCheck and useTitleMatCheck:GetChecked()) then
 			local tTxt = titleEntry and titleEntry:GetText() or lp:GetNWString("SND_CardTitle", "New Recruit")
-			draw.SimpleText(tTxt:upper(), "SND_BO3_Team", textX + 1, 36 * sc_local, Color(0, 0, 0), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
-			draw.SimpleText(tTxt:upper(), "SND_BO3_Team", textX, 35 * sc_local, Color(255, 210, 50), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+			draw.SimpleText(tTxt:upper(), "SND_BO3_Team", textX + 1, 45 * sc_local, Color(0, 0, 0), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+			draw.SimpleText(tTxt:upper(), "SND_BO3_Team", textX, 44 * sc_local, Color(255, 210, 50), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
 		end
 
 		local tCol = team.GetColor(lp:Team())
-		draw.SimpleText(lp:Nick():upper(), "SND_BO3_Player", textX + 1, 93 * sc_local, Color(0, 0, 0), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
-		draw.SimpleText(lp:Nick():upper(), "SND_BO3_Player", textX, 92 * sc_local, Color(tCol.r, tCol.g, tCol.b), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+		draw.SimpleText(lp:Nick():upper(), "SND_BO3_Player", textX + 1, 115 * sc_local, Color(0, 0, 0), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+		draw.SimpleText(lp:Nick():upper(), "SND_BO3_Player", textX, 114 * sc_local, Color(tCol.r, tCol.g, tCol.b), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
 
 		-- 4. Rank
 		local lvl = lp:GetNWInt("SND_Level", 1)
