@@ -16,12 +16,32 @@
 hook.Add("TranslateActivity", "SND_CSSAnimTranslate", function(ply, act)
 	if act == nil then return end
 
+	local model = ply:GetModel() or ""
+	local isCSS = string.find(model, "models/player/ct_") ~= nil or string.find(model, "models/player/t_") ~= nil
+	if not isCSS then return end
+
+	local wep = ply:GetActiveWeapon()
+	local hold = IsValid(wep) and wep:GetHoldType() or "normal"
+
 	local t = {}
-	if ACT_MP_STAND_IDLE then t[ACT_MP_STAND_IDLE] = ACT_IDLE end
-	if ACT_MP_WALK then t[ACT_MP_WALK] = ACT_WALK end
-	if ACT_MP_RUN then t[ACT_MP_RUN] = ACT_RUN end
-	if ACT_MP_CROUCHWALK then t[ACT_MP_CROUCHWALK] = ACT_WALK end
-	if ACT_MP_CROUCH_IDLE then t[ACT_MP_CROUCH_IDLE] = ACT_CROUCHIDLE end
+
+	-- PISTOL / REVOLVER animations for CSS models
+	if hold == "pistol" or hold == "revolver" then
+		local p = (hold == "pistol")
+		if ACT_MP_STAND_IDLE then t[ACT_MP_STAND_IDLE] = p and ACT_HL2MP_IDLE_PISTOL or ACT_HL2MP_IDLE_REVOLVER end
+		if ACT_MP_WALK then t[ACT_MP_WALK] = p and ACT_HL2MP_WALK_PISTOL or ACT_HL2MP_WALK_REVOLVER end
+		if ACT_MP_RUN then t[ACT_MP_RUN] = p and ACT_HL2MP_RUN_PISTOL or ACT_HL2MP_RUN_REVOLVER end
+		if ACT_MP_CROUCH_IDLE then t[ACT_MP_CROUCH_IDLE] = p and ACT_HL2MP_IDLE_CROUCH_PISTOL or ACT_HL2MP_IDLE_CROUCH_REVOLVER end
+		if ACT_MP_CROUCHWALK then t[ACT_MP_CROUCHWALK] = p and ACT_HL2MP_WALK_CROUCH_PISTOL or ACT_HL2MP_WALK_CROUCH_REVOLVER end
+		if ACT_MP_ATTACK_STAND_PRIMARYFIRE then t[ACT_MP_ATTACK_STAND_PRIMARYFIRE] = p and ACT_HL2MP_GESTURE_RANGE_ATTACK_PISTOL or ACT_HL2MP_GESTURE_RANGE_ATTACK_REVOLVER end
+	else
+		if ACT_MP_STAND_IDLE then t[ACT_MP_STAND_IDLE] = ACT_IDLE end
+		if ACT_MP_WALK then t[ACT_MP_WALK] = ACT_WALK end
+		if ACT_MP_RUN then t[ACT_MP_RUN] = ACT_RUN end
+		if ACT_MP_CROUCHWALK then t[ACT_MP_CROUCHWALK] = ACT_WALK end
+		if ACT_MP_CROUCH_IDLE then t[ACT_MP_CROUCH_IDLE] = ACT_CROUCHIDLE end
+	end
+
 	if ACT_MP_JUMP then t[ACT_MP_JUMP] = ACT_HOP end -- CS:S models use ACT_HOP for jumping
 	if ACT_MP_JUMP_START then t[ACT_MP_JUMP_START] = ACT_HOP end
 	if ACT_MP_JUMP_FLOAT then t[ACT_MP_JUMP_FLOAT] = ACT_HOP end
