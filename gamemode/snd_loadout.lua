@@ -267,10 +267,9 @@ net.Receive("SND_ClearLoadoutSlot", function(_, ply)
 end)
 
 -- ── Clear choices between matches (optional — keep across rounds by default) ──
--- Uncomment below if you want choices to reset every round:
--- hook.Add("SND_RoundEnd", "SND_ClearGunPicker", function()
---     SND.Loadout.PlayerChoices = {}
--- end)
+hook.Add("SND_RoundEnd", "SND_ClearGunPicker", function()
+    SND.Loadout.PlayerChoices = {}
+end)
 
 -- ── ConVars ───────────────────────────────────────────────────────────────
 if SERVER then

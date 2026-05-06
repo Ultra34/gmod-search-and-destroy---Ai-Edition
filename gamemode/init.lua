@@ -43,6 +43,7 @@ util.AddNetworkString("SND_SetCallingCard")
 util.AddNetworkString("SND_SetShowTitle")
 util.AddNetworkString("SND_SetTitleMat")
 util.AddNetworkString("SND_SetUseTitleMat")
+util.AddNetworkString("SND_KillFeed")
 util.AddNetworkString("SND_PlayerReady")
 util.AddNetworkString("SND_SelectLoadoutSlot")
 util.AddNetworkString("SND_SyncReadyState")
@@ -260,13 +261,13 @@ end)
 local function performQuickThrow(ply)
 	if ply.SND_IsQuickThrowing then return end
 	local lethal = ply:GetNWString("SND_Lethal", "")
-	if lethal == "" then return end
+	if lethal == "" or not ply:HasWeapon(lethal) then return end
 
 	local current = ply:GetActiveWeapon()
 	if not IsValid(current) or current:GetClass() == lethal then return end
-
+	
+	local oldWepClass = current:GetClass()
 	ply.SND_IsQuickThrowing = true
-	local oldWep = current:GetClass()
 
 	ply:SelectWeapon(lethal)
 
@@ -281,7 +282,7 @@ local function performQuickThrow(ply)
 	-- Switch back to previous weapon after throw animation
 	timer.Simple(1.1, function()
 		if IsValid(ply) and ply:Alive() then
-			ply:SelectWeapon(oldWep)
+			if ply:HasWeapon(oldWepClass) then ply:SelectWeapon(oldWepClass) end
 		end
 		ply.SND_IsQuickThrowing = false
 	end)
@@ -304,4 +305,3 @@ net.Receive("SND_QuickSwitch", function(_, ply)
 		if sec ~= "" then ply:SelectWeapon(sec) end
 	end
 end)
-util.AddNetworkString("SND_KillFeed") -- Add network string for kill feed

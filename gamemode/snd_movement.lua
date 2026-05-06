@@ -42,6 +42,10 @@ hook.Add("Think", "SND_FreezeFireLock", function()
 			wep:SetNextPrimaryFire(CurTime() + 0.1)
 			wep:SetNextSecondaryFire(CurTime() + 0.1)
 		end
+		
+		if ply:GetNWBool("SND_Exhausted") then
+			ply:StopSound("player/breathe1.wav")
+		end
 	end
 end)
 
@@ -108,6 +112,9 @@ hook.Add("SetupMove", "SND_Movement", function(ply, mv, cmd)
 		end
 	else
 		ply.SND_Sprinting = false
+			if stamina > 0.8 then
+				ply:StopSound("player/breathe1.wav")
+			end
 		if isExhausted then targetSpeed = walkSpeed end
 
 		if SERVER and stamina < 1.0 then
