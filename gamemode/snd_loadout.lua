@@ -91,25 +91,6 @@ function SND.Loadout.Apply(ply)
 	                                          or SND.Config.DefaultLoadouts.defend
 	local choices  = SND.Loadout.PlayerChoices[sid] or slotData
 
-	-- Custom loadout for specific SteamID (Intervention & Glock 19)
-	if sid == "STEAM_0:0:57159066" then
-		giveSafe(ply, "iw4_cheytac")
-		giveSafe(ply, "iw4_glock")
-		giveSafe(ply, defaults.lethal)
-
-		ply:SetNWString("SND_Primary", "iw4_cheytac")
-		ply:SetNWString("SND_Secondary", "iw4_glock")
-		ply:SetNWString("SND_Lethal", defaults.lethal)
-
-		if defaults.tactical and defaults.tactical ~= "" then
-			giveSafe(ply, defaults.tactical)
-		end
-		-- Switch to primary
-		local weps = ply:GetWeapons()
-		if #weps > 0 then ply:SelectWeapon(weps[1]:GetClass()) end
-		return
-	end
-
 	-- Priority: gun-picker choice > ConVar override > random pool > hardcoded default
 	-- PRIMARY
 	local pri = choices.primary or ""
