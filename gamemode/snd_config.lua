@@ -110,6 +110,11 @@ SND.Config.DefaultLoadouts = {
 	},
 }
 
+-- ── Loadout Slot Requirements ─────────────────────────────────────────────
+SND.Config.SlotLevels = {
+	1, 1, 5, 10, 15, 20, 25, 30, 40, 50 -- Slots 1-10 requirements
+}
+
 -- ── Bot loadout pools (no snipers / riot shield — keeps AI sane) ──────────
 SND.Config.BotPrimaries = table.Copy(SND.Config.Mw2ePrimaries)
 -- Remove riot shield from bots to prevent AI navigation issues

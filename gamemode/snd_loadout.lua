@@ -10,26 +10,30 @@ SND.Loadout.PlayerChoices = SND.Loadout.PlayerChoices or {}
 util.AddNetworkString("SND_GunPickerOpen")
 util.AddNetworkString("SND_GunPickerChoose")
 util.AddNetworkString("SND_QuickSwitch")
-util.AddNetworkString("SND_SaveLoadout")
+util.AddNetworkString("SND_SaveLoadout") -- Existing, but good to keep here
+util.AddNetworkString("SND_SaveLoadoutName") -- New network string for saving loadout names
 
 -- ── Loadout Persistence ──────────────────────────────────────────────────
 function SND.Loadout.GetSlotData(ply, slot)
 	local prefix = "snd_ld_" .. slot .. "_"
 	return {
 		primary = ply:GetPData(prefix .. "pri", ""),
-		secondary = ply:GetPData(prefix .. "sec", "")
+		secondary = ply:GetPData(prefix .. "sec", ""),
+		loadoutName = ply:GetPData(prefix .. "name", "LOADOUT " .. slot) -- Get loadout name, default to "LOADOUT X"
 	}
 end
 
-function SND.Loadout.SaveSlotData(ply, slot, primary, secondary)
+function SND.Loadout.SaveSlotData(ply, slot, primary, secondary, loadoutName)
 	local prefix = "snd_ld_" .. slot .. "_"
-	if primary then ply:SetPData(prefix .. "pri", primary) end
-	if secondary then ply:SetPData(prefix .. "sec", secondary) end
+	if primary ~= nil then ply:SetPData(prefix .. "pri", primary) end
+	if secondary ~= nil then ply:SetPData(prefix .. "sec", secondary) end
+	if loadoutName ~= nil then ply:SetPData(prefix .. "name", loadoutName) end
 end
 
 -- ── Ready System ──────────────────────────────────────────────────────────
 function SND.Loadout.SetReady(ply, isReady)
 	ply.SND_IsReady = isReady
+	ply:SetNWBool("SND_IsReady", isReady) -- Network for HUD counter
 	net.Start("SND_SyncReadyState")
 		net.WriteEntity(ply)
 		net.WriteBool(isReady)
@@ -174,6 +178,7 @@ function SND.Loadout.OpenPickerForAll()
 					local data = SND.Loadout.GetSlotData(ply, i)
 					net.WriteString(data.primary)
 					net.WriteString(data.secondary)
+					net.WriteString(data.loadoutName) -- Send loadout name
 				end
 			net.Send(ply)
 		end
@@ -207,9 +212,9 @@ net.Receive("SND_GunPickerChoose", function(_, ply)
 	
 	-- Persist immediately
 	if slot == "primary" then
-		SND.Loadout.SaveSlotData(ply, activeSlot, class, nil)
+		SND.Loadout.SaveSlotData(ply, activeSlot, class, nil, nil)
 	else
-		SND.Loadout.SaveSlotData(ply, activeSlot, nil, class)
+		SND.Loadout.SaveSlotData(ply, activeSlot, nil, class, nil)
 	end
 
 	if SND.Round.Phase == SND.PHASE_FREEZE and ply:Alive() then
@@ -224,6 +229,14 @@ end)
 
 net.Receive("SND_SelectLoadoutSlot", function(_, ply)
 	local slot = math.Clamp(net.ReadUInt(4), 1, 10)
+	
+	-- Server-side level validation
+	local req = SND.Config.SlotLevels[slot] or 1
+	if ply:GetNWInt("SND_Level", 1) < req then
+		ply:ChatPrint("[SND] You must be Level " .. req .. " to use this slot!")
+		return
+	end
+
 	ply:SetNWInt("SND_ActiveLoadoutSlot", slot)
 	
 	-- Clear temporary session choice so it loads from the saved slot
@@ -231,6 +244,18 @@ net.Receive("SND_SelectLoadoutSlot", function(_, ply)
 	if SND.Loadout.PlayerChoices[sid] then
 		SND.Loadout.PlayerChoices[sid] = nil
 	end
+	
+	-- Reapply loadout to update client's active weapon if they switch slots during freeze
+	if SND.Round.Phase == SND.PHASE_FREEZE and ply:Alive() then
+		SND.Loadout.Apply(ply)
+	end
+end)
+
+net.Receive("SND_SaveLoadoutName", function(_, ply)
+	local slot = math.Clamp(net.ReadUInt(4), 1, 10)
+	local name = net.ReadString()
+	SND.Loadout.SaveSlotData(ply, slot, nil, nil, name) -- Only update the name
+	ply:ChatPrint("[SND] Loadout " .. slot .. " named: " .. name)
 end)
 
 -- ── Hook: open picker when freeze starts (called from snd_round.lua) ──────

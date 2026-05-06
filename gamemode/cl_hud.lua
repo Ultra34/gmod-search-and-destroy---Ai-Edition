@@ -520,6 +520,32 @@ hook.Add("HUDPaint", "SND_HUD", function()
 
 	-- ── Visual Freeze Effect ──────────────────────────────────────────────
 	local phase = SND.Client.Phase or SND.PHASE_WAIT
+
+	-- ── WAITING FOR PLAYERS COUNTER ───────────────────────────────────────
+	if phase == SND.PHASE_WAIT then
+		local humans = 0
+		local ready = 0
+		for _, p in ipairs(player.GetAll()) do
+			if not p:IsBot() and not p.SND_IsBot then
+				humans = humans + 1
+				if p:GetNWBool("SND_IsReady", false) then ready = ready + 1 end
+			end
+		end
+
+		local waitW, waitH = 300 * sc, 80 * sc
+		local wx, wy = sw * 0.5 - waitW * 0.5, sh * 0.2
+		
+		pill(wx, wy, waitW, waitH, col(0, 0, 0, 180))
+		surface.SetDrawColor(255, 120, 0, 255)
+		surface.DrawRect(wx, wy, waitW, 2 * sc)
+
+		draw.SimpleText("WAITING FOR PLAYERS", "SND_BO3_Header", sw * 0.5, wy + 25 * sc, Color(200, 200, 200), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+		local readyCol = (ready >= humans and humans > 0) and C_GREEN or Color(255, 210, 50)
+		draw.SimpleText(ready .. " / " .. humans .. " READY", "SND_BO3_Score", sw * 0.5, wy + 55 * sc, readyCol, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+		
+		return -- Don't draw scores/timer yet
+	end
+
 	if phase == SND.PHASE_FREEZE then
 		-- Subtle dark grey overlay for better text legibility
 		surface.SetDrawColor(0, 0, 0, 40)
