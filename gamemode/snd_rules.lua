@@ -28,11 +28,3 @@ hook.Add("PlayerSpawn", "SND_StripNoclip", function(ply)
 		ply:SetMoveType(MOVETYPE_WALK)
 	end
 end)
-
--- ── Dropped weapons removed instantly (keeps map clean) ───────────────────
-hook.Add("PlayerDroppedWeapon", "SND_NoWeaponDrop", function(ply, wep)
-	if IsValid(wep) then wep:Remove() end
-end)
-
--- Block the drop console command
-concommand.Add("drop", function() end, nil, nil, FCVAR_CLIENTCMD_CAN_EXECUTE)

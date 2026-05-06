@@ -143,6 +143,14 @@ function GM:PlayerDeath(victim, inflictor, attacker)
 	SND.Round.OnPlayerDeath(victim, attacker)
 	SND.Announcer.OnDeathContext(victim, attacker)
 
+	-- Drop weapons on death (works for bots and players)
+	for _, wep in ipairs(victim:GetWeapons()) do
+		if IsValid(wep) then
+			wep.SND_Dropped = true -- Mark for manual pickup
+			victim:DropWeapon(wep)
+		end
+	end
+
 	if IsValid(attacker) and attacker:IsPlayer() and attacker ~= victim then
 		-- 1. Send Attacker's Identity to Victim (The person who killed you)
 		net.Start("SND_ShowCallingCard")
@@ -212,6 +220,10 @@ end
 
 function GM:PlayerCanPickupWeapon(ply, wep)
 	if SND.Round.Phase ~= SND.PHASE_LIVE and SND.Round.Phase ~= SND.PHASE_FREEZE then
+		return false
+	end
+	-- Block automatic pickup for dropped weapons unless explicitly forced via swap logic
+	if wep.SND_Dropped and not ply.SND_ForcedPickup then
 		return false
 	end
 	return true
@@ -292,6 +304,45 @@ local function performQuickThrow(ply)
 		ply.SND_IsQuickThrowing = false
 	end)
 end
+
+-- ── Weapon Pickup/Swap Logic ──────────────────────────────────────────────
+hook.Add("PlayerButtonDown", "SND_WeaponPickup", function(ply, btn)
+	if btn ~= KEY_E then return end
+	if not IsValid(ply) or not ply:Alive() then return end
+	if SND.Round.Phase ~= SND.PHASE_LIVE and SND.Round.Phase ~= SND.PHASE_FREEZE then return end
+
+	local tr = ply:GetEyeTrace()
+	local ent = tr.Entity
+	-- Allow pickup within 120 units
+	if IsValid(ent) and ent:IsWeapon() and ent.SND_Dropped and tr.StartPos:DistToSqr(tr.HitPos) < 14400 then
+		local class = ent:GetClass()
+		local isPri = table.HasValue(SND.Config.Mw2ePrimaries or {}, class)
+		local isSec = table.HasValue(SND.Config.Mw2eSecondaries or {}, class)
+		
+		if not isPri and not isSec then return end -- Ignore unknown weapon types
+
+		-- Identify current weapon in the corresponding slot to drop it
+		local slotKey = isPri and "SND_Primary" or "SND_Secondary"
+		local currentWep = ply:GetWeapon(ply:GetNWString(slotKey, ""))
+
+		if IsValid(currentWep) then
+			currentWep.SND_Dropped = true
+			ply:DropWeapon(currentWep)
+		end
+
+		-- Enable forced pickup to bypass the standard touch-block
+		ply.SND_ForcedPickup = true
+		ply:PickupWeapon(ent)
+		ply.SND_ForcedPickup = false
+
+		-- Update the Networked String so the inventory HUD and logic remain in sync
+		ply:SetNWString(slotKey, class)
+		
+		-- Select the new weapon immediately
+		ply:SelectWeapon(class)
+		ply:EmitSound("items/ammo_pickup.wav", 65, 100)
+	end
+end)
 
 hook.Add("PlayerButtonDown", "SND_GrenadeKey_SV", function(ply, btn)
 	if btn == KEY_G then

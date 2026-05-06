@@ -111,11 +111,11 @@ local function getGroundPlantPos(ply)
 end
 
 -- ── Bomb prop (frozen, non-moveable) ─────────────────────────────────────
-local function spawnBombProp(pos)
+local function spawnBombProp(pos, isPhysics)
 	if IsValid(SND.Bomb.PropEnt) then SND.Bomb.PropEnt:Remove() end
 
-	-- Use prop_dynamic: no physics simulation → stays exactly where placed
-	local e = ents.Create("prop_dynamic")
+	-- Use prop_physics for dropped bomb, prop_dynamic for planted
+	local e = ents.Create(isPhysics and "prop_physics" or "prop_dynamic")
 	e:SetModel("models/weapons/w_c4.mdl")
 	-- Fallback model if CS:S not mounted
 	if not util.IsValidModel(e:GetModel()) then
@@ -126,10 +126,14 @@ local function spawnBombProp(pos)
 	e:Spawn()
 	e:Activate()
 
+	if isPhysics then
+		e:SetCollisionGroup(COLLISION_GROUP_WEAPON)
+	else
 	-- Make it non-solid to players so they don't get stuck on it,
 	-- but keep it visible
 	e:SetCollisionGroup(COLLISION_GROUP_DEBRIS)
 	e:SetSolid(SOLID_NONE)
+	end
 
 	SND.Bomb.PropEnt = e
 end
@@ -151,7 +155,6 @@ function SND.Bomb.ResetForRound()
 	SND.Bomb.PlantTime   = nil
 	removeBombProp()
 	stopBeepTimer()
-	timer.Remove("SND_ReassignBomb")
 
 	-- Networked clear: Force all clients to reset their carrier index
 	net.Start("SND_Bomb")
@@ -166,6 +169,46 @@ function SND.Bomb.ResetForRound()
 		ply.SND_Defusing = false
 	end
 end
+
+-- ── Drop bomb ─────────────────────────────────────────────────────────────
+function SND.Bomb.Drop(ply)
+	if SND.Bomb.State ~= SND.BOMB_STATE_CARRIED or not IsValid(ply) then return end
+	
+	local pos = ply:GetPos() + Vector(0, 0, 10)
+	SND.Bomb.State = SND.BOMB_STATE_DROPPED
+	SND.Bomb.Carrier = nil
+	
+	spawnBombProp(pos, true)
+	
+	-- Notify clients to clear icons
+	net.Start("SND_Bomb")
+		net.WriteUInt(1, 3)
+		net.WriteInt(-1, 16)
+	net.Broadcast()
+end
+
+-- ── Pickup logic ──────────────────────────────────────────────────────────
+hook.Add("Think", "SND_BombPickupCheck", function()
+	if SND.Bomb.State ~= SND.BOMB_STATE_DROPPED or not IsValid(SND.Bomb.PropEnt) then return end
+	if SND.Round.Phase ~= SND.PHASE_LIVE then return end
+	
+	for _, ply in ipairs(player.GetAll()) do
+		if ply:Alive() and ply:Team() == SND.TEAM_ATTACK and ply:GetPos():DistToSqr(SND.Bomb.PropEnt:GetPos()) < 4096 then
+			SND.Bomb.Carrier = ply
+			SND.Bomb.State = SND.BOMB_STATE_CARRIED
+			removeBombProp()
+			
+			-- Sync new carrier to the attackers
+			net.Start("SND_Bomb")
+				net.WriteUInt(1, 3)
+				net.WriteInt(ply:EntIndex(), 16)
+			net.Send(team.GetPlayers(SND.TEAM_ATTACK))
+			
+			ply:ChatPrint("[SND] You picked up the bomb!")
+			break
+		end
+	end
+end)
 
 -- ── Assign carrier ────────────────────────────────────────────────────────
 function SND.Bomb.AssignCarrier()
@@ -301,7 +344,7 @@ function SND.Bomb.TryPlant(ply)
 			hook.Run("SND_OnBombPlanted", ply)
 
 			-- Spawn locked prop at the exact ground position
-			spawnBombProp(intendedPos)
+			spawnBombProp(intendedPos, false)
 
 			-- Play plant sound at the bomb's location
 			if IsValid(SND.Bomb.PropEnt) then
@@ -408,8 +451,7 @@ end
 -- Reassign bomb if carrier dies (basic fix)
 hook.Add("PlayerDeath", "SND_BombCarrierDeathFix", function(victim)
 	if SND.Bomb.State == SND.BOMB_STATE_CARRIED and victim == SND.Bomb.Carrier then
-		SND.Bomb.Carrier = nil
-		timer.Create("SND_ReassignBomb", 2, 1, function() SND.Bomb.AssignCarrier() end)
+		SND.Bomb.Drop(victim)
 	end
 end)
 

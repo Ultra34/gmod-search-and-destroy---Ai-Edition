@@ -329,6 +329,18 @@ local function drawPlantPrompt(sw, sh, sc, lp)
 	end
 end
 
+-- ── Weapon Pickup Prompt ──────────────────────────────────────────────────
+local function drawWeaponPickupPrompt(sw, sh, sc, lp)
+	local tr = lp:GetEyeTrace()
+	local ent = tr.Entity
+	-- Only show prompt for weapons on the ground (no owner) within reach
+	if IsValid(ent) and ent:IsWeapon() and not IsValid(ent:GetOwner()) and tr.StartPos:DistToSqr(tr.HitPos) < 14400 then
+		local name = ent.GetPrintName and ent:GetPrintName() or ent:GetClass()
+		local alpha = 180 + math.sin(CurTime() * 10) * 75
+		draw.SimpleText("PRESS [E] TO SWAP FOR " .. name:upper(), "Trebuchet24", sw * 0.5, sh * 0.55, Color(255, 255, 255, alpha), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+	end
+end
+
 -- ── Calling Card HUD (MW2 Style) ─────────────────────────────────────────
 local function drawCallingCardPopup(sw, sh, sc)
 	local card = SND.Client.ActiveCallingCard
@@ -520,6 +532,7 @@ hook.Add("HUDPaint", "SND_HUD", function()
 	if lp:Alive() then
 		drawWeaponInventory(sw, sh, sc, lp)
 		drawAmmoCounter(sw, sh, sc, lp)
+		drawWeaponPickupPrompt(sw, sh, sc, lp)
 		drawPlantPrompt(sw, sh, sc, lp)
 	end
 
