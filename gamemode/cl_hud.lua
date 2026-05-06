@@ -491,6 +491,7 @@ hook.Add("HUDPaint", "SND_HUD", function()
 	local cv = GetConVar("snd_hud_scale")
 	local sc = math.Clamp(cv and cv:GetFloat() or 1, 0.75, 1.5)
 	local sw, sh = ScrW(), ScrH()
+	local phase = SND.Client.Phase or SND.PHASE_WAIT
 
 	if lp:Alive() and lp:GetObserverMode() == OBS_MODE_NONE and crosshairVisible then drawCrosshair(sw, sh, sc) end
 
@@ -522,8 +523,56 @@ hook.Add("HUDPaint", "SND_HUD", function()
 		drawPlantPrompt(sw, sh, sc, lp)
 	end
 
-	-- ── Visual Freeze Effect ──────────────────────────────────────────────
-	local phase = SND.Client.Phase or SND.PHASE_WAIT
+	-- ── Bomb Site Markers (Attacker Only) ─────────────────────────────────
+	if lp:Team() == SND.TEAM_ATTACK and (phase == SND.PHASE_LIVE or phase == SND.PHASE_FREEZE) then
+		local bombPlanted = SND.Bomb and SND.Bomb.State == SND.BOMB_STATE_PLANTED
+		local plantedId   = SND.Bomb and SND.Bomb.PlantedSite
+		local plantTime   = SND.Bomb and SND.Bomb.PlantTime
+
+		for _, site in ipairs(SND.Client.Sites or {}) do
+			local col         = SND.GetSiteColor(site.id)
+			local isPlanted   = bombPlanted and plantedId == site.id
+			local labelPos    = site.pos + Vector(0, 0, 90)
+			local dist        = lp:GetPos():Distance(site.pos)
+			local meters      = math.floor(dist / 52.49)
+
+			local sx, sy, vis = labelPos:ToScreen()
+			local isOffscreen = SND.DrawSiteOffscreenArrow(labelPos, col, 1)
+
+			if not isOffscreen then
+				local alpha = math.Clamp(1 - (dist - 2000) / 3000, 0.30, 1) * 255
+				local diamondSize = 28 * sc
+				local pulse = isPlanted and (math.abs(math.sin(CurTime() * 5)) * 0.3 + 0.7) or 1
+				
+				SND.DrawSiteDiamond(sx + 2, sy + 2, diamondSize, Color(0, 0, 0, alpha * 0.5))
+				SND.DrawSiteDiamond(sx, sy, diamondSize, Color(col.r, col.g, col.b, alpha * 0.8 * pulse))
+
+				draw.SimpleText(
+					site.id,
+					"SND_BO3_Score",
+					sx, sy,
+					Color(255, 255, 255, alpha),
+					TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER
+				)
+
+				local distText = meters .. "m"
+				draw.SimpleText(distText, "SND_BO3_Header", sx, sy + diamondSize + 5 * sc, Color(255, 255, 255, alpha), TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
+
+				if isPlanted and plantTime then
+					local remaining = math.max(0, 45 - (CurTime() - plantTime))
+					local timeStr   = string.format("%.1f", remaining)
+					local urgency   = remaining < 10 and Color(255, 60, 40, alpha) or Color(255, 210, 40, alpha)
+					draw.SimpleText(
+						timeStr,
+						"Trebuchet18",
+						sx, sy + 36 * sc,
+						urgency,
+						TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER
+					)
+				end
+			end
+		end
+	end
 
 	-- ── WAITING FOR PLAYERS COUNTER ───────────────────────────────────────
 	if phase == SND.PHASE_WAIT then
