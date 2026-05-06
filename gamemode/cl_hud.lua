@@ -348,8 +348,8 @@ local function drawCallingCardPopup(sw, sh, sc)
 	if age < 0.5 then alpha = (age / 0.5) * 255 
 	elseif age > duration - 0.5 then alpha = ((duration - age) / 0.5) * 255 end
 
-	-- Balanced Banner: 640x160
-	local w, h = 640 * sc, 160 * sc
+	-- Balanced Banner: 512x128
+	local w, h = 512 * sc, 128 * sc
 	local x = sw * 0.5 - w * 0.5
 	
 	-- MW2 Style: Slide up from the absolute bottom center
@@ -375,9 +375,9 @@ local function drawCallingCardPopup(sw, sh, sc)
 	surface.DrawOutlinedRect(x, y, w, h, 2 * sc)
 
 	-- Positioning Anchors
-	local embSize = 130 * sc
-	local embX, embY = x + 15 * sc, y + (h - embSize) * 0.5
-	local textX = x + 160 * sc
+	local embSize = 100 * sc
+	local embX, embY = x + 12 * sc, y + (h - embSize) * 0.5
+	local textX = x + 125 * sc
 
 	-- ── MW2 Title Graphic (Top Strip) ────────────────────────────────────
 	if card.showTitle and card.useTitleMat then 
@@ -399,14 +399,14 @@ local function drawCallingCardPopup(sw, sh, sc)
 
 	-- Custom Title Text (Overlayed on Banner)
 	if card.showTitle and not card.useTitleMat then
-		draw.SimpleText(card.title:upper(), "SND_BO3_Team", textX + 1, y + 40 * sc, Color(0, 0, 0, alpha), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
-		draw.SimpleText(card.title:upper(), "SND_BO3_Team", textX, y + 39 * sc, Color(255, 210, 50, alpha), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+		draw.SimpleText(card.title:upper(), "SND_BO3_Team", textX + 1, y + 36 * sc, Color(0, 0, 0, alpha), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+		draw.SimpleText(card.title:upper(), "SND_BO3_Team", textX, y + 35 * sc, Color(255, 210, 50, alpha), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
     end
 	
 	-- Player Name (Team Colored)
     local tCol = team.GetColor(card.team or 0)
-	draw.SimpleText(card.name:upper(), "SND_BO3_Player", textX + 1, y + 120 * sc, Color(0, 0, 0, alpha), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
-	draw.SimpleText(card.name:upper(), "SND_BO3_Player", textX, y + 119 * sc, Color(tCol.r, tCol.g, tCol.b, alpha), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+	draw.SimpleText(card.name:upper(), "SND_BO3_Player", textX + 1, y + 93 * sc, Color(0, 0, 0, alpha), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+	draw.SimpleText(card.name:upper(), "SND_BO3_Player", textX, y + 92 * sc, Color(tCol.r, tCol.g, tCol.b, alpha), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
 
 	-- Rank Icon (Far Right of banner)
 	local lvl = card.level or 1
@@ -414,7 +414,7 @@ local function drawCallingCardPopup(sw, sh, sc)
 	if icon and not icon:IsError() then -- Check if icon is a valid material
 		surface.SetMaterial(icon) -- Reset material state
 		surface.SetDrawColor(255, 255, 255, alpha)
-		surface.DrawTexturedRect(x + w - 60 * sc, y + h * 0.5 - 20 * sc, 40 * sc, 40 * sc)
+		surface.DrawTexturedRect(x + w - 55 * sc, y + h * 0.5 - 20 * sc, 40 * sc, 40 * sc)
 	end
 
 	if card.emblemMatPath == "steam" and not card.isBot and card.sid64 ~= "0" then
