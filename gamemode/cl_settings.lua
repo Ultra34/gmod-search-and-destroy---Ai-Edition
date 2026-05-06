@@ -73,6 +73,36 @@ function SND.OpenSettingsMenu()
 		end
 		sheet:AddSheet(catName, pnl)
 	end
+
+	-- ── Special Section: Loading URL ──
+	local webPnl = vgui.Create("DPanelList")
+	webPnl:SetPadding(10)
+	webPnl:SetSpacing(10)
+
+	local lbl = vgui.Create("DLabel")
+	lbl:SetText("LOADING SCREEN URL (AUTO-HOSTING)")
+	lbl:SetFont("SND_BO3_Header")
+	lbl:SetTextColor(Color(200, 200, 200))
+	webPnl:AddItem(lbl)
+
+	local urlEntry = vgui.Create("DTextEntry")
+	urlEntry:SetText(SND.Settings.GetString("loading_url", ""))
+	urlEntry:SetPlaceholderText("http://localhost/loading/index.html")
+	webPnl:AddItem(urlEntry)
+
+	local applyBtn = vgui.Create("DButton")
+	applyBtn:SetText("APPLY & SYNC URL")
+	applyBtn:SetTall(30)
+	applyBtn.DoClick = function()
+		net.Start("SND_SetCvar")
+			net.WriteString("snd_loading_url")
+			net.WriteString(urlEntry:GetText())
+		net.SendToServer()
+		surface.PlaySound("buttons/button14.wav")
+	end
+	webPnl:AddItem(applyBtn)
+
+	sheet:AddSheet("Web/URL", webPnl, "icon16/world.png")
 end
 
 function SND.OpenPersonalizationMenu()

@@ -24,11 +24,13 @@ SND.Settings.Defaults = {
 	mapvote_time     = 20,
 	announcer_volume = 1,
 	hud_scale        = 1,
+	loading_url      = "", -- Example: "https://yourdomain.com/loading/index.html"
 }
 
 if SERVER then
 	for k, v in pairs(SND.Settings.Defaults) do
-		CreateConVar("snd_" .. k, tostring(v), { FCVAR_ARCHIVE, FCVAR_REPLICATED, FCVAR_NOTIFY })
+		local flags = (type(v) == "string") and { FCVAR_ARCHIVE } or { FCVAR_ARCHIVE, FCVAR_REPLICATED, FCVAR_NOTIFY }
+		CreateConVar("snd_" .. k, tostring(v), flags)
 	end
 end
 
@@ -41,5 +43,11 @@ end
 function SND.Settings.GetInt(name, fallback)
 	local cv = GetConVar("snd_" .. name)
 	if cv then return cv:GetInt() end
+	return fallback or SND.Settings.Defaults[name]
+end
+
+function SND.Settings.GetString(name, fallback)
+	local cv = GetConVar("snd_" .. name)
+	if cv then return cv:GetString() end
 	return fallback or SND.Settings.Defaults[name]
 end

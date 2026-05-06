@@ -43,7 +43,8 @@ hook.Add("Think", "SND_FreezeFireLock", function()
 			wep:SetNextSecondaryFire(CurTime() + 0.1)
 		end
 		
-		if ply:GetNWBool("SND_Exhausted") then
+		-- Stop breathing sounds if dead or phase ends
+		if not ply:Alive() or phase == SND.PHASE_POST then
 			ply:StopSound("player/breathe1.wav")
 		end
 	end
