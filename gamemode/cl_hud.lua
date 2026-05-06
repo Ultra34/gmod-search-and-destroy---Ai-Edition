@@ -385,7 +385,7 @@ local function drawCallingCardPopup(sw, sh, sc)
 		surface.SetDrawColor(255, 255, 255, alpha)
 		local tMat = card.titleMat
 		if tMat and not (tMat:IsError() and not tostring(card.titleMatPath):match("[.gif|data/]")) then
-			local tW, tH = 512 * sc, 64 * sc -- MW2 Standard Title Strip
+			local tW, tH = 512 * sc, 72 * sc -- Lengthened Title Strip
 			surface.SetMaterial(tMat)
 
 			if not tostring(card.titleMatPath):match("[.gif|data/]") then
@@ -393,7 +393,7 @@ local function drawCallingCardPopup(sw, sh, sc)
 				if frames > 1 then tMat:SetInt("$frame", math.floor(CurTime() * 12) % frames) end
 			end
 
-			surface.DrawTexturedRect(x, y, tW, tH) -- Spans top half
+			surface.DrawTexturedRect(x, y + 2 * sc, tW, tH) -- Repositioned perfectly
 		end
 	end
 
@@ -536,11 +536,12 @@ hook.Add("HUDPaint", "SND_HUD", function()
 			local dist        = lp:GetPos():Distance(site.pos)
 			local meters      = math.floor(dist / 52.49)
 
-			local sx, sy, vis = labelPos:ToScreen()
+			local scr = labelPos:ToScreen()
+			local sx, sy, vis = scr.x, scr.y, scr.visible
 			local isOffscreen = SND.DrawSiteOffscreenArrow(labelPos, col, 1)
 
-			if not isOffscreen then
-				local alpha = math.Clamp(1 - (dist - 2000) / 3000, 0.30, 1) * 255
+			if vis and not isOffscreen then
+				local alpha = math.Clamp(1 - (dist - 2000) / 3000, 0.50, 1) * 255 -- Forced visibility scaling
 				local diamondSize = 28 * sc
 				local pulse = isPlanted and (math.abs(math.sin(CurTime() * 5)) * 0.3 + 0.7) or 1
 				

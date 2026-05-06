@@ -140,12 +140,12 @@ function SND.OpenPersonalizationMenu()
 			local tPath = titleMatEntry and titleMatEntry:GetText() or lp:GetNWString("SND_TitleMat", "vgui/white")
 			local tMat = SND.GetIMaterial(tPath)
 			if tMat and not (tMat:IsError() and not tPath:match("[.gif|data/]")) then
-				local tW, tH = 256 * sc_local, 32 * sc_local
+				local tW, tH = 512 * sc_local, 72 * sc_local -- Matches lengthened HUD graphics
 				local frames = tMat:GetInt("$numframes") or 1
 				if frames > 1 then tMat:SetInt("$frame", math.floor(CurTime() * 12) % frames) end
 				surface.SetMaterial(tMat)
 				surface.SetDrawColor(255, 255, 255)
-				surface.DrawTexturedRect(textX, 36 * sc_local - (tH * 0.5), tW, tH)
+				surface.DrawTexturedRect(0, 2 * sc_local, tW, tH) -- Centered top strip
 			end
 		end
 		

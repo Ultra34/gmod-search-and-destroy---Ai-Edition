@@ -32,7 +32,8 @@ end
 function SND.DrawSiteOffscreenArrow(worldPos, col, alphaMult)
 	local scrW, scrH = ScrW(), ScrH()
 	local cx, cy     = scrW * 0.5, scrH * 0.5
-	local sx, sy, vis = worldPos:ToScreen()
+	local scr = worldPos:ToScreen()
+	local sx, sy, vis = scr.x, scr.y, scr.visible
 
 	if vis and sx >= 0 and sx <= scrW and sy >= 0 and sy <= scrH then
 		return false   -- on screen, no arrow needed
