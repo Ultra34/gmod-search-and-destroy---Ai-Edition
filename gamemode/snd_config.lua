@@ -103,16 +103,16 @@ SND.Config.Mw2eSpecial     = LAUNCHERS   -- wire to pickups / data loadout if wa
 -- ── Default loadouts ──────────────────────────────────────────────────────
 SND.Config.DefaultLoadouts = {
 	attack = {
-		random_primary   = true,
-		random_secondary = true,
+		random_primary   = true, -- Only applies to bots
+		random_secondary = true, -- Only applies to bots
 		primary          = "iw4_m4a1",
 		secondary        = "iw4_deserteagle",
 		lethal           = "weapon_frag",
 		tactical         = "",
 	},
 	defend = {
-		random_primary   = true,
-		random_secondary = true,
+		random_primary   = true, -- Only applies to bots
+		random_secondary = true, -- Only applies to bots
 		primary          = "iw4_ak47",
 		secondary        = "iw4_usp",
 		lethal           = "weapon_frag",

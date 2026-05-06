@@ -47,6 +47,7 @@ util.AddNetworkString("SND_PlayerReady")
 util.AddNetworkString("SND_SelectLoadoutSlot")
 util.AddNetworkString("SND_SyncReadyState")
 util.AddNetworkString("SND_SaveLoadoutName")
+util.AddNetworkString("SND_ClearLoadoutSlot")
 
 DEFINE_BASECLASS("gamemode_base")
 

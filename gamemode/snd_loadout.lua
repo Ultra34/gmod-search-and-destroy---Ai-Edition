@@ -12,6 +12,7 @@ util.AddNetworkString("SND_GunPickerChoose")
 util.AddNetworkString("SND_QuickSwitch")
 util.AddNetworkString("SND_SaveLoadout") -- Existing, but good to keep here
 util.AddNetworkString("SND_SaveLoadoutName") -- New network string for saving loadout names
+util.AddNetworkString("SND_ClearLoadoutSlot") -- New network string for clearing a loadout slot
 
 -- ── Loadout Persistence ──────────────────────────────────────────────────
 function SND.Loadout.GetSlotData(ply, slot)
@@ -100,7 +101,7 @@ function SND.Loadout.Apply(ply)
 	end
 	if pri == "" then
 		local pool = ply.SND_IsBot and SND.Config.BotPrimaries or SND.Config.Mw2ePrimaries
-		if defaults.random_primary and pool and #pool > 0 then
+		if ply.SND_IsBot and defaults.random_primary and pool and #pool > 0 then
 			pri = table.Random(pool)
 		else
 			pri = defaults.primary
@@ -115,7 +116,7 @@ function SND.Loadout.Apply(ply)
 	end
 	if sec == "" then
 		local pool = ply.SND_IsBot and SND.Config.BotSecondaries or SND.Config.Mw2eSecondaries
-		if defaults.random_secondary and pool and #pool > 0 then
+		if ply.SND_IsBot and defaults.random_secondary and pool and #pool > 0 then
 			sec = table.Random(pool)
 		else
 			sec = defaults.secondary
@@ -245,6 +246,24 @@ net.Receive("SND_SaveLoadoutName", function(_, ply)
 	local name = net.ReadString()
 	SND.Loadout.SaveSlotData(ply, slot, nil, nil, name) -- Only update the name
 	ply:ChatPrint("[SND] Loadout " .. slot .. " named: " .. name)
+end)
+
+net.Receive("SND_ClearLoadoutSlot", function(_, ply)
+	local slot = math.Clamp(net.ReadUInt(4), 1, 10)
+	
+	local defaults = (ply:Team() == SND.TEAM_ATTACK) and SND.Config.DefaultLoadouts.attack
+	                                          or SND.Config.DefaultLoadouts.defend
+	
+	-- Reset to default primary/secondary and default name
+	SND.Loadout.SaveSlotData(ply, slot, defaults.primary, defaults.secondary, "LOADOUT " .. slot)
+	
+	-- If the cleared slot is the active one, update the player's weapons and client UI
+	if ply:GetNWInt("SND_ActiveLoadoutSlot", 1) == slot then
+		SND.Loadout.PlayerChoices[ply:SteamID()] = nil -- Clear session choice to force reload from PData
+		SND.Loadout.Apply(ply)
+		SND.Loadout.SendLoadoutData(ply) -- Resend data to update client UI
+	end
+	ply:ChatPrint("[SND] Loadout " .. slot .. " reset to defaults.")
 end)
 
 -- ── Clear choices between matches (optional — keep across rounds by default) ──

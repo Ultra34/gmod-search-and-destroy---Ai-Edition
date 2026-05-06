@@ -149,6 +149,24 @@ function SND.GunPicker.Open()
 			rebuildContent() -- Refresh sidebar buttons to show new name
 		end
 
+		-- Clear Slot Button
+		local clearSlotButton = vgui.Create("DButton", nameEditorPanel)
+		clearSlotButton:SetText("CLEAR SLOT")
+		clearSlotButton:SetFont("SND_BO3_Header")
+		clearSlotButton:SetTextColor(Color(255, 255, 255))
+		clearSlotButton:SetPos(320, 25)
+		clearSlotButton:SetSize(100, 25)
+		clearSlotButton.Paint = function(self, w, h)
+			draw.RoundedBox(0, 0, 0, w, h, self:IsHovered() and Color(150, 50, 50, 150) or Color(120, 40, 40, 100))
+		end
+		clearSlotButton.DoClick = function()
+			local slot = LocalPlayer():GetNWInt("SND_ActiveLoadoutSlot", 1)
+			net.Start("SND_ClearLoadoutSlot")
+				net.WriteUInt(slot, 4)
+			net.SendToServer()
+			surface.PlaySound("buttons/button19.wav") -- Error/cancel sound
+		end
+
 		local activeSlot = LocalPlayer():GetNWInt("SND_ActiveLoadoutSlot", 1)
 		local data = SND.GunPicker.Slots[activeSlot] or { primary = "", secondary = "", loadoutName = "LOADOUT " .. activeSlot }
 		loadoutNameEntry:SetText(data.loadoutName)
