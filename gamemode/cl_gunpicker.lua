@@ -101,55 +101,53 @@ function SND.GunPicker.Open()
 	content:DockMargin(5, 60, 10, 10) -- Adjusted margin for title and bottom buttons
 	content.Paint = nil
 
-	-- Loadout Name Editor
-	local nameEditorPanel = vgui.Create("DPanel", content)
-	nameEditorPanel:SetTall(60)
-	nameEditorPanel:Dock(TOP)
-	nameEditorPanel:DockMargin(0, 0, 0, 10)
-	nameEditorPanel.Paint = nil
-
-	local nameLabel = vgui.Create("DLabel", nameEditorPanel)
-	nameLabel:SetText("LOADOUT NAME:")
-	nameLabel:SetFont("SND_BO3_Header")
-	nameLabel:SetTextColor(Color(200, 200, 200))
-	nameLabel:SetPos(0, 0)
-	nameLabel:SetSize(120, 20)
-
-	loadoutNameEntry = vgui.Create("DTextEntry", nameEditorPanel)
-	loadoutNameEntry:SetPos(0, 25)
-	loadoutNameEntry:SetWide(200)
-	loadoutNameEntry:SetTall(25)
-	loadoutNameEntry:SetPlaceholderText("Enter loadout name...")
-	loadoutNameEntry:SetFont("DermaDefault")
-
-	saveNameButton = vgui.Create("DButton", nameEditorPanel)
-	saveNameButton:SetText("SAVE NAME")
-	saveNameButton:SetFont("SND_BO3_Header")
-	saveNameButton:SetTextColor(Color(255, 255, 255))
-	saveNameButton:SetPos(210, 25)
-	saveNameButton:SetSize(100, 25)
-	saveNameButton.Paint = function(self, w, h)
-		draw.RoundedBox(0, 0, 0, w, h, self:IsHovered() and Color(255, 120, 0, 150) or Color(255, 120, 0, 100))
-	end
-	saveNameButton.DoClick = function()
-		local slot = LocalPlayer():GetNWInt("SND_ActiveLoadoutSlot", 1)
-		net.Start("SND_SaveLoadoutName")
-			net.WriteUInt(slot, 4)
-			net.WriteString(loadoutNameEntry:GetText())
-		net.SendToServer()
-		surface.PlaySound("buttons/button14.wav")
-		SND.GunPicker.Slots[slot].loadoutName = loadoutNameEntry:GetText() -- Update client-side cache
-		rebuildContent() -- Refresh sidebar buttons to show new name
-	end
-
 	local function rebuildContent()
 		content:Clear() -- Clear existing content to rebuild
 		
-		-- Re-add the name editor panel and its children
-		nameEditorPanel:SetParent(content)
-		nameLabel:SetParent(nameEditorPanel)
-		loadoutNameEntry:SetParent(nameEditorPanel)
-		saveNameButton:SetParent(nameEditorPanel)
+		-- Create Loadout Name Editor
+		local nameEditorPanel = vgui.Create("DPanel", content)
+		nameEditorPanel:SetTall(60)
+		nameEditorPanel:Dock(TOP)
+		nameEditorPanel:DockMargin(0, 0, 0, 10)
+		nameEditorPanel.Paint = nil
+
+		local nameLabel = vgui.Create("DLabel", nameEditorPanel)
+		nameLabel:SetText("LOADOUT NAME:")
+		nameLabel:SetFont("SND_BO3_Header")
+		nameLabel:SetTextColor(Color(200, 200, 200))
+		nameLabel:SetPos(0, 0)
+		nameLabel:SetSize(120, 20)
+
+		loadoutNameEntry = vgui.Create("DTextEntry", nameEditorPanel)
+		loadoutNameEntry:SetPos(0, 25)
+		loadoutNameEntry:SetWide(200)
+		loadoutNameEntry:SetTall(25)
+		loadoutNameEntry:SetPlaceholderText("Enter loadout name...")
+		loadoutNameEntry:SetFont("DermaDefault")
+
+		saveNameButton = vgui.Create("DButton", nameEditorPanel)
+		saveNameButton:SetText("SAVE NAME")
+		saveNameButton:SetFont("SND_BO3_Header")
+		saveNameButton:SetTextColor(Color(255, 255, 255))
+		saveNameButton:SetPos(210, 25)
+		saveNameButton:SetSize(100, 25)
+		saveNameButton.Paint = function(self, w, h)
+			draw.RoundedBox(0, 0, 0, w, h, self:IsHovered() and Color(255, 120, 0, 150) or Color(255, 120, 0, 100))
+		end
+		saveNameButton.DoClick = function()
+			local slot = LocalPlayer():GetNWInt("SND_ActiveLoadoutSlot", 1)
+			net.Start("SND_SaveLoadoutName")
+				net.WriteUInt(slot, 4)
+				net.WriteString(loadoutNameEntry:GetText())
+			net.SendToServer()
+			surface.PlaySound("buttons/button14.wav")
+			
+			-- Ensure the cache table exists before updating
+			SND.GunPicker.Slots[slot] = SND.GunPicker.Slots[slot] or {}
+			SND.GunPicker.Slots[slot].loadoutName = loadoutNameEntry:GetText()
+			
+			rebuildContent() -- Refresh sidebar buttons to show new name
+		end
 
 		local activeSlot = LocalPlayer():GetNWInt("SND_ActiveLoadoutSlot", 1)
 		local data = SND.GunPicker.Slots[activeSlot] or { primary = "", secondary = "", loadoutName = "LOADOUT " .. activeSlot }
