@@ -44,6 +44,10 @@ hook.Add("PlayerButtonDown", "SND_CrosshairToggle", function(ply, btn)
 	-- Prevent toggling while in menus, console, or if the cursor is visible
 	if gui.IsGameUIVisible() or gui.IsConsoleVisible() or vgui.CursorVisible() then return end
 
+	-- Block right-click interaction during freeze phase
+	local phase = SND.Client and SND.Client.Phase or SND.PHASE_WAIT
+	if phase == SND.PHASE_FREEZE then return end
+
 	if btn == MOUSE_RIGHT then
 		crosshairVisible = not crosshairVisible
 	end

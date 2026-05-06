@@ -35,8 +35,9 @@ local function siteColor(site)
 end
 
 -- ── Ground ring (drawn in 3D) ─────────────────────────────────────────────
-local function drawRing(pos, radius, col, segments)
+local function drawRing(pos, radius, col, segments, alphaMult)
 	segments = segments or 32
+	alphaMult = alphaMult or 1
 	local step = (math.pi * 2) / segments
 	local pts  = {}
 	for i = 0, segments do
@@ -44,7 +45,7 @@ local function drawRing(pos, radius, col, segments)
 		pts[i+1] = pos + Vector(math.cos(a) * radius, math.sin(a) * radius, 2)
 	end
 	for i = 1, segments do
-		local c = Color(col.r, col.g, col.b, 80)
+		local c = Color(col.r, col.g, col.b, 80 * alphaMult)
 		render.DrawLine(pts[i], pts[i+1], c, true)
 	end
 end
@@ -95,12 +96,31 @@ hook.Add("PostDrawTranslucentRenderables", "SND_SiteMarkers", function()
 	local bombPlanted = SND.Bomb and SND.Bomb.State == SND.BOMB_STATE_PLANTED
 	local plantedId   = SND.Bomb and SND.Bomb.PlantedSite
 
+	local startTime = SND.Client and SND.Client.PhaseStartTime or 0
+	local showDuration = 7   -- Seconds to show sites at full opacity
+	local fadeDuration = 1.5 -- Seconds to fade out
+
+	local proximityRadius = 800 -- Distance to make site show up again
+	local proximityFade   = 200 -- Distance to fade in when approaching
+
 	for _, site in ipairs(SND.Client.Sites) do
 		local col     = siteColor(site)
 		local isThisBombSite = bombPlanted and plantedId == site.id
+		local dist = lp:GetPos():Distance(site.pos)
+
+		-- Smooth time-based fade
+		local timeAlpha = 1 - math.Clamp((CurTime() - (startTime + showDuration)) / fadeDuration, 0, 1)
+		
+		-- Proximity-based visibility
+		local proximityAlpha = 1 - math.Clamp((dist - proximityRadius) / proximityFade, 0, 1)
+
+		local visibility = isThisBombSite and 1 or math.max(timeAlpha, proximityAlpha)
+
+		-- If invisible, skip
+		if visibility <= 0 then continue end
 
 		-- Ground ring (always visible, faint)
-		drawRing(site.pos, site.radius, col, 40)
+		drawRing(site.pos, site.radius, col, 40, visibility)
 
 		-- Pulsing planted ring
 		if isThisBombSite then
@@ -140,8 +160,7 @@ hook.Add("HUDPaint", "SND_SiteHUD", function()
 
 		if not offscreen then
 			-- Distance fade: fully visible up to 2000 units, fades to 30% at 5000
-			local dist   = lp:GetPos():Distance(site.pos)
-			local alpha  = math.Clamp(1 - (dist - 2000) / 3000, 0.30, 1) * 255
+			local alpha  = math.Clamp(1 - (dist - 2000) / 3000, 0.30, 1) * 255 * visibility
 
 			-- Outer dark pill background
 			local txtW, txtH = 52, 36

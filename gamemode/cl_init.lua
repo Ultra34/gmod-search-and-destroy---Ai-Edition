@@ -18,8 +18,17 @@ SND.Bomb = SND.Bomb or {}
 SND.Round.RoundTimerEnd = 0
 SND.Client.HalftimeTime = -1
 
+local MAT_BOMB = Material("vgui/hud/weapon_c4", "smooth mips")
+-- Fallback if CS:S is not mounted
+if MAT_BOMB:IsError() then
+	MAT_BOMB = Material("icon16/bomb.png")
+end
+
 net.Receive("SND_RoundState", function()
 	local phase = net.ReadUInt(3)
+	if SND.Client.Phase ~= phase then
+		SND.Client.PhaseStartTime = CurTime()
+	end
 	SND.Client.Phase = phase
 	SND.Client.Winner = net.ReadUInt(4)
 	SND.Client.AttackScore = net.ReadUInt(8)
