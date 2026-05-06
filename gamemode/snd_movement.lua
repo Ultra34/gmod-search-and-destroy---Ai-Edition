@@ -5,6 +5,9 @@ AddCSLuaFile()
 
 SND.Movement = SND.Movement or {}
 
+-- Fallback for environments where IN_CONTEXT_MENU is not defined (added in GMod March 2023)
+local IN_CONTEXT_MENU = IN_CONTEXT_MENU or 67108864
+
 function SND.Movement.Setup(ply)
 	ply.SND_Sprinting = false
 end
