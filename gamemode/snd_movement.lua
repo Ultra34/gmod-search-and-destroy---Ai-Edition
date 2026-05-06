@@ -100,6 +100,7 @@ hook.Add("SetupMove", "SND_Movement", function(ply, mv, cmd)
 			ply:SetNWFloat("SND_Stamina", nextStam)
 			if nextStam <= 0 then
 				ply:SetNWBool("SND_Exhausted", true)
+				ply:EmitSound("player/breathe1.wav", 50, 100, 0.4)
 			end
 		end
 	else
@@ -113,12 +114,6 @@ hook.Add("SetupMove", "SND_Movement", function(ply, mv, cmd)
 			ply:SetNWFloat("SND_Stamina", nextStam)
 			if nextStam > 0.25 then ply:SetNWBool("SND_Exhausted", false) end
 		end
-	end
-
-	-- ── Unified Exhaustion Sound ──────────────────────────────────────────
-	if SERVER and ply:GetNWFloat("SND_Stamina", 1.0) <= 0 and not isExhausted then
-		-- Only play if we weren't already exhausted (transition point)
-		ply:EmitSound("player/breathe1.wav", 50, 100, 0.4)
 	end
 
 	-- Apply Jump Penalty (prevents bunny hopping)

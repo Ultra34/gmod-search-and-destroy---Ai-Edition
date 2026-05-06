@@ -18,12 +18,6 @@ SND.Bomb = SND.Bomb or {}
 SND.Round.RoundTimerEnd = 0
 SND.Client.HalftimeTime = -1
 
-local MAT_BOMB = Material("vgui/hud/weapon_c4", "smooth mips")
--- Fallback if CS:S is not mounted
-if MAT_BOMB:IsError() then -- If CS:S C4 model is not available
-	MAT_BOMB = Material("icon16/bomb.png") -- Use a generic bomb icon
-end
-
 net.Receive("SND_RoundState", function()
 	local phase = net.ReadUInt(3)
 	SND.Client.Phase = phase

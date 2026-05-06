@@ -109,8 +109,8 @@ end
 local MAT_WHITE = Material("vgui/white")
 local MAT_BOMB  = Material("vgui/hud/weapon_c4", "smooth mips")
 -- Fallback if CS:S is not mounted
-if MAT_BOMB:IsError() then
-	MAT_BOMB = Material("vgui/white")
+if MAT_BOMB:IsError() then -- If CS:S C4 model is not available
+	MAT_BOMB = Material("icon16/bomb.png") -- Use a generic bomb icon
 end
 
 -- ── Calling Card State ────────────────────────────────────────────────────
