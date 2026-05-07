@@ -537,7 +537,8 @@ hook.Add("HUDPaint", "SND_HUD", function()
 	end
 
 	-- ── Bomb Site Markers (Attacker Only) ─────────────────────────────────
-	if lp:Team() == SND.TEAM_ATTACK and (phase == SND.PHASE_LIVE or phase == SND.PHASE_FREEZE) then
+	local debugMode = GetConVar("snd_debug_mode"):GetBool()
+	if (lp:Team() == SND.TEAM_ATTACK or debugMode) and (phase == SND.PHASE_LIVE or phase == SND.PHASE_FREEZE or phase == SND.PHASE_DEBUG) then
 		for _, site in ipairs(SND.Client.Sites or {}) do
 			local col = SND.GetSiteColor(site.id)
 			local labelPos = site.pos + Vector(0, 0, 95)
@@ -602,41 +603,50 @@ hook.Add("HUDPaint", "SND_HUD", function()
 
 	-- ── Phase label ───────────────────────────────────────────────────────
 	local phaseStr = "WAITING"
+	local phaseCol = C_DIM
 	if phase == SND.PHASE_FREEZE then phaseStr = "GET READY"
 	elseif phase == SND.PHASE_LIVE  then phaseStr = "LIVE"
 	elseif phase == SND.PHASE_POST  then phaseStr = "ROUND END"
-	elseif phase == SND.PHASE_DEBUG then phaseStr = "DEBUG MODE"
+	elseif phase == SND.PHASE_DEBUG then 
+		phaseStr = "DEBUG MODE"
+		phaseCol = Color(180, 50, 255) -- Purple
 	end
 
 	draw.SimpleText(
 		phaseStr, "Trebuchet18",
 		sx + scoreW * 0.5, sy + scoreH + 6 * sc,
-		C_DIM, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP
+		phaseCol, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP
 	)
 
 	-- ── Central Timer (Match & Bomb) ─────────────────────────────────────
-	if phase == SND.PHASE_LIVE or phase == SND.PHASE_FREEZE then
+	if phase == SND.PHASE_LIVE or phase == SND.PHASE_FREEZE or phase == SND.PHASE_DEBUG then
 		local timerVal = math.max(0, (SND.Round.RoundTimerEnd or 0) - CurTime())
 		local timerCol = C_WHITE
 		local isBomb = false
+		local timerText = ""
 
-		-- Bomb timer takes priority over the round timer once planted
-		if SND.Bomb and SND.Bomb.State == SND.BOMB_STATE_PLANTED and SND.Bomb.PlantTime then
-			local fuse = SND.Settings.Get("bomb_fuse_time", 45)
-			timerVal = math.max(0, fuse - (CurTime() - SND.Bomb.PlantTime))
-			timerCol = C_BOMB
-			isBomb = true
-			
-			-- Pulse red when detonation is imminent (under 10s)
-			if timerVal < 10 then
-				local p = math.abs(math.sin(CurTime() * 10))
-				timerCol = col(255, 60 + 195 * p, 40 + 215 * p)
+		if phase == SND.PHASE_DEBUG then
+			timerText = "PAUSED"
+			timerCol = Color(180, 50, 255)
+		else
+			-- Bomb timer takes priority over the round timer once planted
+			if SND.Bomb and SND.Bomb.State == SND.BOMB_STATE_PLANTED and SND.Bomb.PlantTime then
+				local fuse = SND.Settings.Get("bomb_fuse_time", 45)
+				timerVal = math.max(0, fuse - (CurTime() - SND.Bomb.PlantTime))
+				timerCol = C_BOMB
+				isBomb = true
+				
+				-- Pulse red when detonation is imminent (under 10s)
+				if timerVal < 10 then
+					local p = math.abs(math.sin(CurTime() * 10))
+					timerCol = col(255, 60 + 195 * p, 40 + 215 * p)
+				end
 			end
-		end
 
-		local m = math.floor(timerVal / 60)
-		local s = math.floor(timerVal % 60)
-		local timerText = (isBomb and timerVal < 10) and string.format("%.1f", timerVal) or string.format("%02d:%02d", m, s)
+			local m = math.floor(timerVal / 60)
+			local s = math.floor(timerVal % 60)
+			timerText = (isBomb and timerVal < 10) and string.format("%.1f", timerVal) or string.format("%02d:%02d", m, s)
+		end
 
 		surface.SetFont("DermaLarge")
 		local tw, th = surface.GetTextSize(timerText)

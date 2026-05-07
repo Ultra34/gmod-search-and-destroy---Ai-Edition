@@ -53,7 +53,9 @@ hook.Add("InitPostEntity", "SND_SendSitesOnLoad", function()
 end)
 
 hook.Add("Think", "SND_SiteDebugDraw", function()
-	if SND.Settings.GetInt("debug_mode", 0) == 0 then return end
+	local debugMode = SND.Settings.GetInt("debug_mode", 0) == 1
+	local debugPhase = SND.Round and SND.Round.Phase == SND.PHASE_DEBUG
+	if not debugMode and not debugPhase then return end
 	local sites = SND.Config.MapSites[game.GetMap()]
 	if not sites then return end
 

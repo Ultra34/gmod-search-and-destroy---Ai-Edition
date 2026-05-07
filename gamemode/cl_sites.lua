@@ -76,10 +76,14 @@ end
 -- ── 3D2D World Markers ───────────────────────────────────────────────────
 hook.Add("PostDrawTranslucentRenderables", "SND_Site3D2D", function()
 	local lp = LocalPlayer()
-	if not IsValid(lp) or lp:Team() ~= SND.TEAM_ATTACK then return end
+	if not IsValid(lp) then return end
 
 	local phase = SND.Client and SND.Client.Phase or SND.PHASE_WAIT
-	if phase ~= SND.PHASE_LIVE and phase ~= SND.PHASE_FREEZE then return end
+	local debugMode = GetConVar("snd_debug_mode"):GetBool()
+
+	-- Show for Attackers normally, or everyone in Debug Mode
+	if lp:Team() ~= SND.TEAM_ATTACK and not debugMode then return end
+	if phase ~= SND.PHASE_LIVE and phase ~= SND.PHASE_FREEZE and phase ~= SND.PHASE_DEBUG then return end
 
 	local sites = SND.Client.Sites or {}
 	if #sites == 0 then return end
@@ -122,5 +126,21 @@ hook.Add("PostDrawTranslucentRenderables", "SND_Site3D2D", function()
 			
 			render.OverrideDepthEnable(false, false)
 		cam.End3D2D()
+
+		-- Draw the defuse radius ring in world-space during Debug Mode
+		if debugMode then
+			local radius = site.radius or 120
+			render.SetColorMaterial()
+			
+			-- Draw a ground circle
+			local segments = 32
+			local lastPos = site.pos + Vector(radius, 0, 0)
+			for i = 1, segments do
+				local ang = (i / segments) * math.pi * 2
+				local nextPos = site.pos + Vector(math.cos(ang) * radius, math.sin(ang) * radius, 0)
+				render.DrawLine(lastPos + Vector(0,0,5), nextPos + Vector(0,0,5), Color(255, 255, 0), true)
+				lastPos = nextPos
+			end
+		end
 	end
 end)
