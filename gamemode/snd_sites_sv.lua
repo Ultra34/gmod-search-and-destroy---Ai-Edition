@@ -52,6 +52,16 @@ hook.Add("InitPostEntity", "SND_SendSitesOnLoad", function()
 	timer.Simple(2, function() broadcastSites() end)
 end)
 
+hook.Add("Think", "SND_SiteDebugDraw", function()
+	if SND.Settings.GetInt("debug_mode", 0) == 0 then return end
+	local sites = SND.Config.MapSites[game.GetMap()]
+	if not sites then return end
+
+	for _, s in ipairs(sites) do
+		debugoverlay.Sphere(s.plantPos, s.defuseRadius or 120, 0.1, Color(255, 255, 0, 255), true)
+	end
+end)
+
 -- ── Manual Site Management ──────────────────────────────────────────────
 local function saveMapData(map, data)
 	file.CreateDir("snd_mwclassic/maps")

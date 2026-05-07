@@ -69,6 +69,23 @@ function SND.Spawns.Apply(ply)
 	end
 end
 
+-- ── Debug Visualization ──────────────────────────────────────────────────
+hook.Add("Think", "SND_SpawnDebugDraw", function()
+	if SND.Settings.GetInt("debug_mode", 0) == 0 then return end
+	local map = game.GetMap()
+	local data = SND.Config.MapSpawns[map]
+	if not data then return end
+
+	-- Draw Attack Spawns (Red)
+	for _, s in ipairs(data.attack or {}) do
+		debugoverlay.Box(s.pos, Vector(-16,-16,0), Vector(16,16,72), 0.1, Color(255, 0, 0, 255), true)
+	end
+	-- Draw Defend Spawns (Blue)
+	for _, s in ipairs(data.defend or {}) do
+		debugoverlay.Box(s.pos, Vector(-16,-16,0), Vector(16,16,72), 0.1, Color(0, 0, 255, 255), true)
+	end
+end)
+
 -- ── Manual Spawn Management ──────────────────────────────────────────────
 local function saveMapData(map, data)
 	file.CreateDir("snd_mwclassic/maps")
@@ -125,4 +142,31 @@ concommand.Add("snd_spawn_clear", function(ply)
 	SND.Config.MapSpawns[map] = { attack = {}, defend = {} }
 	saveMapData(map, { sites = SND.Config.MapSites[map], spawns = SND.Config.MapSpawns[map] })
 	ply:ChatPrint("[SND] Cleared all custom spawns for " .. map)
+end)
+
+concommand.Add("snd_spawn_remove_nearest", function(ply)
+	if IsValid(ply) and not ply:IsSuperAdmin() then return end
+	local map = game.GetMap()
+	local spawns = SND.Config.MapSpawns[map]
+	if not spawns then return end
+
+	local pos = ply:GetPos()
+	local best, bestDist, bestTeam, bestIdx
+
+	for _, teamKey in ipairs({"attack", "defend"}) do
+		for i, s in ipairs(spawns[teamKey] or {}) do
+			local d = pos:DistToSqr(s.pos)
+			if not bestDist or d < bestDist then
+				bestDist, bestTeam, bestIdx = d, teamKey, i
+			end
+		end
+	end
+
+	if bestIdx and math.sqrt(bestDist) < 200 then
+		table.remove(SND.Config.MapSpawns[map][bestTeam], bestIdx)
+		saveMapData(map, { sites = SND.Config.MapSites[map], spawns = SND.Config.MapSpawns[map] })
+		ply:ChatPrint("[SND] Removed nearest " .. bestTeam .. " spawn.")
+	else
+		ply:ChatPrint("[SND] No spawn point close enough to remove.")
+	end
 end)
