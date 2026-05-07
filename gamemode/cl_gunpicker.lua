@@ -37,28 +37,28 @@ local DISPLAY_NAMES = {
 	["iw3_miniuzi"] = "Mini-Uzi (Classic)",
 	["iw3_ak74u"] = "AK-74u",
 
-	-- ARC9 MW2 primaries
-	["arc9_mw2e_acr"]         = "ACR 6.8",
-	["arc9_mw2e_ak47"]        = "AK-47",
-	["arc9_mw2e_f2000"]       = "F2000",
-	["arc9_mw2e_fnfal"]       = "FN FAL",
-	["arc9_mw2e_famas"]       = "FAMAS",
-	["arc9_mw2e_m16a4"]       = "M16A4",
-	["arc9_mw2e_m4a1"]        = "M4A1",
-	["arc9_mw2e_scarh"]       = "SCAR-H",
-	["arc9_mw2e_tavor"]       = "TAVOR",
-	["arc9_mw2e_aug"]         = "AUG",
-	["arc9_mw2e_m240"]        = "M240",
-	["arc9_mw2e_mg4"]         = "MG4",
-	["arc9_mw2e_m1014"]       = "M1014",
-	["arc9_mw3e_m1887"]       = "Model 1887",
-	["arc9_mw2e_akimbo_1887"] = "Akimbo 1887",
-	["arc9_mw2e_ranger"]      = "W1200 Ranger",
-	["arc9_mw2e_spas12"]      = "SPAS-12",
-	["arc9_mw2e_cheytac"]     = "CheyTac M200",
-	["arc9_mw2e_mp5k"]        = "MP5K",
-	["arc9_mw2e_pp2000"]      = "PP-2000",
-	["arc9_mw2e_vector"]      = "KRISS Vector",
+	-- MW2 primaries (TFA)
+	["iw4_acr"]         = "ACR 6.8",
+	["iw4_ak47"]        = "AK-47",
+	["iw4_f2000"]       = "F2000",
+	["iw4_fal"]         = "FN FAL",
+	["iw4_famas"]       = "FAMAS",
+	["iw4_m16a4"]       = "M16A4",
+	["iw4_m4a1"]        = "M4A1",
+	["iw4_scar"]        = "SCAR-H",
+	["iw4_tavor"]       = "TAVOR",
+	["iw4_aug"]         = "AUG",
+	["iw4_m240"]        = "M240",
+	["iw4_mg4"]         = "MG4",
+	["iw4_m1014"]       = "M1014",
+	["iw4_1887"]        = "Model 1887",
+	["iw4_akimbo_1887"] = "Akimbo 1887",
+	["iw4_ranger"]      = "W1200 Ranger",
+	["iw4_spas12"]      = "SPAS-12",
+	["iw4_cheytac"]     = "CheyTac M200",
+	["iw4_mp5"]         = "MP5K",
+	["iw4_pp2000"]      = "PP-2000",
+	["iw4_vector"]      = "KRISS Vector",
 
 	-- MW3 IW5
 	["iw5_acr"] = "ACR 6.8 (MW3)",
@@ -108,9 +108,9 @@ local DISPLAY_NAMES = {
 	["iw5_pp90m1"] = "PP90M1",
 	["iw5_riotshield"] = "Riot Shield (MW3)",
 
-	["arc9_mw2e_g17"]         = "Glock 17",
-	["arc9_mw2e_mk23"]        = "MK23 SOCOM",
-	["arc9_mw2e_m93r"]        = "Beretta 93R",
+	["iw4_glock"]         = "Glock 17",
+	["iw4_usp"]           = "USP .45",
+	["iw4_raffica"]       = "Beretta 93R",
 }
 
 -- Helper to get the world model for a weapon class
@@ -310,10 +310,14 @@ function SND.GunPicker.Open()
 						local textX = 0
 						
 						if iconMat and not iconMat:IsError() then
+							local iW, iH = iconMat:GetInternalTexture():Width(), iconMat:GetInternalTexture():Height()
+							local ratio = iW / iH
+							local drawW = h * ratio -- Automatically scale width to maintain aspect ratio
+
 							surface.SetMaterial(iconMat)
 							surface.SetDrawColor(255, 255, 255, 255)
-							surface.DrawTexturedRect(0, 0, h, h)
-							textX = h + 10
+							surface.DrawTexturedRect(0, 0, drawW, h)
+							textX = drawW + 15
 						end
 						
 						draw.SimpleText(gameName:upper(), "SND_BO3_Title", textX, h/2, Color(255, 120, 0), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)

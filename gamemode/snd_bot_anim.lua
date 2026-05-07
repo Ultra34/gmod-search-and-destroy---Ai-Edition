@@ -184,4 +184,5 @@ if SERVER then
 			end)
 		end)
 	end)
+-- When a bot spawns with a TFA weapon the worldmodel (3rd-person visible gun)
 end
