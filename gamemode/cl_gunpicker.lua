@@ -36,6 +36,8 @@ local DISPLAY_NAMES = {
 	["iw3_mp5"] = "MP5 (Classic)",
 	["iw3_miniuzi"] = "Mini-Uzi (Classic)",
 	["iw3_ak74u"] = "AK-74u",
+	["iw3_at4"] = "AT4 (Classic)",
+	["iw3_rpg"] = "RPG-7 (Classic)",
 
 	-- MW2 primaries (TFA)
 	["iw4_acr"]         = "ACR 6.8",
@@ -48,17 +50,27 @@ local DISPLAY_NAMES = {
 	["iw4_scar"]        = "SCAR-H",
 	["iw4_tavor"]       = "TAVOR",
 	["iw4_aug"]         = "AUG",
+	["iw4_rpd"]         = "RPD",
 	["iw4_m240"]        = "M240",
 	["iw4_mg4"]         = "MG4",
+	["iw4_sa80"]        = "L86 LSW",
+	["iw4_miniuzi"]     = "Mini-Uzi",
+	["iw4_ump45"]       = "UMP45",
+	["iw4_tmp"]         = "TMP",
 	["iw4_m1014"]       = "M1014",
 	["iw4_1887"]        = "Model 1887",
 	["iw4_akimbo_1887"] = "Akimbo 1887",
 	["iw4_ranger"]      = "W1200 Ranger",
 	["iw4_spas12"]      = "SPAS-12",
+	["iw4_striker"]     = "Striker",
 	["iw4_cheytac"]     = "CheyTac M200",
+	["iw4_dragunov"]    = "SVD Dragunov",
+	["iw4_m14ebr"]      = "M14 EBR",
+	["iw4_wa2000"]      = "WA2000",
 	["iw4_mp5"]         = "MP5K",
 	["iw4_pp2000"]      = "PP-2000",
 	["iw4_vector"]      = "KRISS Vector",
+	["iw4_riotshield"]  = "Riot Shield",
 
 	-- MW3 IW5
 	["iw5_acr"] = "ACR 6.8 (MW3)",
@@ -108,9 +120,18 @@ local DISPLAY_NAMES = {
 	["iw5_pp90m1"] = "PP90M1",
 	["iw5_riotshield"] = "Riot Shield (MW3)",
 
+	-- MW2 Secondaries & Special
 	["iw4_glock"]         = "Glock 17",
 	["iw4_usp"]           = "USP .45",
 	["iw4_raffica"]       = "Beretta 93R",
+	["iw4_anaconda"]      = ".44 Magnum",
+	["iw4_deserteagle"]   = "Desert Eagle",
+	["iw4_beretta"]       = "M9 Beretta",
+	["iw4_at4"]           = "AT4",
+	["iw4_javelin"]       = "Javelin",
+	["iw4_rpg"]           = "RPG-7",
+	["iw4_stinger"]       = "Stinger",
+	["iw4_m79"]           = "M79 Thumper",
 }
 
 -- Helper to get the world model for a weapon class
