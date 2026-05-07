@@ -295,18 +295,38 @@ function SND.GunPicker.Open()
 		end
 
 		if #groups > 0 then
-			local lbl = vgui.Create("DLabel", content)
-			lbl:SetText("PRIMARY WEAPONS")
-			lbl:SetFont("SND_BO3_Header")
-			lbl:Dock(TOP)
-			lbl:DockMargin(0, 10, 0, 5)
-
+			local lastGame = ""
 			for _, g in ipairs(groups) do
-				createGrid(g.name, g.weapons, "primary", "DermaDefaultBold", Color(180, 180, 180), 10)
+				local gameName = g.name:match("^(.-):") or "MISCELLANEOUS"
+				if gameName ~= lastGame then
+					local gameHeader = vgui.Create("DPanel", content)
+					gameHeader:SetTall(32)
+					gameHeader:Dock(TOP)
+					gameHeader:DockMargin(0, 20, 0, 5)
+					gameHeader.Paint = function(self, w, h)
+						local iconName = gameName:upper()
+						local iconPath = "data/snd_mwclassic/game_icons/" .. iconName .. ".png"
+						local iconMat = SND.GetIMaterial(iconPath)
+						local textX = 0
+						
+						if iconMat and not iconMat:IsError() then
+							surface.SetMaterial(iconMat)
+							surface.SetDrawColor(255, 255, 255, 255)
+							surface.DrawTexturedRect(0, 0, h, h)
+							textX = h + 10
+						end
+						
+						draw.SimpleText(gameName:upper(), "SND_BO3_Title", textX, h/2, Color(255, 120, 0), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+					end
+					lastGame = gameName
+				end
+				
+				local subHeader = g.name:match("^.-:%s*(.*)$") or g.name
+				createGrid(subHeader, g.weapons, "primary", "DermaDefaultBold", Color(180, 180, 180), 15)
 			end
 		end
 
-		createGrid("Secondary Weapons", secondaries, "secondary")
+		createGrid("SECONDARY WEAPONS", secondaries, "secondary", "SND_BO3_Title", Color(255, 120, 0), 0)
 	end
 
 	local playerLevel = LocalPlayer():GetNWInt("SND_Level", 1)

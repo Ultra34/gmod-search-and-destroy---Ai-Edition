@@ -34,6 +34,7 @@ file.CreateDir("snd_mwclassic/players")
 file.CreateDir("snd_mwclassic/banners")
 file.CreateDir("snd_mwclassic/emblems")
 file.CreateDir("snd_mwclassic/titles")
+file.CreateDir("snd_mwclassic/game_icons")
 
 print("[SND] Calling Card & Emblem System initialized successfully.")
 
