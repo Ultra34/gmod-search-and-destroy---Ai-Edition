@@ -35,8 +35,8 @@ net.Receive("SND_RoundState", function()
 	SND.Client.DefendScore = net.ReadUInt(8)
 	SND.Round.RoundTimerEnd = net.ReadDouble()
 
-	-- Force close the loadout menu when the round goes live or ends
-	if phase == SND.PHASE_LIVE or phase == SND.PHASE_POST then
+	-- Force close the loadout menu when the round starts (Freeze), goes live, or ends
+	if phase == SND.PHASE_FREEZE or phase == SND.PHASE_LIVE or phase == SND.PHASE_POST then
 		if SND.GunPicker and SND.GunPicker.Close then
 			SND.GunPicker.Close()
 		end
