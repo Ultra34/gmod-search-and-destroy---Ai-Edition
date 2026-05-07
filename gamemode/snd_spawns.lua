@@ -69,6 +69,55 @@ function SND.Spawns.Apply(ply)
 	end
 end
 
+-- ── Debug Ghost Entities ─────────────────────────────────────────────────
+local debugGhosts = {}
+
+local function clearDebugGhosts()
+	for _, ent in ipairs(debugGhosts) do
+		if IsValid(ent) then ent:Remove() end
+	end
+	debugGhosts = {}
+end
+
+local function spawnDebugGhosts()
+	clearDebugGhosts()
+	local map = game.GetMap()
+	local data = SND.Config.MapSpawns[map]
+	if not data then return end
+
+	local function createGhost(pos, ang, model, col)
+		local e = ents.Create("prop_dynamic")
+		e:SetModel(model)
+		e:SetPos(pos)
+		e:SetAngles(ang)
+		e:SetColor(col)
+		e:SetRenderMode(RENDERMODE_TRANSCOLOR)
+		e:SetCollisionGroup(COLLISION_GROUP_DEBRIS)
+		e:SetSolid(SOLID_NONE)
+		e:Spawn()
+		table.insert(debugGhosts, e)
+	end
+
+	for _, s in ipairs(data.attack or {}) do
+		local mdl = SND.Config.Factions.attack.models[1]
+		createGhost(s.pos, s.ang or Angle(0,0,0), mdl, Color(255, 100, 100, 200))
+	end
+	for _, s in ipairs(data.defend or {}) do
+		local mdl = SND.Config.Factions.defend.models[1]
+		createGhost(s.pos, s.ang or Angle(0,0,0), mdl, Color(100, 100, 255, 200))
+	end
+end
+
+-- Hook into phase changes to manage ghosts
+hook.Add("Think", "SND_DebugGhostManager", function()
+	local isDebug = SND.Round and SND.Round.Phase == SND.PHASE_DEBUG
+	if isDebug and #debugGhosts == 0 then
+		spawnDebugGhosts()
+	elseif not isDebug and #debugGhosts > 0 then
+		clearDebugGhosts()
+	end
+end)
+
 -- ── Debug Visualization ──────────────────────────────────────────────────
 hook.Add("Think", "SND_SpawnDebugDraw", function()
 	local debugMode = SND.Settings.GetInt("debug_mode", 0) == 1
@@ -80,11 +129,14 @@ hook.Add("Think", "SND_SpawnDebugDraw", function()
 
 	-- Draw Attack Spawns (Red)
 	for _, s in ipairs(data.attack or {}) do
-		debugoverlay.Box(s.pos, Vector(-16,-16,0), Vector(16,16,72), 0.1, Color(255, 0, 0, 255), true)
+		debugoverlay.Box(s.pos, Vector(-16,-16,0), Vector(16,16,72), 0.1, Color(255, 0, 0, 0), true)
+		debugoverlay.EntityText(0, s.pos + Vector(0,0,75), "ATTACKER SPAWN", 0.1, Color(255, 50, 50))
 	end
+
 	-- Draw Defend Spawns (Blue)
 	for _, s in ipairs(data.defend or {}) do
-		debugoverlay.Box(s.pos, Vector(-16,-16,0), Vector(16,16,72), 0.1, Color(0, 0, 255, 255), true)
+		debugoverlay.Box(s.pos, Vector(-16,-16,0), Vector(16,16,72), 0.1, Color(0, 0, 255, 0), true)
+		debugoverlay.EntityText(0, s.pos + Vector(0,0,75), "DEFENDER SPAWN", 0.1, Color(50, 50, 255))
 	end
 end)
 
@@ -134,6 +186,9 @@ local function addSpawnCommand(ply, teamKey)
 	saveMapData(map, fullData)
 	
 	ply:ChatPrint("[SND] Added " .. teamKey .. " spawn at your position and saved to data.")
+	if SND.Round.Phase == SND.PHASE_DEBUG then
+		spawnDebugGhosts() -- Refresh models instantly
+	end
 end
 
 concommand.Add("snd_spawn_add_attack", function(ply) addSpawnCommand(ply, "attack") end)
@@ -143,6 +198,7 @@ concommand.Add("snd_spawn_clear", function(ply)
 	local map = game.GetMap()
 	SND.Config.MapSpawns[map] = { attack = {}, defend = {} }
 	saveMapData(map, { sites = SND.Config.MapSites[map], spawns = SND.Config.MapSpawns[map] })
+	clearDebugGhosts()
 	ply:ChatPrint("[SND] Cleared all custom spawns for " .. map)
 end)
 

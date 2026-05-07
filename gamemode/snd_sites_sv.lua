@@ -61,6 +61,7 @@ hook.Add("Think", "SND_SiteDebugDraw", function()
 
 	for _, s in ipairs(sites) do
 		debugoverlay.Sphere(s.plantPos, s.defuseRadius or 120, 0.1, Color(255, 255, 0, 255), true)
+		debugoverlay.EntityText(0, s.plantPos + Vector(0,0,20), "SITE " .. (s.id or "?"), 0.1, Color(255, 255, 0))
 	end
 end)
 

@@ -219,10 +219,12 @@ concommand.Add("snd_debug_toggle", function(ply)
 		SND.Round.Phase = SND.PHASE_DEBUG
 		SND.Round.RoundTimerEnd = 0
 		RunConsoleCommand("snd_debug_mode", "1")
+		ply:SetMoveType(MOVETYPE_NOCLIP)
 		ply:ChatPrint("[SND] DEBUG PHASE ENABLED. Match logic paused. Noclip enabled.")
 	else
 		SND.Round.Phase = SND.PHASE_FREEZE
 		RunConsoleCommand("snd_debug_mode", "0")
+		ply:SetMoveType(MOVETYPE_WALK)
 		ply:ChatPrint("[SND] DEBUG PHASE DISABLED. Restarting round...")
 		SND.Round.StartNewRound()
 	end
