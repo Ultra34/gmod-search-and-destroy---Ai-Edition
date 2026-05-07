@@ -3,7 +3,16 @@
 
 SND.Config = SND.Config or {}
 
--- ── Assault Rifles ────────────────────────────────────────────────────────
+-- ── CoD4: Modern Warfare (IW3) ──────────────────────────────────────────
+local IW3_AR = { "iw3_ak47", "iw3_g3", "iw3_g36c", "iw3_m14", "iw3_m16a4", "iw3_m4a1", "iw3_mp44" }
+local IW3_SMG = { "iw3_skorpion", "iw3_p90", "iw3_mp5", "iw3_miniuzi", "iw3_ak74u" }
+local IW3_LMG = { "iw3_m249", "iw3_m60e4", "iw3_rpd" }
+local IW3_SG = { "iw3_m1014", "iw3_w1200" }
+local IW3_SR = { "iw3_barrett", "iw3_dragunov", "iw3_m21", "iw3_m40a3", "iw3_r700" }
+local IW3_PISTOLS = { "iw3_usp", "iw3_beretta", "iw3_colt45", "iw3_deserteagle" }
+local IW3_LAUNCHERS = { "iw3_at4", "iw3_rpg" }
+
+-- ── MW2: Modern Warfare 2 (IW4) ──────────────────────────────────────────
 local AR = {
 	"iw4_acr",
 	"iw4_ak47",
@@ -60,32 +69,45 @@ local MISC = {
 	"iw4_riotshield",
 }
 
--- ── Secondaries (pistols) ─────────────────────────────────────────────────
-local PISTOLS = {
-	"iw4_anaconda",
-	"iw4_deserteagle",
-	"iw4_beretta",
-	"iw4_usp",
-	"iw4_glock",
-	"iw4_raffica",
-}
+-- ── MW3: Modern Warfare 3 (IW5) ──────────────────────────────────────────
+local IW5_AR = { "iw5_acr", "iw5_ak47", "iw5_cm901", "iw5_fad", "iw5_g36c", "iw5_m16a4", "iw5_m4a1", "iw5_mk14", "iw5_type95", "iw5_scar" }
+local IW5_SMG = { "iw5_ak74u", "iw5_mp5", "iw5_mp7", "iw5_p90", "iw5_pm9", "iw5_ump45", "iw5_pp90m1" }
+local IW5_LMG = { "iw5_sa80", "iw5_m60e4", "iw5_mg36", "iw5_mk46", "iw5_pecheneg" }
+local IW5_SG = { "iw5_aa12", "iw5_ksg", "iw5_1887", "iw5_spas12", "iw5_striker", "iw5_usas12" }
+local IW5_SR = { "iw5_rsass", "iw5_msr", "iw5_mk12spr", "iw5_l96a1", "iw5_dragunov", "iw5_barrett", "iw5_as50" }
+local IW5_PISTOLS = { "iw5_anaconda", "iw5_deserteagle", "iw5_fiveseven", "iw5_mp412", "iw5_p99", "iw5_usp", "iw5_skorpion", "iw5_tmp", "iw5_glock", "iw5_fmg" }
+local IW5_LAUNCHERS = { "iw5_xm25", "iw5_stinger", "iw5_smaw", "iw5_rpg", "iw5_m320", "iw5_javelin" }
+
+-- ── Merged Secondaries ───────────────────────────────────────────────────
+local PISTOLS = {}
+table.Add(PISTOLS, IW3_PISTOLS)
+table.Add(PISTOLS, { "iw4_anaconda", "iw4_deserteagle", "iw4_beretta", "iw4_usp", "iw4_glock", "iw4_raffica" })
+table.Add(PISTOLS, IW5_PISTOLS)
 
 -- ── Launchers — special slot, not given on spawn by default ───────────────
-local LAUNCHERS = {
-	"iw4_at4",
-	"iw4_javelin",
-	"iw4_rpg",
-	"iw4_stinger",
-	"iw4_m79",
-}
+local LAUNCHERS = {}
+table.Add(LAUNCHERS, IW3_LAUNCHERS)
+table.Add(LAUNCHERS, { "iw4_at4", "iw4_javelin", "iw4_rpg", "iw4_stinger", "iw4_m79" })
+table.Add(LAUNCHERS, IW5_LAUNCHERS)
 
 -- Categorized Primary weapons for UI display
 SND.Config.WeaponGroups = {
-	{ name = "Assault Rifles", weapons = AR },
-	{ name = "Light Machine Guns", weapons = LMG },
-	{ name = "Sub-Machine Guns", weapons = SMG },
-	{ name = "Shotguns", weapons = SG },
-	{ name = "Sniper Rifles", weapons = SR },
+	{ name = "CoD4: Assault Rifles", weapons = IW3_AR },
+	{ name = "CoD4: SMGs", weapons = IW3_SMG },
+	{ name = "CoD4: Sniper Rifles", weapons = IW3_SR },
+	{ name = "CoD4: LMGs & Shotguns", weapons = table.Add(table.Copy(IW3_LMG), IW3_SG) },
+
+	{ name = "MW2: Assault Rifles", weapons = AR },
+	{ name = "MW2: SMGs", weapons = SMG },
+	{ name = "MW2: Sniper Rifles", weapons = SR },
+	{ name = "MW2: LMGs", weapons = LMG },
+	{ name = "MW2: Shotguns", weapons = SG },
+
+	{ name = "MW3: Assault Rifles", weapons = IW5_AR },
+	{ name = "MW3: SMGs", weapons = IW5_SMG },
+	{ name = "MW3: Sniper Rifles", weapons = IW5_SR },
+	{ name = "MW3: LMGs & Shotguns", weapons = table.Add(table.Copy(IW5_LMG), IW5_SG) },
+	
 	{ name = "Miscellaneous", weapons = MISC },
 }
 

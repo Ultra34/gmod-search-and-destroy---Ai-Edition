@@ -37,12 +37,14 @@ One life per round, bomb plant and defuse, team scoring, optional map voting, Lu
 | Requirement | Notes |
 |---|---|
 | Garry's Mod (Steam) | Updated to the current branch |
+| **[TFA][AT] Call of Duty 4: Modern Warfare Weapons Pack** | Workshop — provides all `iw3_*` SWEP classes |
 | **[TFA][AT] Call of Duty: Modern Warfare 2 Weapons Pack** | Workshop — provides all `iw4_*` SWEP classes |
+| **[TFA][AT] Call of Duty: Modern Warfare 3 Weapons Pack** | Workshop — provides all `iw5_*` SWEP classes |
 | **TFA Base** | Required by the weapon pack above |
 | Counter-Strike: Source (mounted) | CSS player models and bomb sounds (`c4_plant.wav`, `c4_beep1.wav`, etc.) |
 
-> If CS:S is not mounted, player models will show as ERROR and bomb sounds will be silent.  
-> Subscribe to TFA Base **before** the weapon pack or weapons will not register.
+> If CS:S is not mounted, player models will show as ERROR and bomb sounds will be silent.
+> Subscribe to TFA Base **before** the weapon packs or weapons will not register.
 
 ---
 
@@ -103,18 +105,30 @@ Or select the gamemode from the **Create Game** menu.
 
 All weapons use the `iw4_` prefix from the TFA MW2 pack.
 
-| Category | Classes |
-|---|---|
-| Assault Rifles | `iw4_acr` `iw4_ak47` `iw4_f200` `iw4_fal` `iw4_famas` `iw4_m16a4` `iw4_m4a1` `iw4_scar` `iw4_tavor` |
-| LMGs | `iw4_rpd` `iw4_mg4` `iw4_m240` `iw4_sa80` |
-| SMGs | `iw4_miniuzi` `iw4_mp5` `iw4_p90` `iw4_ump45` `iw4_vector` `iw4_pp2000` `iw4_tmp` |
-| Shotguns | `iw4_aa12` `iw4_m1014` `iw4_1887` `iw4_ranger` `iw4_spas12` `iw4_striker` |
-| Snipers | `iw4_barrett` `iw4_dragunov` `iw4_cheytac` `iw4_m14ebr` `iw4_wa2000` |
-| Other | `iw4_aug` `iw4_riotshield` |
-| Secondaries | `iw4_anaconda` `iw4_deserteagle` `iw4_beretta` `iw4_usp` `iw4_glock` `iw4_raffica` |
-| Launchers* | `iw4_at4` `iw4_javelin` `iw4_rpg` `iw4_stinger` `iw4_m79` |
+The gamemode supports weapons from CoD4 (IW3), MW2 (IW4), and MW3 (IW5) TFA packs.
 
-*Launchers are in `SND.Config.Mw2eSpecial` and are **not** given on spawn by default. Wire them to pickups or a data loadout if wanted.
+| Game | Category | Classes (Examples) |
+|---|---|---|
+| **CoD4 (IW3)** | Assault Rifles | `iw3_ak47` `iw3_m16a4` `iw3_g36c` |
+| | SMGs | `iw3_mp5` `iw3_p90` `iw3_ak74u` |
+| | Sniper Rifles | `iw3_barrett` `iw3_m40a3` `iw3_dragunov` |
+| | LMGs & Shotguns | `iw3_m249` `iw3_m1014` |
+| | Pistols | `iw3_usp` `iw3_deserteagle` |
+| | Launchers | `iw3_at4` `iw3_rpg` |
+| **MW2 (IW4)** | Assault Rifles | `iw4_acr` `iw4_m4a1` `iw4_famas` |
+| | SMGs | `iw4_mp5` `iw4_vector` `iw4_ump45` |
+| | Sniper Rifles | `iw4_barrett` `iw4_cheytac` `iw4_wa2000` |
+| | LMGs & Shotguns | `iw4_rpd` `iw4_aa12` `iw4_spas12` |
+| | Pistols | `iw4_anaconda` `iw4_glock` `iw4_usp` |
+| | Launchers | `iw4_at4` `iw4_javelin` `iw4_rpg` |
+| **MW3 (IW5)** | Assault Rifles | `iw5_acr` `iw5_m4a1` `iw5_scar` |
+| | SMGs | `iw5_mp7` `iw5_p90` `iw5_ump45` |
+| | Sniper Rifles | `iw5_msr` `iw5_barrett` `iw5_as50` |
+| | LMGs & Shotguns | `iw5_mk46` `iw5_striker` |
+| | Pistols | `iw5_anaconda` `iw5_fmg9` `iw5_usp` |
+| | Launchers | `iw5_xm25` `iw5_stinger` `iw5_rpg` |
+
+Launchers are in `SND.Config.Mw2eSpecial` and are **not** given on spawn by default. Wire them to pickups or a data loadout if wanted.
 
 To fix a weapon for both teams instead of using the random pool, edit `garrysmod/data/snd_mwclassic/loadouts.lua`:
 
