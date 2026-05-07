@@ -443,22 +443,24 @@ function SND.GunPicker.Open()
 	ready:SetTextColor(Color(255, 255, 255))
 
 	ready.Paint = function(self, w, h)
-		local col = isReady and Color(80, 220, 100) or Color(255, 120, 0)
+		local rdy = LocalPlayer():GetNWBool("SND_IsReady", false)
+		local col = rdy and Color(80, 220, 100) or Color(255, 120, 0)
 		if self:IsHovered() then col = Color(col.r + 30, col.g + 30, col.b + 30) end
 		draw.RoundedBox(0, 0, 0, w, h, col)
 	end
 
 	ready.DoClick = function()
 		isReady = not isReady
+		local rdy = isReady
 		net.Start("SND_PlayerReady")
-			net.WriteBool(isReady)
+			net.WriteBool(rdy)
 		net.SendToServer()
-		ready:SetText(isReady and "READY!" or "READY UP")
-		surface.PlaySound(isReady and "buttons/button3.wav" or "buttons/button19.wav")
+		ready:SetText(rdy and "READY!" or "READY UP")
+		surface.PlaySound(rdy and "buttons/button3.wav" or "buttons/button19.wav")
 		
-		-- Close menu if ready during live game, otherwise stay open for waiting
-		if isReady and SND.Client.Phase ~= SND.PHASE_WAIT then
-			f:Close()
+		-- Force the menu to close if we are ready and the round is in progress (Freeze or Live)
+		if rdy and SND.Client.Phase ~= SND.PHASE_WAIT then
+			SND.GunPicker.Close()
 		end
 	end
 end
