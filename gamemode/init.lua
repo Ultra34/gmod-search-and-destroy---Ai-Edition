@@ -184,6 +184,15 @@ function GM:PlayerDeath(victim, inflictor, attacker)
 				net.WriteString(victim:GetNWString("SND_TitleMat", "vgui/white"))
 				net.WriteBool(true) -- You WERE the killer
 			net.Send(attacker)
+
+			-- Award XP for the kill (Team Check)
+			if attacker:Team() ~= victim:Team() then
+				local amount = 100
+				if victim:LastHitGroup() == HITGROUP_HEAD then
+					amount = amount + 50
+				end
+				SND.Levels.AddXP(attacker, amount)
+			end
 		end)
 	end
 end

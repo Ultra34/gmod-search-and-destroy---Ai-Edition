@@ -77,8 +77,8 @@ function SND.Levels.AddXP(ply, amount)
 	end
 
 	net.Start("SND_UpdateXP")
-		net.WriteUInt(ply.SND_XP, 32)
-		net.WriteUInt(ply.SND_Level, 16)
+		net.WriteUInt(tonumber(ply.SND_XP) or 0, 32)
+		net.WriteUInt(tonumber(ply.SND_Level) or 1, 16)
 		net.WriteUInt(amount, 16)
 	net.Send(ply)
 	

@@ -454,15 +454,6 @@ function SND.Bomb.CancelAction(ply, kind)
 	net.Broadcast()
 end
 
--- Reassign bomb if carrier dies (basic fix)
-hook.Add("PlayerDeath", "SND_BombCarrierDeathFix", function(victim)
-	if SND.Bomb.State == SND.BOMB_STATE_CARRIED and victim == SND.Bomb.Carrier then
-		timer.Simple(0, function()
-			if IsValid(victim) then SND.Bomb.Drop(victim) end
-		end)
-	end
-end)
-
 -- Authoritative: If a player is no longer an attacker, they CANNOT have the bomb icon
 hook.Add("OnPlayerChangedTeam", "SND_BombTeamClearClient", function(ply, oldTeam, newTeam)
 	if newTeam ~= SND.TEAM_ATTACK then

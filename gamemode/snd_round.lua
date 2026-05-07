@@ -187,35 +187,29 @@ function SND.Round.OnPlayerDeath(victim, attacker)
 		local wep = attacker:GetActiveWeapon()
 		local weaponName = IsValid(wep) and wep:GetPrintName() or "Fists" -- Fallback for melee/no weapon
 		
-		timer.Simple(0, function()
-			net.Start("SND_KillFeed")
-				net.WriteString(attacker:Nick())
-				net.WriteUInt(attacker:Team(), 2)
-				net.WriteString(victim:Nick())
-				net.WriteUInt(victim:Team(), 2)
-				net.WriteString(weaponName)
-			net.Broadcast()
-		end)
+		net.Start("SND_KillFeed")
+			net.WriteString(attacker:Nick())
+			net.WriteUInt(attacker:Team(), 2)
+			net.WriteString(victim:Nick())
+			net.WriteUInt(victim:Team(), 2)
+			net.WriteString(weaponName)
+		net.Broadcast()
 	else
 		-- Handle suicides or environmental deaths
-		timer.Simple(0, function()
-			net.Start("SND_KillFeed")
-				net.WriteString("") -- No attacker
-				net.WriteUInt(0, 2) -- No attacker team
-				net.WriteString(victim:Nick())
-				net.WriteUInt(victim:Team(), 2)
-				net.WriteString("died") -- Generic death message
-			net.Broadcast()
-		end)
+		net.Start("SND_KillFeed")
+			net.WriteString("") -- No attacker
+			net.WriteUInt(0, 2) -- No attacker team
+			net.WriteString(victim:Nick())
+			net.WriteUInt(victim:Team(), 2)
+			net.WriteString("died") -- Generic death message
+		net.Broadcast()
 	end
 
-	timer.Simple(0, function()
-		SND.Round.CheckElimination()
-		local teamAlive = aliveOnTeamReal(victim:Team())
-		if teamAlive == 1 then
-			SND.Announcer.LastMan()
-		end
-	end)
+	SND.Round.CheckElimination()
+	local teamAlive = aliveOnTeamReal(victim:Team())
+	if teamAlive == 1 then
+		SND.Announcer.LastMan()
+	end
 end
 
 function SND.Round.FirstSpawn()
