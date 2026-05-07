@@ -35,7 +35,7 @@ function SND.Spawns.Apply(ply)
 	-- Attempt to find a spawn point that isn't currently occupied by another player
 	local pool = table.Copy(list)
 	local pick = nil
-	local occupiedRadiusSqr = 48 * 48 -- Distance squared threshold to avoid spawning on others (approx 4ft)
+	local occupiedRadiusSqr = 70 * 70 -- Increased radius to prevent players from overlapping and "bouncing"
 
 	while #pool > 0 do
 		local k = math.random(#pool)
@@ -68,3 +68,61 @@ function SND.Spawns.Apply(ply)
 		end
 	end
 end
+
+-- ── Manual Spawn Management ──────────────────────────────────────────────
+local function saveMapData(map, data)
+	file.CreateDir("snd_mwclassic/maps")
+	local path = "snd_mwclassic/maps/" .. map .. ".lua"
+	
+	local out = "return {\n"
+	-- Preserve existing sites if they exist
+	if data.sites then
+		out = out .. "\tsites = {\n"
+		for _, s in ipairs(data.sites) do
+			out = out .. string.format("\t\t{ id = %q, plantPos = Vector(%f, %f, %f), defuseRadius = %f },\n", s.id, s.plantPos.x, s.plantPos.y, s.plantPos.z, s.defuseRadius)
+		end
+		out = out .. "\t},\n"
+	end
+
+	out = out .. "\tspawns = {\n"
+	out = out .. "\t\tattack = {\n"
+	for _, s in ipairs(data.spawns.attack or {}) do
+		out = out .. string.format("\t\t\t{ pos = Vector(%f, %f, %f), ang = Angle(%f, %f, %f) },\n", s.pos.x, s.pos.y, s.pos.z, s.ang.p, s.ang.y, s.ang.r)
+	end
+	out = out .. "\t\t},\n"
+	out = out .. "\t\tdefend = {\n"
+	for _, s in ipairs(data.spawns.defend or {}) do
+		out = out .. string.format("\t\t\t{ pos = Vector(%f, %f, %f), ang = Angle(%f, %f, %f) },\n", s.pos.x, s.pos.y, s.pos.z, s.ang.p, s.ang.y, s.ang.r)
+	end
+	out = out .. "\t\t}\n\t}\n}"
+	
+	file.Write(path, out)
+end
+
+local function addSpawnCommand(ply, teamKey)
+	if IsValid(ply) and not ply:IsSuperAdmin() then return end
+	local map = game.GetMap()
+	SND.Config.MapSpawns[map] = SND.Config.MapSpawns[map] or { attack = {}, defend = {} }
+	
+	local pos = ply:GetPos() + Vector(0, 0, 8) -- Slight offset to prevent floor sticking
+	local ang = ply:GetEyeAngles()
+	ang.p = 0 -- Keep spawns level
+
+	table.insert(SND.Config.MapSpawns[map][teamKey], { pos = pos, ang = ang })
+	
+	-- We include existing site data in the save to avoid wiping it
+	local fullData = { sites = SND.Config.MapSites[map], spawns = SND.Config.MapSpawns[map] }
+	saveMapData(map, fullData)
+	
+	ply:ChatPrint("[SND] Added " .. teamKey .. " spawn at your position and saved to data.")
+end
+
+concommand.Add("snd_spawn_add_attack", function(ply) addSpawnCommand(ply, "attack") end)
+concommand.Add("snd_spawn_add_defend", function(ply) addSpawnCommand(ply, "defend") end)
+concommand.Add("snd_spawn_clear", function(ply)
+	if IsValid(ply) and not ply:IsSuperAdmin() then return end
+	local map = game.GetMap()
+	SND.Config.MapSpawns[map] = { attack = {}, defend = {} }
+	saveMapData(map, { sites = SND.Config.MapSites[map], spawns = SND.Config.MapSpawns[map] })
+	ply:ChatPrint("[SND] Cleared all custom spawns for " .. map)
+end)

@@ -260,11 +260,11 @@ util.AddNetworkString("SND_Halftime")
 
 function SND.Round.Sync(target)
     net.Start("SND_RoundState")
-    net.WriteUInt(SND.Round.Phase, 3)
+    net.WriteUInt(tonumber(SND.Round.Phase) or 0, 3)
     net.WriteUInt(SND.Round.Winner or 0, 4)
-    net.WriteUInt(SND.Round.AttackScore, 8)
-    net.WriteUInt(SND.Round.DefendScore, 8)
-    net.WriteDouble(SND.Round.RoundTimerEnd)
+    net.WriteUInt(tonumber(SND.Round.AttackScore) or 0, 8)
+    net.WriteUInt(tonumber(SND.Round.DefendScore) or 0, 8)
+    net.WriteDouble(tonumber(SND.Round.RoundTimerEnd) or 0)
     if target then net.Send(target) else net.Broadcast() end
 end
 

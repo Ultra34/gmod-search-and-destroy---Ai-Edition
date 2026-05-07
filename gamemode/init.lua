@@ -6,6 +6,7 @@ AddCSLuaFile("cl_settings.lua")       -- SuperAdmin UI
 AddCSLuaFile("cl_levels.lua")         -- XP/Rank Client
 AddCSLuaFile("cl_gunpicker.lua")      -- Loadout UI
 AddCSLuaFile("cl_crosshair_menu.lua") -- Crosshair UI
+AddCSLuaFile("cl_sites.lua")          -- 3D Objective Markers
 AddCSLuaFile("snd_settings.lua")      -- Replicated ConVars
 AddCSLuaFile("snd_bot_anim.lua")      -- Animation Fixes
 AddCSLuaFile("snd_movement.lua")      -- Movement & Stamina logic
@@ -27,6 +28,7 @@ include("snd_spawns.lua")
 include("snd_rust.lua")
 include("snd_spectate.lua")
 include("snd_bot_anim.lua")
+include("snd_sites_sv.lua")
 include("snd_levels.lua")
 
 -- Ensure the directory structure exists in garrysmod/data/
@@ -48,8 +50,6 @@ util.AddNetworkString("SND_SetUseTitleMat")
 util.AddNetworkString("SND_PlayerReady")
 util.AddNetworkString("SND_SelectLoadoutSlot")
 util.AddNetworkString("SND_SyncReadyState")
-util.AddNetworkString("SND_SaveLoadoutName")
-util.AddNetworkString("SND_ClearLoadoutSlot")
 util.AddNetworkString("SND_QuickThrow")
 
 DEFINE_BASECLASS("gamemode_base")

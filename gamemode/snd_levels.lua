@@ -52,9 +52,9 @@ function SND.Levels.Sync(ply)
 	if not IsValid(ply) or ply:IsBot() or ply.SND_IsBot then return end
 
 	net.Start("SND_UpdateXP")
-		net.WriteUInt(tonumber(ply.SND_XP) or 0, 32)
-		net.WriteUInt(tonumber(ply.SND_Level) or 1, 16)
-		net.WriteUInt(0, 16) -- Amount gained (0 for sync)
+		net.WriteUInt(math.max(0, tonumber(ply.SND_XP) or 0), 32)
+		net.WriteUInt(math.max(1, tonumber(ply.SND_Level) or 1), 16)
+		net.WriteUInt(0, 16)
 	net.Send(ply)
 end
 
@@ -77,9 +77,9 @@ function SND.Levels.AddXP(ply, amount)
 	end
 
 	net.Start("SND_UpdateXP")
-		net.WriteUInt(tonumber(ply.SND_XP) or 0, 32)
-		net.WriteUInt(tonumber(ply.SND_Level) or 1, 16)
-		net.WriteUInt(amount, 16)
+		net.WriteUInt(math.max(0, tonumber(ply.SND_XP) or 0), 32)
+		net.WriteUInt(math.max(1, tonumber(ply.SND_Level) or 1), 16)
+		net.WriteUInt(tonumber(amount) or 0, 16)
 	net.Send(ply)
 	
 	SND.Levels.Save(ply)

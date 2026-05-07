@@ -67,7 +67,6 @@ hook.Add("SetupMove", "SND_Movement", function(ply, mv, cmd)
 		mv:SetForwardSpeed(0)
 		mv:SetSideSpeed(0)
 		mv:SetUpSpeed(0)
-		mv:SetVelocity(Vector(0, 0, 0))
 		ply.SND_Sprinting = false
 		return
 	end
