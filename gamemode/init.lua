@@ -253,9 +253,11 @@ hook.Add("Think", "SND_HealthRegen", function()
 		if not ply:Alive() or ply:Health() >= 100 then continue end
 		
 		local lastDmg = ply.SND_LastDamageTime or 0
-		if now > lastDmg + 5 then -- 5 second delay before regen starts
+		local delay = SND.Settings.Get("health_regen_delay", 5)
+		if now > lastDmg + delay then
 			if not ply.SND_NextRegen or now > ply.SND_NextRegen then
-				ply:SetHealth(math.min(100, ply:Health() + 5)) -- Faster heal rate (50 HP/sec)
+				local rate = SND.Settings.Get("health_regen_rate", 5)
+				ply:SetHealth(math.min(100, ply:Health() + rate))
 				ply.SND_NextRegen = now + 0.1
 			end
 		end

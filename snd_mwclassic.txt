@@ -106,5 +106,61 @@
 			"type"		"CheckBox"
 			"default"	"0"
 		}
+		13
+		{
+			"name"		"snd_bomb_fuse_time"
+			"text"		"Bomb fuse time (sec)"
+			"help"		"Seconds until the bomb explodes after being planted"
+			"type"		"Numeric"
+			"default"	"45"
+		}
+		14
+		{
+			"name"		"snd_stamina_jump_cost"
+			"text"		"Jump stamina cost"
+			"help"		"How much stamina is consumed per jump (0.0 to 1.0)"
+			"type"		"Numeric"
+			"default"	"0.15"
+		}
+		15
+		{
+			"name"		"snd_health_regen_delay"
+			"text"		"Health regen delay (sec)"
+			"help"		"Seconds to wait after taking damage before healing starts"
+			"type"		"Numeric"
+			"default"	"5"
+		}
+		16
+		{
+			"name"		"snd_ads_slow"
+			"text"		"ADS Speed Multiplier"
+			"help"		"Movement speed multiplier while aiming down sights"
+			"type"		"Numeric"
+			"default"	"0.88"
+		}
+		17
+		{
+			"name"		"snd_air_accel_scale"
+			"text"		"Air Acceleration"
+			"help"		"How much control players have in the air"
+			"type"		"Numeric"
+			"default"	"1.35"
+		}
+		18
+		{
+			"name"		"snd_stamina_drain"
+			"text"		"Stamina Drain Rate"
+			"help"		"How fast stamina is consumed while sprinting"
+			"type"		"Numeric"
+			"default"	"0.25"
+		}
+		19
+		{
+			"name"		"snd_debug_mode"
+			"text"		"Debug Mode"
+			"help"		"Enable visual debug helpers for spawns and bomb sites"
+			"type"		"CheckBox"
+			"default"	"0"
+		}
 	}
 }

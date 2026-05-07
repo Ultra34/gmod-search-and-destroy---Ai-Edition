@@ -18,7 +18,9 @@ if SERVER then
 	util.AddNetworkString("SND_BombProgress")
 end
 
-local FUSE_TIME = 45  -- seconds until detonation
+local function getFuseTime()
+	return SND.Settings.Get("bomb_fuse_time", 45)
+end
 
 -- ── CSS beep sound ────────────────────────────────────────────────────────
 -- CS:S ships this at sound/weapons/c4/c4_beep1.wav
@@ -28,7 +30,7 @@ local PLANT_SOUND = "weapons/c4/c4_plant.wav"
 
 -- Beep interval ramps from 1 s → 0.2 s over the fuse duration
 local function beepInterval(elapsed)
-	local frac = math.Clamp(elapsed / FUSE_TIME, 0, 1)
+	local frac = math.Clamp(elapsed / getFuseTime(), 0, 1)
 	return math.max(0.2, 1.0 - frac * 0.8)
 end
 
@@ -515,7 +517,7 @@ timer.Create("SND_BombExplode", 1, 0, function()
 	if SND.Bomb.State  ~= SND.BOMB_STATE_PLANTED then return end
 	if not SND.Bomb.PlantPos or not SND.Bomb.PlantTime then return end
 
-	if CurTime() >= SND.Bomb.PlantTime + FUSE_TIME then
+	if CurTime() >= SND.Bomb.PlantTime + getFuseTime() then
 		stopBeepTimer()
 
 		local eff = EffectData()

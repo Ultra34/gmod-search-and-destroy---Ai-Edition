@@ -621,7 +621,7 @@ hook.Add("HUDPaint", "SND_HUD", function()
 
 		-- Bomb timer takes priority over the round timer once planted
 		if SND.Bomb and SND.Bomb.State == SND.BOMB_STATE_PLANTED and SND.Bomb.PlantTime then
-			local fuse = 45 -- Matches FUSE_TIME in snd_bomb.lua
+			local fuse = SND.Settings.Get("bomb_fuse_time", 45)
 			timerVal = math.max(0, fuse - (CurTime() - SND.Bomb.PlantTime))
 			timerCol = C_BOMB
 			isBomb = true

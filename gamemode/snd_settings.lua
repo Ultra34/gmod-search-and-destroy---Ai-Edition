@@ -10,10 +10,14 @@ SND.Settings.Defaults = {
 	ads_slow         = 0.88,
 	air_accel_scale  = 1.35,
 	friction_floor   = 0.92,
-	plant_time       = 5,
 	stamina_drain    = 0.25, -- Exactly 4 seconds of sprint
 	stamina_recover  = 0.25, -- ~4 seconds recovery standing still
+	stamina_jump_cost = 0.15,
+	health_regen_delay = 5,
+	health_regen_rate  = 5,
+	plant_time       = 5,
 	defuse_time      = 8,
+	bomb_fuse_time   = 45,
 	freeze_time      = 6,
 	round_time       = 120,
 	win_limit        = 4,
@@ -25,6 +29,7 @@ SND.Settings.Defaults = {
 	announcer_volume = 1,
 	hud_scale        = 1,
 	debug_mode       = 0,
+	rust_swap_spawns = 0,
 }
 
 if SERVER then

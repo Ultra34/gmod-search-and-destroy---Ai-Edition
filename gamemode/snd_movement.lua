@@ -95,7 +95,8 @@ hook.Add("SetupMove", "SND_Movement", function(ply, mv, cmd)
 	if onGround and cmd:KeyDown(IN_JUMP) and not ply.SND_JumpDown then
 		ply.SND_JumpDown = true
 		if SERVER then
-			stamina = math.max(0, stamina - 0.15) -- 15% cost per jump
+			local jumpCost = SND.Settings.Get("stamina_jump_cost", 0.15)
+			stamina = math.max(0, stamina - jumpCost)
 			ply:SetNWFloat("SND_Stamina", stamina)
 		end
 	elseif not cmd:KeyDown(IN_JUMP) then
