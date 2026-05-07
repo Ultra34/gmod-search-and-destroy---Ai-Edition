@@ -24,6 +24,11 @@ hook.Add("StartCommand", "SND_FreezeInput", function(ply, cmd)
 		cmd:ClearMovement()
 	end
 
+	-- Quick Throw: Force the attack button if the server-side logic requested it
+	if ply.SND_ForceAttackGrenade then
+		cmd:SetButtons(bit.bor(cmd:GetButtons(), IN_ATTACK))
+	end
+
 	-- Prevent sprinting if exhausted
 	if ply:GetNWBool("SND_Exhausted", false) then
 		cmd:RemoveKey(IN_SPEED)

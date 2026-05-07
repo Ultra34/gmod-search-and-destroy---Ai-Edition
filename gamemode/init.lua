@@ -323,19 +323,22 @@ local function performQuickThrow(ply)
 	ply.SND_IsQuickThrowing = true
 	ply:SelectWeapon(lethal)
 
-	-- Allow time for the grenade to deploy (ARC9/TFA compatibility)
-	timer.Simple(0.4, function()
+	-- Allow time for the grenade to deploy, then force the attack bit
+	timer.Simple(0.45, function()
 		if IsValid(ply) and ply:Alive() then
 			local wep = ply:GetActiveWeapon()
 			if IsValid(wep) and wep:GetClass() == lethal then
-				ply:ConCommand("+attack")
-				timer.Simple(0.2, function() if IsValid(ply) then ply:ConCommand("-attack") end end)
+				ply.SND_ForceAttackGrenade = true
+				-- Hold attack for 0.4s to ensure the weapon base registers the throw
+				timer.Simple(0.4, function()
+					if IsValid(ply) then ply.SND_ForceAttackGrenade = false end
+				end)
 			end
 		end
 	end)
 
-	-- Switch back to previous weapon after throw animation is likely finished
-	timer.Simple(1.3, function()
+	-- Switch back to previous weapon after the throw is guaranteed to be finished
+	timer.Simple(1.6, function()
 		if IsValid(ply) and ply:Alive() then
 			if ply:HasWeapon(oldWepClass) then ply:SelectWeapon(oldWepClass) end
 		end
