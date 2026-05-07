@@ -51,3 +51,71 @@ end)
 hook.Add("InitPostEntity", "SND_SendSitesOnLoad", function()
 	timer.Simple(2, function() broadcastSites() end)
 end)
+
+-- ── Manual Site Management ──────────────────────────────────────────────
+local function saveMapData(map, data)
+	file.CreateDir("snd_mwclassic/maps")
+	local path = "snd_mwclassic/maps/" .. map .. ".lua"
+	
+	local out = "return {\n"
+	out = out .. "\tsites = {\n"
+	for _, s in ipairs(data.sites or {}) do
+		out = out .. string.format("\t\t{ id = %q, plantPos = Vector(%f, %f, %f), defuseRadius = %f },\n", s.id, s.plantPos.x, s.plantPos.y, s.plantPos.z, s.defuseRadius)
+	end
+	out = out .. "\t},\n"
+
+	-- Preserve existing spawns if they exist
+	if data.spawns then
+		out = out .. "\tspawns = {\n"
+		out = out .. "\t\tattack = {\n"
+		for _, s in ipairs(data.spawns.attack or {}) do
+			out = out .. string.format("\t\t\t{ pos = Vector(%f, %f, %f), ang = Angle(%f, %f, %f) },\n", s.pos.x, s.pos.y, s.pos.z, s.ang.p, s.ang.y, s.ang.r)
+		end
+		out = out .. "\t\t},\n"
+		out = out .. "\t\tdefend = {\n"
+		for _, s in ipairs(data.spawns.defend or {}) do
+			out = out .. string.format("\t\t\t{ pos = Vector(%f, %f, %f), ang = Angle(%f, %f, %f) },\n", s.pos.x, s.pos.y, s.pos.z, s.ang.p, s.ang.y, s.ang.r)
+		end
+		out = out .. "\t\t}\n\t}\n"
+	end
+	out = out .. "}"
+	
+	file.Write(path, out)
+end
+
+concommand.Add("snd_site_add", function(ply, cmd, args)
+	if IsValid(ply) and not ply:IsSuperAdmin() then return end
+	local id = args[1] or "A"
+	local radius = tonumber(args[2]) or 120
+	local map = game.GetMap()
+
+	SND.Config.MapSites[map] = SND.Config.MapSites[map] or {}
+	
+	-- Find ground below player
+	local tr = util.TraceLine({
+		start = ply:GetPos() + Vector(0,0,10),
+		endpos = ply:GetPos() - Vector(0,0,100),
+		mask = MASK_SOLID_BRUSHONLY
+	})
+	local pos = tr.Hit and tr.HitPos or ply:GetPos()
+
+	table.insert(SND.Config.MapSites[map], { id = id, plantPos = pos, defuseRadius = radius })
+	
+	local fullData = { sites = SND.Config.MapSites[map], spawns = SND.Config.MapSpawns[map] }
+	saveMapData(map, fullData)
+	
+	broadcastSites()
+	ply:ChatPrint("[SND] Added site " .. id .. " at your position and saved to data.")
+end)
+
+concommand.Add("snd_site_clear", function(ply)
+	if IsValid(ply) and not ply:IsSuperAdmin() then return end
+	local map = game.GetMap()
+	SND.Config.MapSites[map] = {}
+	
+	local fullData = { sites = SND.Config.MapSites[map], spawns = SND.Config.MapSpawns[map] }
+	saveMapData(map, fullData)
+	
+	broadcastSites()
+	ply:ChatPrint("[SND] Cleared all custom sites for " .. map)
+end)

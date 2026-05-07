@@ -24,6 +24,7 @@ SND.Settings.Defaults = {
 	mapvote_time     = 20,
 	announcer_volume = 1,
 	hud_scale        = 1,
+	debug_mode       = 0,
 }
 
 if SERVER then

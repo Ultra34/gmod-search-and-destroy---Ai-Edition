@@ -5,10 +5,8 @@ SND.Bots = SND.Bots or {}
 
 -- ── Debugging ─────────────────────────────────────────────────────────────
 if SERVER then
-	CreateConVar("snd_bot_debug_paths", "0", FCVAR_CHEAT, "Visualize bot pathfinding segments in real-time.")
-
 	hook.Add("Think", "SND_BotDebugPaths", function()
-		if not GetConVar("snd_bot_debug_paths"):GetBool() then return end
+		if SND.Settings.GetInt("debug_mode", 0) == 0 then return end
 
 		for _, bot in ipairs(player.GetAll()) do
 			if not bot.SND_IsBot or not bot:Alive() then continue end

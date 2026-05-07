@@ -46,6 +46,7 @@ function SND.OpenSettingsMenu()
 		["Interface"] = {
 			{ key = "snd_announcer_volume", lbl = "Announcer Volume",     min = 0,    max = 1,    dec = 2 },
 			{ key = "snd_hud_scale",        lbl = "HUD Global Scale",     min = 0.75, max = 1.5,  dec = 2 },
+			{ key = "snd_debug_mode",       lbl = "Debug Visuals",        min = 0,    max = 1,    dec = 0 },
 		}
 	}
 
