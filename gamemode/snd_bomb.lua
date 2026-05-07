@@ -457,7 +457,9 @@ end
 -- Reassign bomb if carrier dies (basic fix)
 hook.Add("PlayerDeath", "SND_BombCarrierDeathFix", function(victim)
 	if SND.Bomb.State == SND.BOMB_STATE_CARRIED and victim == SND.Bomb.Carrier then
-		SND.Bomb.Drop(victim)
+		timer.Simple(0, function()
+			if IsValid(victim) then SND.Bomb.Drop(victim) end
+		end)
 	end
 end)
 

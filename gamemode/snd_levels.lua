@@ -115,7 +115,9 @@ hook.Add("PlayerDeath", "SND_XPOnKill", function(victim, inflictor, attacker)
 		if victim:LastHitGroup() == HITGROUP_HEAD then
 			amount = amount + 50
 		end
-		SND.Levels.AddXP(attacker, amount)
+		timer.Simple(0, function()
+			if IsValid(attacker) then SND.Levels.AddXP(attacker, amount) end
+		end)
 	end
 end)
 
