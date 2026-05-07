@@ -35,6 +35,7 @@ local BS_SEARCH    = 4   -- Clearing corners at a location
 local BS_PLANT     = 5   -- Moving to plant
 local BS_DEFUSE    = 6   -- Moving to defuse
 local BS_FOLLOW    = 7   -- Escorting the carrier
+local BS_RECOVER   = 8   -- Recovering dropped bomb
 
 -- ── Skill 1-10 → internal float helpers ──────────────────────────────────
 local function skillT(s)       return (math.Clamp(s, 1, 10) - 1) / 9 end
@@ -453,25 +454,29 @@ hook.Add("StartCommand", "SND_BotAI", function(bot, cmd)
 	local targetObj = nil
 	local isCarrier = (bot:Team() == SND.TEAM_ATTACK and SND.Bomb.Carrier == bot)
 	local isRetaker = (bot:Team() == SND.TEAM_DEFEND and SND.Bomb.State == SND.BOMB_STATE_PLANTED)
+	local isRecoverer = (bot:Team() == SND.TEAM_ATTACK and SND.Bomb.State == SND.BOMB_STATE_DROPPED)
 	local allyCarrier = getAllyCarrier(bot)
 
 	-- Determine if we have a mission-critical objective
-	local hasMissionCritical = isCarrier or isRetaker
+	local hasMissionCritical = isCarrier or isRetaker or isRecoverer
 
 	-- Objective selection logic when not in active combat
 	if ai.state ~= BS_ENGAGE and ai.state ~= BS_INVESTIGATE and ai.state ~= BS_SEARCH then
 		if isCarrier then ai.state = BS_PLANT
 		elseif isRetaker then ai.state = BS_DEFUSE
+		elseif isRecoverer then ai.state = BS_RECOVER
 		elseif allyCarrier and allyCarrier ~= bot then ai.state = BS_FOLLOW
 		elseif ai.state == BS_IDLE then ai.state = BS_PATROL end
 	end
 
-	if ai.state == BS_PATROL or ai.state == BS_PLANT or ai.state == BS_DEFUSE or ai.state == BS_FOLLOW then
+	if ai.state == BS_PATROL or ai.state == BS_PLANT or ai.state == BS_DEFUSE or ai.state == BS_FOLLOW or ai.state == BS_RECOVER then
 		if ai.state == BS_PLANT then
 			local site = nearestSite(bot)
 			if site then targetObj = site.plantPos or site.pos end
 		elseif ai.state == BS_DEFUSE then
 			targetObj = SND.Bomb.PlantPos
+		elseif ai.state == BS_RECOVER and IsValid(SND.Bomb.PropEnt) then
+			targetObj = SND.Bomb.PropEnt:GetPos()
 		elseif ai.state == BS_FOLLOW and IsValid(allyCarrier) then
 			-- Stay behind the carrier
 			targetObj = allyCarrier:GetPos() - allyCarrier:GetForward() * 150
@@ -547,6 +552,7 @@ hook.Add("StartCommand", "SND_BotAI", function(bot, cmd)
 		-- but the bomb needs attention, go straight to it.
 		if hasMissionCritical then
 			if isCarrier then ai.state = BS_PLANT 
+			elseif isRecoverer then ai.state = BS_RECOVER
 			else ai.state = BS_DEFUSE end
 		elseif ai.state == BS_ENGAGE and ai.lastKnownPos then
 			-- We lost sight of an enemy but have no bomb objective?
