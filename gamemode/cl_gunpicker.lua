@@ -323,6 +323,16 @@ function SND.GunPicker.Open()
 				
 				local subHeader = g.name:match("^.-:%s*(.*)$") or g.name
 				createGrid(subHeader, g.weapons, "primary", "DermaDefaultBold", Color(180, 180, 180), 15)
+
+				-- ── Separator Line ──
+				local sep = vgui.Create("DPanel", content)
+				sep:SetTall(20)
+				sep:Dock(TOP)
+				sep:DockMargin(15, 5, 10, 10)
+				sep.Paint = function(self, w, h)
+					surface.SetDrawColor(255, 255, 255, 15)
+					surface.DrawRect(0, h/2, w, 1)
+				end
 			end
 		end
 
