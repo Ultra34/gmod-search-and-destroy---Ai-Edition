@@ -3,6 +3,7 @@
      Add to init.lua:  include("snd_sites_sv.lua")
 ]]
 
+util.AddNetworkString("SND_SpawnData")
 util.AddNetworkString("SND_SiteData")
 
 local function broadcastSites(ply)

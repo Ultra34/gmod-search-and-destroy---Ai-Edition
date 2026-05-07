@@ -15,6 +15,27 @@ net.Receive("SND_SiteData", function()
 	end
 end)
 
+SND.Client.Spawns = SND.Client.Spawns or { attack = {}, defend = {} }
+net.Receive("SND_SpawnData", function()
+    SND.Client.Spawns.attack = {}
+    local nAttack = net.ReadUInt(8)
+    for i = 1, nAttack do
+        table.insert(SND.Client.Spawns.attack, {
+            pos = net.ReadVector(),
+            ang = net.ReadAngle()
+        })
+    end
+
+    SND.Client.Spawns.defend = {}
+    local nDefend = net.ReadUInt(8)
+    for i = 1, nDefend do
+        table.insert(SND.Client.Spawns.defend, {
+            pos = net.ReadVector(),
+            ang = net.ReadAngle()
+        })
+    end
+end)
+
 -- ── Diamond Drawing Helper ────────────────────────────────────────────────
 function SND.DrawSiteDiamond(x, y, size, col)
 	local pts = {
@@ -143,4 +164,21 @@ hook.Add("PostDrawTranslucentRenderables", "SND_Site3D2D", function()
 			end
 		end
 	end
+
+    -- Draw Spawn Debug Visuals
+    if debugMode or phase == SND.PHASE_DEBUG then
+        local spawns = SND.Client.Spawns
+        if spawns then
+            -- Draw Attack Spawns (Red)
+            for _, s in ipairs(spawns.attack or {}) do
+                debugoverlay.Box(s.pos, Vector(-16,-16,0), Vector(16,16,72), 0.1, Color(255, 0, 0, 255), true)
+                debugoverlay.EntityText(0, s.pos + Vector(0,0,75), "ATTACKER SPAWN", 0.1, Color(255, 50, 50))
+            end
+            -- Draw Defend Spawns (Blue)
+            for _, s in ipairs(spawns.defend or {}) do
+                debugoverlay.Box(s.pos, Vector(-16,-16,0), Vector(16,16,72), 0.1, Color(0, 0, 255, 255), true)
+                debugoverlay.EntityText(0, s.pos + Vector(0,0,75), "DEFENDER SPAWN", 0.1, Color(50, 50, 255))
+            end
+        end
+    end
 end)

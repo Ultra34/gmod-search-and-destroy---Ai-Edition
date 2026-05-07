@@ -118,28 +118,6 @@ hook.Add("Think", "SND_DebugGhostManager", function()
 	end
 end)
 
--- ── Debug Visualization ──────────────────────────────────────────────────
-hook.Add("Think", "SND_SpawnDebugDraw", function()
-	local debugMode = SND.Settings.GetInt("debug_mode", 0) == 1
-	local debugPhase = SND.Round and SND.Round.Phase == SND.PHASE_DEBUG
-	if not debugMode and not debugPhase then return end
-	local map = game.GetMap()
-	local data = SND.Config.MapSpawns[map]
-	if not data then return end
-
-	-- Draw Attack Spawns (Red)
-	for _, s in ipairs(data.attack or {}) do
-		debugoverlay.Box(s.pos, Vector(-16,-16,0), Vector(16,16,72), 0.1, Color(255, 0, 0, 0), true)
-		debugoverlay.EntityText(0, s.pos + Vector(0,0,75), "ATTACKER SPAWN", 0.1, Color(255, 50, 50))
-	end
-
-	-- Draw Defend Spawns (Blue)
-	for _, s in ipairs(data.defend or {}) do
-		debugoverlay.Box(s.pos, Vector(-16,-16,0), Vector(16,16,72), 0.1, Color(0, 0, 255, 0), true)
-		debugoverlay.EntityText(0, s.pos + Vector(0,0,75), "DEFENDER SPAWN", 0.1, Color(50, 50, 255))
-	end
-end)
-
 -- ── Manual Spawn Management ──────────────────────────────────────────────
 local function saveMapData(map, data)
 	file.CreateDir("snd_mwclassic/maps")
