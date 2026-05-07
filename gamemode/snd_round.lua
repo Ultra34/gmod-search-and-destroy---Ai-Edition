@@ -220,8 +220,7 @@ concommand.Add("snd_debug_toggle", function(ply)
 		SND.Round.RoundTimerEnd = 0
 		game.ConsoleCommand("snd_debug_mode 1\n")
 		game.ConsoleCommand("sv_cheats 1\n")
-		ply:SetMoveType(MOVETYPE_NOCLIP)
-		ply:ChatPrint("[SND] DEBUG PHASE ENABLED. Match logic paused. Noclip enabled.")
+		ply:ChatPrint("[SND] DEBUG PHASE ENABLED. Match logic paused. Use 'v' or 'snd_noclip' to fly.")
 	else
 		SND.Round.Phase = SND.PHASE_FREEZE
 		game.ConsoleCommand("snd_debug_mode 0\n")
@@ -231,6 +230,21 @@ concommand.Add("snd_debug_toggle", function(ply)
 		SND.Round.StartNewRound()
 	end
 	SND.Round.Sync()
+end)
+
+concommand.Add("snd_noclip", function(ply)
+	if not IsValid(ply) or not ply:IsAdmin() then return end
+	local isDebug = (SND.Settings.GetInt("debug_mode", 0) == 1 or SND.Round.Phase == SND.PHASE_DEBUG)
+	if not isDebug then 
+		ply:ChatPrint("[SND] Noclip is restricted to Debug Mode.")
+		return 
+	end
+
+	if ply:GetMoveType() == MOVETYPE_NOCLIP then
+		ply:SetMoveType(MOVETYPE_WALK)
+	else
+		ply:SetMoveType(MOVETYPE_NOCLIP)
+	end
 end)
 
 function SND.Round.FirstSpawn()
