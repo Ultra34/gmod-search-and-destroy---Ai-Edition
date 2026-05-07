@@ -218,14 +218,14 @@ concommand.Add("snd_debug_toggle", function(ply)
 	if SND.Round.Phase ~= SND.PHASE_DEBUG then
 		SND.Round.Phase = SND.PHASE_DEBUG
 		SND.Round.RoundTimerEnd = 0
-		RunConsoleCommand("snd_debug_mode", "1")
-		RunConsoleCommand("sv_cheats", "1")
+		game.ConsoleCommand("snd_debug_mode 1\n")
+		game.ConsoleCommand("sv_cheats 1\n")
 		ply:SetMoveType(MOVETYPE_NOCLIP)
 		ply:ChatPrint("[SND] DEBUG PHASE ENABLED. Match logic paused. Noclip enabled.")
 	else
 		SND.Round.Phase = SND.PHASE_FREEZE
-		RunConsoleCommand("snd_debug_mode", "0")
-		RunConsoleCommand("sv_cheats", "0")
+		game.ConsoleCommand("snd_debug_mode 0\n")
+		game.ConsoleCommand("sv_cheats 0\n")
 		ply:SetMoveType(MOVETYPE_WALK)
 		ply:ChatPrint("[SND] DEBUG PHASE DISABLED. Restarting round...")
 		SND.Round.StartNewRound()
