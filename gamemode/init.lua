@@ -48,9 +48,11 @@ util.AddNetworkString("SND_SetShowTitle")
 util.AddNetworkString("SND_SetTitleMat")
 util.AddNetworkString("SND_SetUseTitleMat")
 util.AddNetworkString("SND_PlayerReady")
-util.AddNetworkString("SND_SelectLoadoutSlot")
 util.AddNetworkString("SND_SyncReadyState")
 util.AddNetworkString("SND_QuickThrow")
+util.AddNetworkString("SND_SelectLoadoutSlot")
+util.AddNetworkString("SND_SaveLoadoutName")
+util.AddNetworkString("SND_ClearLoadoutSlot")
 
 DEFINE_BASECLASS("gamemode_base")
 
@@ -91,6 +93,10 @@ function GM:PlayerInitialSpawn(ply)
 	ply:SetNWString("SND_TitleMat", ply:GetPData("snd_title_mat", "vgui/white"))
 	ply:SetNWString("SND_EmblemMat", ply:GetPData("snd_emblem_mat", isBot and (SND.Config.DefaultBotEmblem or "vgui/icon_skull") or "steam"))
 
+	-- Load Active Loadout Slot choice
+	local savedSlot = tonumber(ply:GetPData("snd_active_slot", "1")) or 1
+	ply:SetNWInt("SND_ActiveLoadoutSlot", savedSlot)
+
 	SND.Teams.ApplyFactionModel(ply)
 end
 
@@ -115,6 +121,26 @@ function GM:PlayerSpawn(ply)
 	SND.Bots.OnPlayerSpawn(ply)
 end
 
+local function sendSelfCallingCardUpdate(ply)
+    if not IsValid(ply) then return end
+
+    net.Start("SND_ShowCallingCard")
+        net.WriteString(ply:Nick()) -- Killer's name (self)
+        net.WriteString(ply:GetNWString("SND_CardTitle", "New Recruit"))
+        net.WriteString(ply:GetNWString("SND_CardMat", "vgui/white"))
+        net.WriteString(ply:GetNWString("SND_EmblemMat", "vgui/white"))
+        net.WriteString(ply:SteamID64())
+        net.WriteString(ply:Nick()) -- Victim's name (self)
+        net.WriteUInt(ply:GetNWInt("SND_Level", 1), 16)
+        net.WriteBool(ply:IsBot() or ply.SND_IsBot)
+        net.WriteUInt(ply:Team(), 4)
+        net.WriteBool(ply:GetNWBool("SND_ShowTitle", true))
+        net.WriteBool(ply:GetNWBool("SND_UseTitleMat", false))
+        net.WriteString(ply:GetNWString("SND_TitleMat", "vgui/white"))
+        net.WriteBool(false) -- wasKiller: false, as it's not a kill event
+    net.Send(ply)
+end
+
 net.Receive("SND_SetCallingCard", function(_, ply)
 	local title = net.ReadString()
 	local mat = net.ReadString()
@@ -123,6 +149,7 @@ net.Receive("SND_SetCallingCard", function(_, ply)
 	ply:SetNWString("SND_CardMat", mat)
 	ply:SetPData("snd_card_title", title)
 	ply:SetPData("snd_card_mat", mat)
+	sendSelfCallingCardUpdate(ply)
 end)
 
 net.Receive("SND_SetEmblem", function(_, ply)
@@ -130,6 +157,28 @@ net.Receive("SND_SetEmblem", function(_, ply)
 	
 	ply:SetNWString("SND_EmblemMat", mat)
 	ply:SetPData("snd_emblem_mat", mat)
+	sendSelfCallingCardUpdate(ply)
+end)
+
+net.Receive("SND_SetShowTitle", function(_, ply)
+	local show = net.ReadBool()
+	ply:SetNWBool("SND_ShowTitle", show)
+	ply:SetPData("snd_show_title", show and "1" or "0")
+	sendSelfCallingCardUpdate(ply)
+end)
+
+net.Receive("SND_SetUseTitleMat", function(_, ply)
+	local useMat = net.ReadBool()
+	ply:SetNWBool("SND_UseTitleMat", useMat)
+	ply:SetPData("snd_use_title_mat", useMat and "1" or "0")
+	sendSelfCallingCardUpdate(ply)
+end)
+
+net.Receive("SND_SetTitleMat", function(_, ply)
+	local mat = net.ReadString()
+	ply:SetNWString("SND_TitleMat", mat)
+	ply:SetPData("snd_title_mat", mat)
+	sendSelfCallingCardUpdate(ply)
 end)
 
 

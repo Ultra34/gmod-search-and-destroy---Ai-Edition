@@ -10,9 +10,9 @@ SND.Loadout.PlayerChoices = SND.Loadout.PlayerChoices or {}
 util.AddNetworkString("SND_GunPickerOpen")
 util.AddNetworkString("SND_GunPickerChoose")
 util.AddNetworkString("SND_QuickSwitch")
-util.AddNetworkString("SND_SaveLoadout") -- Existing, but good to keep here
-util.AddNetworkString("SND_SaveLoadoutName") -- New network string for saving loadout names
-util.AddNetworkString("SND_ClearLoadoutSlot") -- New network string for clearing a loadout slot
+util.AddNetworkString("SND_SelectLoadoutSlot")
+util.AddNetworkString("SND_SaveLoadoutName")
+util.AddNetworkString("SND_ClearLoadoutSlot")
 
 -- ── Loadout Persistence ──────────────────────────────────────────────────
 function SND.Loadout.GetSlotData(ply, slot)
@@ -229,6 +229,7 @@ net.Receive("SND_SelectLoadoutSlot", function(_, ply)
 	end
 
 	ply:SetNWInt("SND_ActiveLoadoutSlot", slot)
+	ply:SetPData("snd_active_slot", slot)
 	
 	-- Clear temporary session choice so it loads from the saved slot
 	local sid = ply:SteamID()
@@ -270,6 +271,10 @@ end)
 -- ── Clear choices between matches (optional — keep across rounds by default) ──
 hook.Add("SND_RoundEnd", "SND_ClearGunPicker", function()
     SND.Loadout.PlayerChoices = {}
+end)
+
+hook.Add("SND_RoundStart_Freeze", "SND_OpenLoadoutMenu", function()
+	SND.Loadout.OpenPickerForAll()
 end)
 
 -- ── ConVars ───────────────────────────────────────────────────────────────
