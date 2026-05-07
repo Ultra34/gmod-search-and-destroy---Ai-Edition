@@ -35,8 +35,10 @@ hook.Add("Think", "SND_FreezeFireLock", function()
 	local phase = SERVER and SND.Round.Phase or (SND.Client and SND.Client.Phase) or SND.PHASE_WAIT
 
 	for _, ply in ipairs(player.GetAll()) do
-		-- Always stop breathing sounds if dead or round is over
-		if not ply:Alive() or phase == SND.PHASE_POST then
+		-- Force stop breathing if dead, phase ended, or no longer exhausted
+		local exhausted = ply:GetNWBool("SND_Exhausted", false)
+		local stamina = ply:GetNWFloat("SND_Stamina", 1.0)
+		if not ply:Alive() or phase == SND.PHASE_POST or (not exhausted and stamina > 0.8) then
 			ply:StopSound("player/breathe1.wav")
 		end
 
@@ -104,7 +106,7 @@ hook.Add("SetupMove", "SND_Movement", function(ply, mv, cmd)
 		targetSpeed = runSpeed * mult
 
 		if SERVER then
-			local drain = SND.Settings.Get("stamina_drain", 0.22)
+			local drain = SND.Settings.Get("stamina_drain", 0.25)
 			local nextStam = math.max(0, stamina - (FrameTime() * drain))
 			ply:SetNWFloat("SND_Stamina", nextStam)
 			if nextStam <= 0 then
@@ -114,9 +116,6 @@ hook.Add("SetupMove", "SND_Movement", function(ply, mv, cmd)
 		end
 	else
 		ply.SND_Sprinting = false
-			if stamina > 0.8 then
-				ply:StopSound("player/breathe1.wav")
-			end
 		if isExhausted then targetSpeed = walkSpeed end
 
 		if SERVER and stamina < 1.0 then

@@ -49,6 +49,7 @@ util.AddNetworkString("SND_SelectLoadoutSlot")
 util.AddNetworkString("SND_SyncReadyState")
 util.AddNetworkString("SND_SaveLoadoutName")
 util.AddNetworkString("SND_ClearLoadoutSlot")
+util.AddNetworkString("SND_QuickThrow")
 
 DEFINE_BASECLASS("gamemode_base")
 
@@ -320,19 +321,21 @@ local function performQuickThrow(ply)
 
 	local oldWepClass = current:GetClass()
 	ply.SND_IsQuickThrowing = true
-
 	ply:SelectWeapon(lethal)
 
-	-- Force the attack sequence
-	timer.Simple(0.1, function()
+	-- Allow time for the grenade to deploy (ARC9/TFA compatibility)
+	timer.Simple(0.4, function()
 		if IsValid(ply) and ply:Alive() then
-			ply:ConCommand("+attack")
-			timer.Simple(0.1, function() if IsValid(ply) then ply:ConCommand("-attack") end end)
+			local wep = ply:GetActiveWeapon()
+			if IsValid(wep) and wep:GetClass() == lethal then
+				ply:ConCommand("+attack")
+				timer.Simple(0.2, function() if IsValid(ply) then ply:ConCommand("-attack") end end)
+			end
 		end
 	end)
 
-	-- Switch back to previous weapon after throw animation
-	timer.Simple(1.1, function()
+	-- Switch back to previous weapon after throw animation is likely finished
+	timer.Simple(1.3, function()
 		if IsValid(ply) and ply:Alive() then
 			if ply:HasWeapon(oldWepClass) then ply:SelectWeapon(oldWepClass) end
 		end
@@ -340,10 +343,9 @@ local function performQuickThrow(ply)
 	end)
 end
 
-hook.Add("PlayerButtonDown", "SND_GrenadeKey_SV", function(ply, btn)
-	if btn == KEY_G then
-		performQuickThrow(ply)
-	end
+net.Receive("SND_QuickThrow", function(_, ply)
+	if not IsValid(ply) or not ply:Alive() then return end
+	performQuickThrow(ply)
 end)
 
 net.Receive("SND_QuickSwitch", function(_, ply)

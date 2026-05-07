@@ -311,6 +311,16 @@ hook.Add("PlayerBindPress", "SND_WeaponSelection", function(ply, bind, pressed)
 	end
 end)
 
+-- ── Quick Throw Input ────────────────────────────────────────────────────
+hook.Add("PlayerButtonDown", "SND_QuickThrowInput", function(ply, btn)
+	if btn == KEY_G and not vgui.CursorVisible() and not gui.IsGameUIVisible() then
+		if ply == LocalPlayer() and ply:Alive() then
+			net.Start("SND_QuickThrow")
+			net.SendToServer()
+		end
+	end
+end)
+
 hook.Add("ScoreboardShow", "SND_ScoreboardShow", function()
 	if not IsValid(scoreboard) then
 		scoreboard = createScoreboard()
