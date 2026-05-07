@@ -247,7 +247,7 @@ local function drawWeaponInventory(sw, sh, sc, lp)
 
 	local function cleanName(class)
 		if class == "" then return "---" end
-		local name = class:gsub("iw4_", ""):upper()
+		local name = class:gsub("iw[345]_", ""):upper()
 		return name
 	end
 

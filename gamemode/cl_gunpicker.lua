@@ -66,6 +66,7 @@ local DISPLAY_NAMES = {
 	["iw4_cheytac"]     = "CheyTac M200",
 	["iw4_dragunov"]    = "SVD Dragunov",
 	["iw4_m14ebr"]      = "M14 EBR",
+	["iw4_barrett"]     = "Barrett .50cal",
 	["iw4_wa2000"]      = "WA2000",
 	["iw4_mp5"]         = "MP5K",
 	["iw4_pp2000"]      = "PP-2000",
