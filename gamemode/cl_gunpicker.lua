@@ -310,9 +310,13 @@ function SND.GunPicker.Open()
 						local textX = 0
 						
 						if iconMat and not iconMat:IsError() then
-							local iW, iH = iconMat:GetInternalTexture():Width(), iconMat:GetInternalTexture():Height()
-							local ratio = iW / iH
-							local drawW = h * ratio -- Automatically scale width to maintain aspect ratio
+							local tex = iconMat:GetTexture("$basetexture")
+							local ratio = 1
+							if tex then
+								ratio = tex:Width() / tex:Height()
+							end
+
+							local drawW = h * ratio
 
 							surface.SetMaterial(iconMat)
 							surface.SetDrawColor(255, 255, 255, 255)
@@ -326,7 +330,8 @@ function SND.GunPicker.Open()
 				end
 				
 				local subHeader = g.name:match("^.-:%s*(.*)$") or g.name
-				createGrid(subHeader, g.weapons, "primary", "DermaDefaultBold", Color(180, 180, 180), 15)
+				local slotKey = g.isSecondary and "secondary" or "primary"
+				createGrid(subHeader, g.weapons, slotKey, "DermaDefaultBold", Color(180, 180, 180), 15)
 
 				-- ── Separator Line ──
 				local sep = vgui.Create("DPanel", content)
@@ -339,8 +344,6 @@ function SND.GunPicker.Open()
 				end
 			end
 		end
-
-		createGrid("SECONDARY WEAPONS", secondaries, "secondary", "SND_BO3_Title", Color(255, 120, 0), 0)
 	end
 
 	local playerLevel = LocalPlayer():GetNWInt("SND_Level", 1)
@@ -442,10 +445,11 @@ net.Receive("SND_GunPickerOpen", function()
 	local groups = {}
 	for i = 1, nGroups do
 		local name = net.ReadString()
+		local isSec = net.ReadBool()
 		local count = net.ReadUInt(8)
 		local weapons = {}
 		for j = 1, count do weapons[j] = net.ReadString() end
-		groups[i] = { name = name, weapons = weapons }
+		groups[i] = { name = name, isSecondary = isSec, weapons = weapons }
 	end
 
 	local nSec = net.ReadUInt(8)

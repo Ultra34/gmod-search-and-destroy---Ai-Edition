@@ -151,6 +151,7 @@ function SND.Loadout.SendLoadoutData(ply)
 		net.WriteUInt(#groups, 8)
 		for _, g in ipairs(groups) do
 			net.WriteString(g.name)
+			net.WriteBool(g.isSecondary or false) -- Send slot type
 			net.WriteUInt(#g.weapons, 8)
 			for _, class in ipairs(g.weapons) do net.WriteString(class) end
 		end

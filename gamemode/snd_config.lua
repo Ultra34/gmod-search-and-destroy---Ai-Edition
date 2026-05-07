@@ -92,17 +92,22 @@ table.Add(LAUNCHERS, IW5_LAUNCHERS)
 
 -- Categorized Primary weapons for UI display
 SND.Config.WeaponGroups = {
+	-- COD4
 	{ name = "CoD4: Assault Rifles", weapons = IW3_AR },
 	{ name = "CoD4: SMGs", weapons = IW3_SMG },
 	{ name = "CoD4: Sniper Rifles", weapons = IW3_SR },
 	{ name = "CoD4: LMGs & Shotguns", weapons = table.Add(table.Copy(IW3_LMG), IW3_SG) },
+	{ name = "CoD4: Pistols", weapons = IW3_PISTOLS, isSecondary = true },
 
+	-- MW2
 	{ name = "MW2: Assault Rifles", weapons = AR },
 	{ name = "MW2: SMGs", weapons = SMG },
 	{ name = "MW2: Sniper Rifles", weapons = SR },
 	{ name = "MW2: LMGs", weapons = LMG },
 	{ name = "MW2: Shotguns", weapons = SG },
+	{ name = "MW2: Pistols", weapons = { "iw4_anaconda", "iw4_deserteagle", "iw4_beretta", "iw4_usp", "iw4_glock", "iw4_raffica" }, isSecondary = true },
 
+	-- MW3
 	{ name = "MW3: Assault Rifles", weapons = IW5_AR },
 	{ name = "MW3: SMGs", weapons = IW5_SMG },
 	{ name = "MW3: Sniper Rifles", weapons = IW5_SR },
