@@ -27,6 +27,29 @@ local function broadcastSites(ply)
 				net.WriteFloat(s.defuseRadius or 96)
 			end
 		if target then net.Send(target) else net.Broadcast() end
+
+		-- Also send spawn data for debug visualization
+		local spawns = SND.Config.MapSpawns[map]
+		net.Start("SND_SpawnData")
+			if spawns and spawns.attack then
+				net.WriteUInt(#spawns.attack, 8)
+				for _, s in ipairs(spawns.attack) do
+					net.WriteVector(s.pos)
+					net.WriteAngle(s.ang or Angle(0, 0, 0))
+				end
+			else
+				net.WriteUInt(0, 8)
+			end
+			if spawns and spawns.defend then
+				net.WriteUInt(#spawns.defend, 8)
+				for _, s in ipairs(spawns.defend) do
+					net.WriteVector(s.pos)
+					net.WriteAngle(s.ang or Angle(0, 0, 0))
+				end
+			else
+				net.WriteUInt(0, 8)
+			end
+		if target then net.Send(target) else net.Broadcast() end
 	end
 
 	if IsValid(ply) then
