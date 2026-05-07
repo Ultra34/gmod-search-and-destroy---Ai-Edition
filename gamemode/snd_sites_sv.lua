@@ -129,3 +129,19 @@ concommand.Add("snd_site_clear", function(ply)
 	broadcastSites()
 	ply:ChatPrint("[SND] Cleared all custom sites for " .. map)
 end)
+
+concommand.Add("snd_site_goto", function(ply, cmd, args)
+	if IsValid(ply) and not ply:IsSuperAdmin() then return end
+	local id = (args[1] or "A"):upper()
+	local sites = SND.Config.MapSites[game.GetMap()]
+	if not sites then return end
+
+	for _, s in ipairs(sites) do
+		if s.id == id then
+			ply:SetPos(s.plantPos + Vector(0,0,10))
+			ply:ChatPrint("[SND] Teleported to Site " .. id)
+			return
+		end
+	end
+	ply:ChatPrint("[SND] Site " .. id .. " not found.")
+end)

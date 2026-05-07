@@ -16,7 +16,7 @@ hook.Add("StartCommand", "SND_FreezeInput", function(ply, cmd)
 	if not IsValid(ply) or not ply:Alive() then return end
 
 	local phase = SERVER and SND.Round.Phase or SND.Client.Phase
-	if phase == SND.PHASE_WAIT or phase == SND.PHASE_FREEZE or phase == SND.PHASE_POST then
+	if (phase == SND.PHASE_WAIT or phase == SND.PHASE_FREEZE or phase == SND.PHASE_POST) and phase ~= SND.PHASE_DEBUG then
 		-- Block all action inputs to prevent shooting, reloading, or planting
 		-- Intercepting buttons in StartCommand is more reliable for blocking weapon fire
 		local blocked = bit.bor(IN_ATTACK, IN_ATTACK2, IN_RELOAD, IN_USE, IN_CONTEXT_MENU)
@@ -63,7 +63,7 @@ hook.Add("SetupMove", "SND_Movement", function(ply, mv, cmd)
 
 	-- ── FREEZE: nobody moves ───────────────────────────────────────────────
 	local phase = SERVER and SND.Round.Phase or SND.Client.Phase
-	if phase == SND.PHASE_WAIT or phase == SND.PHASE_FREEZE or phase == SND.PHASE_POST then
+	if (phase == SND.PHASE_WAIT or phase == SND.PHASE_FREEZE or phase == SND.PHASE_POST) and phase ~= SND.PHASE_DEBUG then
 		mv:SetForwardSpeed(0)
 		mv:SetSideSpeed(0)
 		mv:SetUpSpeed(0)

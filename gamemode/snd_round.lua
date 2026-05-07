@@ -212,6 +212,23 @@ function SND.Round.OnPlayerDeath(victim, attacker)
 	end
 end
 
+concommand.Add("snd_debug_toggle", function(ply)
+	if IsValid(ply) and not ply:IsSuperAdmin() then return end
+	
+	if SND.Round.Phase ~= SND.PHASE_DEBUG then
+		SND.Round.Phase = SND.PHASE_DEBUG
+		SND.Round.RoundTimerEnd = 0
+		RunConsoleCommand("snd_debug_mode", "1")
+		ply:ChatPrint("[SND] DEBUG PHASE ENABLED. Match logic paused. Noclip enabled.")
+	else
+		SND.Round.Phase = SND.PHASE_FREEZE
+		RunConsoleCommand("snd_debug_mode", "0")
+		ply:ChatPrint("[SND] DEBUG PHASE DISABLED. Restarting round...")
+		SND.Round.StartNewRound()
+	end
+	SND.Round.Sync()
+end)
+
 function SND.Round.FirstSpawn()
 	if SND.Round.MatchStarted then return end
 	

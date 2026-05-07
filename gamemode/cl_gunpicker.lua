@@ -149,7 +149,6 @@ end
 -- ── State ─────────────────────────────────────────────────────────────────
 local pickerFrame = nil
 SND.GunPicker.Slots = SND.GunPicker.Slots or {}
-local isReady = false
 
 local loadoutNameEntry = nil
 local saveNameButton = nil
@@ -443,9 +442,11 @@ function SND.GunPicker.Open()
 	local ready = vgui.Create("DButton", f)
 	ready:SetSize(200, 50)
 	ready:SetPos(W - 210, H - 60)
-	ready:SetText(isReady and "READY!" or "READY UP")
 	ready:SetFont("SND_BO3_Title")
 	ready:SetTextColor(Color(255, 255, 255))
+	
+	local currentReady = LocalPlayer():GetNWBool("SND_IsReady", false)
+	ready:SetText(currentReady and "READY!" or "READY UP")
 
 	ready.Paint = function(self, w, h)
 		local rdy = LocalPlayer():GetNWBool("SND_IsReady", false)
@@ -455,16 +456,15 @@ function SND.GunPicker.Open()
 	end
 
 	ready.DoClick = function()
-		isReady = not isReady
-		local rdy = isReady
+		local newState = not LocalPlayer():GetNWBool("SND_IsReady", false)
 		net.Start("SND_PlayerReady")
-			net.WriteBool(rdy)
+			net.WriteBool(newState)
 		net.SendToServer()
-		ready:SetText(rdy and "READY!" or "READY UP")
-		surface.PlaySound(rdy and "buttons/button3.wav" or "buttons/button19.wav")
+		ready:SetText(newState and "READY!" or "READY UP")
+		surface.PlaySound(newState and "buttons/button3.wav" or "buttons/button19.wav")
 		
 		-- Force the menu to close if we are ready and the round is in progress (Freeze or Live)
-		if rdy and SND.Client.Phase ~= SND.PHASE_WAIT then
+		if newState and SND.Client.Phase ~= SND.PHASE_WAIT then
 			SND.GunPicker.Close()
 		end
 	end

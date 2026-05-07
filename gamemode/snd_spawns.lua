@@ -170,3 +170,21 @@ concommand.Add("snd_spawn_remove_nearest", function(ply)
 		ply:ChatPrint("[SND] No spawn point close enough to remove.")
 	end
 end)
+
+concommand.Add("snd_spawn_goto", function(ply, cmd, args)
+	if IsValid(ply) and not ply:IsSuperAdmin() then return end
+	local teamKey = (args[1] or "attack"):lower()
+	local idx = tonumber(args[2]) or 1
+	
+	local spawns = SND.Config.MapSpawns[game.GetMap()]
+	if not spawns or not spawns[teamKey] or #spawns[teamKey] == 0 then
+		ply:ChatPrint("[SND] No " .. teamKey .. " spawns configured.")
+		return
+	end
+
+	local s = spawns[teamKey][math.Clamp(idx, 1, #spawns[teamKey])]
+	if s then
+		ply:SetPos(s.pos + Vector(0,0,5))
+		ply:ChatPrint("[SND] Teleported to " .. teamKey .. " spawn #" .. idx)
+	end
+end)

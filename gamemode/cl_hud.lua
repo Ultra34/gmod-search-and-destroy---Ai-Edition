@@ -605,6 +605,7 @@ hook.Add("HUDPaint", "SND_HUD", function()
 	if phase == SND.PHASE_FREEZE then phaseStr = "GET READY"
 	elseif phase == SND.PHASE_LIVE  then phaseStr = "LIVE"
 	elseif phase == SND.PHASE_POST  then phaseStr = "ROUND END"
+	elseif phase == SND.PHASE_DEBUG then phaseStr = "DEBUG MODE"
 	end
 
 	draw.SimpleText(
