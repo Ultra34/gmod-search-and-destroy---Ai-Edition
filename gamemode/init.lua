@@ -134,6 +134,14 @@ end)
 
 
 function GM:PlayerDeath(victim, inflictor, attacker)
+	-- Drop weapons on death BEFORE they are stripped by the base gamemode
+	for _, wep in ipairs(victim:GetWeapons()) do
+		if IsValid(wep) then
+			wep.SND_Dropped = true -- Mark for manual interaction
+			victim:DropWeapon(wep)
+		end
+	end
+
 	self.BaseClass.PlayerDeath(self, victim, inflictor, attacker)
 	SND.Round.OnPlayerDeath(victim, attacker)
 	SND.Announcer.OnDeathContext(victim, attacker)
@@ -209,6 +217,10 @@ function GM:PlayerCanPickupWeapon(ply, wep)
 	if SND.Round.Phase ~= SND.PHASE_LIVE and SND.Round.Phase ~= SND.PHASE_FREEZE then
 		return false
 	end
+	-- Block automatic pickup for dropped weapons unless explicitly forced via swap logic
+	if wep.SND_Dropped and not ply.SND_ForcedPickup then
+		return false
+	end
 	return true
 end
 
@@ -257,17 +269,57 @@ hook.Add("PlayerShouldTakeDamage", "SND_NoFriendlyFire", function(ply, attacker)
 	end
 end)
 
+-- ── Weapon Pickup/Swap Logic ──────────────────────────────────────────────
+hook.Add("PlayerButtonDown", "SND_WeaponPickup", function(ply, btn)
+	if btn ~= KEY_E then return end
+	if not IsValid(ply) or not ply:Alive() then return end
+	if SND.Round.Phase ~= SND.PHASE_LIVE and SND.Round.Phase ~= SND.PHASE_FREEZE then return end
+
+	local tr = ply:GetEyeTrace()
+	local ent = tr.Entity
+	-- Allow interaction within 120 units
+	if IsValid(ent) and ent:IsWeapon() and ent.SND_Dropped and tr.StartPos:DistToSqr(tr.HitPos) < 14400 then
+		local class = ent:GetClass()
+		local isPri = table.HasValue(SND.Config.Mw2ePrimaries or {}, class)
+		local isSec = table.HasValue(SND.Config.Mw2eSecondaries or {}, class)
+		
+		if not isPri and not isSec then return end -- Ignore non-loadout weapons
+
+		-- Identify current weapon in the corresponding slot to drop it
+		local slotKey = isPri and "SND_Primary" or "SND_Secondary"
+		local currentClass = ply:GetNWString(slotKey, "")
+		local currentWep = ply:GetWeapon(currentClass)
+
+		if IsValid(currentWep) then
+			currentWep.SND_Dropped = true
+			ply:DropWeapon(currentWep)
+		end
+
+		-- Enable forced pickup to bypass the CanPickup block
+		ply.SND_ForcedPickup = true
+		ply:PickupWeapon(ent)
+		ply.SND_ForcedPickup = false
+
+		-- Update network state so HUD and logic stay in sync
+		ply:SetNWString(slotKey, class)
+		
+		-- Switch to the new weapon immediately
+		ply:SelectWeapon(class)
+		ply:EmitSound("items/ammo_pickup.wav", 65, 100)
+	end
+end)
+
 -- ── Custom Loadout & Quick-Throw System (Server) ─────────────────────────
 local function performQuickThrow(ply)
 	if ply.SND_IsQuickThrowing then return end
 	local lethal = ply:GetNWString("SND_Lethal", "")
-	if lethal == "" then return end
+	if lethal == "" or not ply:HasWeapon(lethal) then return end
 
 	local current = ply:GetActiveWeapon()
 	if not IsValid(current) or current:GetClass() == lethal then return end
 
+	local oldWepClass = current:GetClass()
 	ply.SND_IsQuickThrowing = true
-	local oldWep = current:GetClass()
 
 	ply:SelectWeapon(lethal)
 
@@ -282,7 +334,7 @@ local function performQuickThrow(ply)
 	-- Switch back to previous weapon after throw animation
 	timer.Simple(1.1, function()
 		if IsValid(ply) and ply:Alive() then
-			ply:SelectWeapon(oldWep)
+			if ply:HasWeapon(oldWepClass) then ply:SelectWeapon(oldWepClass) end
 		end
 		ply.SND_IsQuickThrowing = false
 	end)
