@@ -149,19 +149,9 @@ hook.Add("PostDrawTranslucentRenderables", "SND_Site3D2D", function()
 		cam.End3D2D()
 
 		-- Draw the defuse radius ring in world-space during Debug Mode
-		if debugMode then
-			local radius = site.radius or 120
-			render.SetColorMaterial()
-			
-			-- Draw a ground circle
-			local segments = 32
-			local lastPos = site.pos + Vector(radius, 0, 0)
-			for i = 1, segments do
-				local ang = (i / segments) * math.pi * 2
-				local nextPos = site.pos + Vector(math.cos(ang) * radius, math.sin(ang) * radius, 0)
-				render.DrawLine(lastPos + Vector(0,0,5), nextPos + Vector(0,0,5), Color(255, 255, 0), true)
-				lastPos = nextPos
-			end
+		if debugMode or phase == SND.PHASE_DEBUG then
+			debugoverlay.Sphere(site.pos, site.radius or 120, 0.1, Color(255, 255, 0, 255), true)
+			debugoverlay.EntityText(0, site.pos + Vector(0,0,20), "SITE " .. (site.id or "?"), 0.1, Color(255, 255, 0))
 		end
 	end
 
