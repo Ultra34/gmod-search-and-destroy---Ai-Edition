@@ -5,19 +5,11 @@
 
 -- Layer 1: the canonical GMod hook — returning false denies the toggle
 hook.Add("PlayerNoClip", "SND_NoNoclip", function(ply, desiredState)
-	if SND.Settings.GetInt("debug_mode", 0) == 1 or (SND.Round and SND.Round.Phase == SND.PHASE_DEBUG) then
-		return true
+	if (SND.Settings.GetInt("debug_mode", 0) == 1 or (SND.Round and SND.Round.Phase == SND.PHASE_DEBUG)) and ply:IsAdmin() then
+		return true -- Allow toggle if in debug mode and is an admin
 	end
 	return false
 end)
-
--- Layer 2: override the gamemode method itself so the base class can't re-enable it
-function GM:PlayerNoClip(ply, desiredState)
-	if SND.Settings.GetInt("debug_mode", 0) == 1 or (SND.Round and SND.Round.Phase == SND.PHASE_DEBUG) then
-		return true
-	end
-	return false
-end
 
 -- Layer 3: poll every 0.5 s and forcibly walk anyone who somehow got noclip
 timer.Create("SND_NoclipEnforce", 0.5, 0, function()
