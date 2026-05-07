@@ -214,13 +214,12 @@ end)
 -- ── Assign carrier ────────────────────────────────────────────────────────
 function SND.Bomb.AssignCarrier()
 	SND.Bomb.ResetForRound()
-	SND.Bomb.State = SND.BOMB_STATE_CARRIED
 
 	local humanAttackers = {}
 	local botAttackers = {}
 
 	for _, ply in ipairs(team.GetPlayers(SND.TEAM_ATTACK)) do
-		if IsValid(ply) and ply:Alive() then
+		if IsValid(ply) then
 			if ply:IsBot() or ply.SND_IsBot then
 				table.insert(botAttackers, ply)
 			else
@@ -233,8 +232,14 @@ function SND.Bomb.AssignCarrier()
 	if #humanAttackers > 0 then carrier = table.Random(humanAttackers)
 	elseif #botAttackers > 0 then carrier = table.Random(botAttackers) end
 
-	if not IsValid(carrier) then return end -- No valid attacker to assign bomb to
+	-- If no attackers found, ensure state is clean and stop
+	if not IsValid(carrier) then 
+		SND.Bomb.State = SND.BOMB_STATE_NONE
+		return 
+	end
 
+	-- Successfully found a carrier
+	SND.Bomb.State = SND.BOMB_STATE_CARRIED
 	SND.Bomb.Carrier = carrier
 
 	-- Clear carrier for everyone first

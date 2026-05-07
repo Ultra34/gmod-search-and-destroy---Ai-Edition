@@ -131,7 +131,8 @@ function SND.Round.StartNewRound()
 
 	-- Cleanup world: remove dropped weapons and clear blood decals for all clients
 	for _, ent in ipairs(ents.GetAll()) do
-		if ent:IsWeapon() and ent.SND_Dropped then
+		-- Explicitly remove weapons and any dropped bomb props left in the world
+		if (ent:IsWeapon() and ent.SND_Dropped) or ent:GetNWBool("SND_IsDroppedBomb") then
 			ent:Remove()
 		end
 	end
