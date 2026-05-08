@@ -138,6 +138,7 @@ net.Receive("SND_NavData", function()
 	local compressed = net.ReadData(len)
 	local json = util.Decompress(compressed)
 	navData = util.JSONToTable(json or "[]")
+	print("[SND] Minimap: Received floorplan data (" .. (#navData/5) .. " areas)")
 end)
 
 local function rotatePoint(x, y, ang)
@@ -178,34 +179,49 @@ local function drawMinimap(sw, sh, sc, lp)
 	-- 2. Nav Mesh Geometry (Floorplan)
 	if navData then
 		render.SetScissorRect(mx - radius, my - radius, mx + radius, my + radius, true)
-		surface.SetDrawColor(100, 105, 110, 180) -- Lightened and more opaque
-		draw.NoTexture()
+		surface.SetDrawColor(150, 155, 160, 150) -- Brighter grey for geometry
 
-		for i = 1, #navData, 4 do
-			local xMin, yMin, xMax, yMax = navData[i], navData[i+1], navData[i+2], navData[i+3]
+		for i = 1, #navData, 5 do
+			local xMin, yMin, xMax, yMax, zVal = navData[i], navData[i+1], navData[i+2], navData[i+3], navData[i+4]
 			
-			-- Distance check (Increased from 2000 to 4000 units)
+			-- ── Filters ──
+			-- 1. Only show areas on the current "floor" (within 200 units height)
+			if math.abs(zVal - pPos.z) > 200 then continue end
+
+			-- 2. Distance check to save performance
 			local cx, cy = (xMin + xMax) / 2, (yMin + yMax) / 2
 			local distSq = (cx - pPos.x)^2 + (cy - pPos.y)^2
 			if distSq > 16000000 then continue end 
 
+			-- Calculate relative screen positions
 			local x1, y1 = (xMin - pPos.x) * minimapScale, (yMin - pPos.y) * minimapScale
 			local x2, y2 = (xMax - pPos.x) * minimapScale, (yMax - pPos.y) * minimapScale
 			
-			-- Rotate relative to player
 			local rot = -pAng + 90
 			local rx1, ry1 = rotatePoint(x1, y1, rot)
 			local rx2, ry2 = rotatePoint(x2, y2, rot)
 			local rx3, ry3 = rotatePoint(x2, y1, rot)
 			local rx4, ry4 = rotatePoint(x1, y2, rot)
 
+			-- Draw Outlines (Modern CoD style) for better visibility
+			surface.DrawLine(mx + rx1, my - ry1, mx + rx3, my - ry3)
+			surface.DrawLine(mx + rx3, my - ry3, mx + rx2, my - ry2)
+			surface.DrawLine(mx + rx2, my - ry2, mx + rx4, my - ry4)
+			surface.DrawLine(mx + rx4, my - ry4, mx + rx1, my - ry1)
+			
+			-- Draw very faint fill for volume
+			surface.SetDrawColor(150, 155, 160, 20)
+			draw.NoTexture()
 			surface.DrawPoly({
 				{x = mx + rx1, y = my - ry1},
 				{x = mx + rx3, y = my - ry3},
 				{x = mx + rx2, y = my - ry2},
 				{x = mx + rx4, y = my - ry4}
 			})
+			surface.SetDrawColor(150, 155, 160, 150) -- Reset for next line
 		end
+		
+		render.SetScissorRect(0, 0, 0, 0, false)
 
 		-- 3. Bomb Sites
 		for _, site in ipairs(SND.Client.Sites or {}) do
@@ -235,7 +251,6 @@ local function drawMinimap(sw, sh, sc, lp)
 				surface.DrawRect(mx + rx - 2, my - ry - 2, 4, 4)
 			end
 		end
-		render.SetScissorRect(0, 0, 0, 0, false)
 
 		-- 4.5. Enemy Pings
 		for i = #SND.Client.MinimapPings, 1, -1 do
