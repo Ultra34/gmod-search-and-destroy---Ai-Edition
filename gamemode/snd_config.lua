@@ -270,21 +270,45 @@ function SND.Config.LoadMapOverrides(map)
 end
 
 if SERVER then
+	-- Automatically add a map name to the voting rotation file
+	function SND.Config.RegisterMapForVoting(map)
+		local path = "snd_mwclassic/maps.txt"
+		local content = file.Exists(path, "DATA") and file.Read(path, "DATA") or ""
+
+		local found = false
+		for line in string.gmatch(content, "[^\r\n]+") do
+			if string.Trim(line) == map then
+				found = true
+				break
+			end
+		end
+
+		if not found then
+			file.CreateDir("snd_mwclassic")
+			local lastChar = string.sub(content, -1)
+			local prefix = (content ~= "" and lastChar ~= "\n" and lastChar ~= "") and "\n" or ""
+			file.Append(path, prefix .. map .. "\n")
+			print("[SND] Map " .. map .. " auto-registered in maps.txt for voting.")
+		end
+	end
+
     function SND.Config.SaveMapData(map)
         local sites = SND.Config.MapSites[map] or {}
-        local spawns = SND.Config.MapSpawns[map] or {}
+        local spawns = SND.Config.MapSpawns[map] or { attack = {}, defend = {} }
         local attack = spawns.attack or {}
         local defend = spawns.defend or {}
 
         local path = "snd_mwclassic/maps/" .. map .. ".lua"
 
-        -- Ensure all subdirectories (especially for Workshop maps) are created
+        -- Recursive directory creation for Workshop maps (paths with slashes)
         file.CreateDir(string.GetPathFromFilename(path))
 
-        local out = "return {\n"
+        local out = "-- Auto-generated Map Configuration for " .. map .. "\n"
+        out = out .. "return {\n"
         out = out .. "\tsites = {\n"
         for _, s in ipairs(sites) do
-            out = out .. string.format("\t\t{ id = %q, plantPos = Vector(%f, %f, %f), defuseRadius = %f },\n", s.id, s.plantPos.x, s.plantPos.y, s.plantPos.z, s.defuseRadius or 120)
+            local p = s.plantPos or s.pos or Vector(0,0,0)
+            out = out .. string.format("\t\t{ id = %q, plantPos = Vector(%f, %f, %f), defuseRadius = %f },\n", s.id, p.x, p.y, p.z, s.defuseRadius or 120)
         end
         out = out .. "\t},\n"
 
@@ -302,9 +326,12 @@ if SERVER then
             local a = s.ang or Angle(0,0,0)
             out = out .. string.format("\t\t\t{ pos = Vector(%f, %f, %f), ang = Angle(%f, %f, %f) },\n", p.x, p.y, p.z, a.p, a.y, a.r)
         end
-        out = out .. "\t\t}\n\t}\n}"
+        out = out .. "\t\t}\n\t}\n}\n"
 
         file.Write(path, out)
         print("[SND] Saved map configuration: " .. path)
+
+        -- Ensure this map is eligible for the end-of-match vote
+        SND.Config.RegisterMapForVoting(map)
     end
 end

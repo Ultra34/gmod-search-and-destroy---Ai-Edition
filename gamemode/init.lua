@@ -387,18 +387,22 @@ hook.Add("InitPostEntity", "SND_RustMapSetup", function()
 		local map = game.GetMap()
 		SND.Config.LoadMapOverrides(map)
 
+		-- Ensure map tables are initialized even if no file exists yet
+		SND.Config.MapSites[map] = SND.Config.MapSites[map] or {}
+		SND.Config.MapSpawns[map] = SND.Config.MapSpawns[map] or { attack = {}, defend = {} }
+
+		-- Execute map-specific logic (e.g., auto-layout for Rust)
+		SND.Rust.InitPostEntity()
+
+		-- Auto-create template if it doesn't exist
 		local path = "snd_mwclassic/maps/" .. map .. ".lua"
 		if not file.Exists(path, "DATA") then
 			print("[SND] No config found for " .. map .. ". Creating auto-template...")
-			SND.Config.MapSites[map] = {}
-			SND.Config.MapSpawns[map] = { attack = {}, defend = {} }
 			SND.Config.SaveMapData(map)
-		else
-			-- Ensure the map is in the vote rotation if the config exists
-			SND.Config.RegisterMapForVoting(map)
 		end
-
-		SND.Rust.InitPostEntity()
+		
+		-- Always ensure voting registration is up to date
+		SND.Config.RegisterMapForVoting(map)
 	end
 end)
 

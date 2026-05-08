@@ -137,6 +137,7 @@ function SND.Rust.InitPostEntity()
 		local spawnsEmpty = not sp or not sp.attack or #sp.attack == 0 or not sp.defend or #sp.defend == 0
 		if sitesEmpty or spawnsEmpty then
 			SND.Rust.ApplyAutoLayout()
+			SND.Config.SaveMapData(map) -- Save the auto-generated layout
 		end
 	end
 end
