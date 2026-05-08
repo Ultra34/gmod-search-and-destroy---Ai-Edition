@@ -128,7 +128,7 @@ end)
 
 -- ── Manual Spawn Management ──────────────────────────────────────────────
 local function addSpawnCommand(ply, teamKey)
-	if IsValid(ply) and not (ply:IsSuperAdmin() or game.SinglePlayer() or ply:IsListenServerHost()) then 
+	if IsValid(ply) and not (ply:IsSuperAdmin() or ply:IsListenServerHost()) then 
 		ply:ChatPrint("[SND] ERROR: You must be a SuperAdmin to save map data.")
 		return 
 	end
@@ -155,7 +155,7 @@ end
 concommand.Add("snd_spawn_add_attack", function(ply) addSpawnCommand(ply, "attack") end)
 concommand.Add("snd_spawn_add_defend", function(ply) addSpawnCommand(ply, "defend") end)
 concommand.Add("snd_spawn_clear", function(ply)
-	if IsValid(ply) and not (ply:IsSuperAdmin() or game.SinglePlayer() or ply:IsListenServerHost()) then return end
+	if IsValid(ply) and not (ply:IsSuperAdmin() or ply:IsListenServerHost()) then return end
 	local map = string.lower(game.GetMap())
 	SND.Config.MapSpawns[map] = { attack = {}, defend = {} }
 	SND.Config.SaveMapData(map)
@@ -164,7 +164,7 @@ concommand.Add("snd_spawn_clear", function(ply)
 end)
 
 concommand.Add("snd_spawn_remove_nearest", function(ply)
-	if IsValid(ply) and not (ply:IsSuperAdmin() or game.SinglePlayer() or ply:IsListenServerHost()) then return end
+	if IsValid(ply) and not (ply:IsSuperAdmin() or ply:IsListenServerHost()) then return end
 	local map = string.lower(game.GetMap())
 	local spawns = SND.Config.MapSpawns[map]
 	if not spawns then return end
@@ -191,7 +191,7 @@ concommand.Add("snd_spawn_remove_nearest", function(ply)
 end)
 
 concommand.Add("snd_spawn_goto", function(ply, cmd, args)
-	if IsValid(ply) and not (ply:IsSuperAdmin() or game.SinglePlayer() or ply:IsListenServerHost()) then return end
+	if IsValid(ply) and not (ply:IsSuperAdmin() or ply:IsListenServerHost()) then return end
 	local teamKey = (args[1] or "attack"):lower()
 	local idx = tonumber(args[2]) or 1
 	

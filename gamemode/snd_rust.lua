@@ -143,7 +143,7 @@ function SND.Rust.InitPostEntity()
 end
 
 concommand.Add("snd_rust_dump_spawn_line", function(ply)
-	if IsValid(ply) and not ply:IsSuperAdmin() then return end
+	if IsValid(ply) and not (ply:IsSuperAdmin() or ply:IsListenServerHost()) then return end
 	local who = IsValid(ply) and ply or player.GetAll()[1]
 	if not IsValid(who) then return end
 	local p = who:GetPos()
@@ -155,7 +155,7 @@ concommand.Add("snd_rust_dump_spawn_line", function(ply)
 end)
 
 concommand.Add("snd_rust_dump_site_vectors", function(ply)
-	if IsValid(ply) and not ply:IsSuperAdmin() then return end
+	if IsValid(ply) and not (ply:IsSuperAdmin() or ply:IsListenServerHost()) then return end
 	local who = IsValid(ply) and ply or player.GetAll()[1]
 	if not IsValid(who) then return end
 	local p = groundPos(who:GetPos() + Vector(0, 0, 8))

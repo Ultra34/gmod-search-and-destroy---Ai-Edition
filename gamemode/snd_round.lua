@@ -225,7 +225,7 @@ local function startRoundTickTimer()
 end
 
 concommand.Add("snd_debug_toggle", function(ply)
-	if IsValid(ply) and not ply:IsSuperAdmin() then return end
+	if IsValid(ply) and not (ply:IsSuperAdmin() or ply:IsListenServerHost()) then return end
 	
 	if SND.Round.Phase ~= SND.PHASE_DEBUG then
 		SND.Round.Phase = SND.PHASE_DEBUG
