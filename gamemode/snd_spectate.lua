@@ -37,6 +37,9 @@ end
 function SND.Spectate.Ensure(ply)
 	if not IsValid(ply) or ply:Alive() then return end
 
+	-- Safety: Delay spectating start to allow the death ragdoll to spawn at the correct location
+	if ply.SND_DeathTime and CurTime() < ply.SND_DeathTime + 0.2 then return end
+
 	local targets = SND.Spectate.TeamTargets(ply)
 	if #targets == 0 then
 		if ply:GetObserverMode() ~= OBS_MODE_ROAMING or IsValid(ply:GetObserverTarget()) then

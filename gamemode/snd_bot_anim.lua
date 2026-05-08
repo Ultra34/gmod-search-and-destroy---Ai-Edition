@@ -94,6 +94,8 @@ end
 -- override which animation sequence plays.  Critical for NextBot bots.
 if CLIENT then
 	hook.Add("UpdateAnimation", "SND_BotAnimUpdate", function(ply, velocity, maxSeqGroundSpeed)
+		if not ply:Alive() then return end
+
 		-- Apply to both bots AND human players using CSS models so they look identical
 		local isCSSModel = string.find(ply:GetModel(), "models/player/ct_") ~= nil
 		                or string.find(ply:GetModel(), "models/player/t_")  ~= nil
@@ -136,6 +138,8 @@ if CLIENT then
 	-- This is the hook that controls whether the player plays IDLE, WALK, or RUN.
 	-- Without this, bots may get stuck on IDLE regardless of their velocity.
 	hook.Add("CalcMainActivity", "SND_BotCalcActivity", function(ply, velocity)
+		if not ply:Alive() then return end
+
 		local isCSSModel = string.find(ply:GetModel(), "models/player/ct_") ~= nil
 		                or string.find(ply:GetModel(), "models/player/t_")  ~= nil
 		if not isCSSModel then return end
