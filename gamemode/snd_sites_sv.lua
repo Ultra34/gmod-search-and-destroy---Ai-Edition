@@ -143,6 +143,8 @@ concommand.Add("snd_site_add", function(ply, cmd, args)
 		table.insert(sites, { id = id, plantPos = pos, defuseRadius = radius })
 	end
 
+	print("[SND] Site " .. id .. " added to memory table. Total sites: " .. #sites)
+
 	SND.Config.SaveMapData(map)
 	
 	broadcastSites()

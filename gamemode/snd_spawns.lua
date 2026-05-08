@@ -143,6 +143,8 @@ local function addSpawnCommand(ply, teamKey)
 
 	table.insert(SND.Config.MapSpawns[map][teamKey], { pos = pos, ang = ang })
 	
+	print("[SND] " .. teamKey .. " spawn added to memory table. Total: " .. #SND.Config.MapSpawns[map][teamKey])
+
 	-- We include existing site data in the save to avoid wiping it
 	SND.Config.SaveMapData(map)
 	

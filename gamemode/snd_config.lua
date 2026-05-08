@@ -270,8 +270,15 @@ if SERVER then
 
     function SND.Config.SaveMapData(map)
         map = string.lower(map)
-        local sites = SND.Config.MapSites[map] or {}
-        local spawns = SND.Config.MapSpawns[map] or { attack = {}, defend = {} }
+        
+        -- Ensure we are pulling the most recent data from memory
+        local sites = SND.Config.MapSites[map]
+        local spawns = SND.Config.MapSpawns[map]
+        
+        -- Safety check: if memory tables don't exist, create them as empty
+        if not sites then sites = {} SND.Config.MapSites[map] = sites end
+        if not spawns then spawns = { attack = {}, defend = {} } SND.Config.MapSpawns[map] = spawns end
+        
         local attack = spawns.attack or {}
         local defend = spawns.defend or {}
 
@@ -286,7 +293,7 @@ if SERVER then
         out = out .. "\tsites = {\n"
         for _, s in ipairs(sites) do
             local p = s.plantPos or s.pos or Vector(0,0,0)
-            out = out .. string.format("\t\t{ id = %q, plantPos = Vector(%f, %f, %f), defuseRadius = %f },\n", s.id or "?", p.x, p.y, p.z, s.defuseRadius or 120)
+            out = out .. string.format("\t\t{ id = %q, plantPos = Vector(%.2f, %.2f, %.2f), defuseRadius = %.1f },\n", s.id or "?", p.x, p.y, p.z, s.defuseRadius or 120)
         end
         out = out .. "\t},\n"
 
@@ -295,19 +302,25 @@ if SERVER then
         for _, s in ipairs(attack) do
             local p = s.pos or Vector(0,0,0)
             local a = s.ang or Angle(0,0,0)
-            out = out .. string.format("\t\t\t{ pos = Vector(%f, %f, %f), ang = Angle(%f, %f, %f) },\n", p.x, p.y, p.z, a.p, a.y, a.r)
+            out = out .. string.format("\t\t\t{ pos = Vector(%.2f, %.2f, %.2f), ang = Angle(%.2f, %.2f, %.2f) },\n", p.x, p.y, p.z, a.p, a.y, a.r)
         end
         out = out .. "\t\t},\n"
         out = out .. "\t\tdefend = {\n"
         for _, s in ipairs(defend) do
             local p = s.pos or Vector(0,0,0)
             local a = s.ang or Angle(0,0,0)
-            out = out .. string.format("\t\t\t{ pos = Vector(%f, %f, %f), ang = Angle(%f, %f, %f) },\n", p.x, p.y, p.z, a.p, a.y, a.r)
+            out = out .. string.format("\t\t\t{ pos = Vector(%.2f, %.2f, %.2f), ang = Angle(%.2f, %.2f, %.2f) },\n", p.x, p.y, p.z, a.p, a.y, a.r)
         end
         out = out .. "\t\t}\n\t}\n}\n"
 
         file.Write(path, out)
-        print(string.format("[SND] AUTO-SAVED: %d Sites, %d Spawns to %s", #sites, (#attack + #defend), path))
+        
+        -- Verify the write worked and print success to console
+        if file.Exists(path, "DATA") then
+            print(string.format("[SND] SUCCESS: Saved %d Sites, %d Spawns to %s", #sites, (#attack + #defend), path))
+        else
+            print("[SND] ERROR: Failed to write map configuration to " .. path)
+        end
 
         -- Ensure this map is eligible for the end-of-match vote
         SND.Config.RegisterMapForVoting(map)
