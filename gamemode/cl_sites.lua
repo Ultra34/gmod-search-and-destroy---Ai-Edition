@@ -103,16 +103,16 @@ local function drawGroundRing(pos, radius, col)
 	
 	for i = 0, segments do
 		local ang = i * step
-		local offset = Vector(math.cos(ang) * radius, math.sin(ang) * radius, 10)
+		local offset = Vector(math.cos(ang) * radius, math.sin(ang) * radius, 25)
 		local worldP = pos + offset
 		
 		-- Trace down to stick to ground
 		local tr = util.TraceLine({
 			start = worldP,
-			endpos = worldP - Vector(0, 0, 100),
-			mask = MASK_SOLID_BRUSHONLY
+			endpos = worldP - Vector(0, 0, 150),
+			mask = MASK_SOLID -- Include props, displacements, and world brushes
 		})
-		local drawP = tr.Hit and (tr.HitPos + tr.HitNormal) or worldP
+		local drawP = tr.Hit and (tr.HitPos + Vector(0, 0, 1)) or (pos + Vector(math.cos(ang) * radius, math.sin(ang) * radius, 1))
 		
 		if lastPos then render.DrawLine(lastPos, drawP, col, true) end
 		lastPos = drawP
