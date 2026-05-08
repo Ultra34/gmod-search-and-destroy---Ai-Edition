@@ -268,3 +268,39 @@ function SND.Config.LoadMapOverrides(map)
 		print("[SND] Loaded spawns for " .. map)
 	end
 end
+
+if SERVER then
+    function SND.Config.SaveMapData(map)
+        local sites = SND.Config.MapSites[map] or {}
+        local spawns = SND.Config.MapSpawns[map] or { attack = {}, defend = {} }
+
+        file.CreateDir("snd_mwclassic/maps")
+        local path = "snd_mwclassic/maps/" .. map .. ".lua"
+
+        local out = "return {\n"
+        out = out .. "\tsites = {\n"
+        for _, s in ipairs(sites) do
+            out = out .. string.format("\t\t{ id = %q, plantPos = Vector(%f, %f, %f), defuseRadius = %f },\n", s.id, s.plantPos.x, s.plantPos.y, s.plantPos.z, s.defuseRadius or 120)
+        end
+        out = out .. "\t},\n"
+
+        out = out .. "\tspawns = {\n"
+        out = out .. "\t\tattack = {\n"
+        for _, s in ipairs(spawns.attack or {}) do
+            local p = s.pos or Vector(0,0,0)
+            local a = s.ang or Angle(0,0,0)
+            out = out .. string.format("\t\t\t{ pos = Vector(%f, %f, %f), ang = Angle(%f, %f, %f) },\n", p.x, p.y, p.z, a.p, a.y, a.r)
+        end
+        out = out .. "\t\t},\n"
+        out = out .. "\t\tdefend = {\n"
+        for _, s in ipairs(spawns.defend or {}) do
+            local p = s.pos or Vector(0,0,0)
+            local a = s.ang or Angle(0,0,0)
+            out = out .. string.format("\t\t\t{ pos = Vector(%f, %f, %f), ang = Angle(%f, %f, %f) },\n", p.x, p.y, p.z, a.p, a.y, a.r)
+        end
+        out = out .. "\t\t}\n\t}\n}"
+
+        file.Write(path, out)
+        print("[SND] Saved map configuration: " .. path)
+    end
+end

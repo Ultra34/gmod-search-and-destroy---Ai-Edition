@@ -79,21 +79,13 @@ function GM:GetFallDamage(ply, speed)
 end
 
 local function sendNavToPlayer(ply)
-	if not navmesh.IsLoaded() then 
-		print("[SND] Minimap Warning: No nav mesh found. Use 'nav_generate' in console.")
-		return 
-	end
-
+	if not navmesh.IsLoaded() then return end
 	local areas = navmesh.GetAllNavAreas()
-	print("[SND] Minimap: Sending " .. #areas .. " nav areas to " .. ply:Nick())
-	
 	local data = {}
+	-- Pack corner coordinates into a flat table for compression
 	for _, a in ipairs(areas) do
 		local c1, c2 = a:GetCorner(0), a:GetCorner(2)
-		-- Flattened data: x1, y1, x2, y2, z
-		table.insert(data, math.Round(c1.x)) table.insert(data, math.Round(c1.y))
-		table.insert(data, math.Round(c2.x)) table.insert(data, math.Round(c2.y))
-		table.insert(data, math.Round(c1.z))
+		table.insert(data, {math.Round(c1.x), math.Round(c1.y), math.Round(c2.x), math.Round(c2.y)})
 	end
 	
 	local compressed = util.Compress(util.TableToJSON(data))
@@ -384,6 +376,17 @@ end)
 
 hook.Add("InitPostEntity", "SND_RustMapSetup", function()
 	if SERVER then
+		local map = game.GetMap()
+		SND.Config.LoadMapOverrides(map)
+
+		local path = "snd_mwclassic/maps/" .. map .. ".lua"
+		if not file.Exists(path, "DATA") then
+			print("[SND] No config found for " .. map .. ". Creating auto-template...")
+			SND.Config.MapSites[map] = SND.Config.MapSites[map] or {}
+			SND.Config.MapSpawns[map] = SND.Config.MapSpawns[map] or { attack = {}, defend = {} }
+			SND.Config.SaveMapData(map)
+		end
+
 		SND.Rust.InitPostEntity()
 	end
 end)

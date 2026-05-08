@@ -117,36 +117,6 @@ hook.Add("InitPostEntity", "SND_SendSitesOnLoad", function()
 end)
 
 -- ── Manual Site Management ──────────────────────────────────────────────
-local function saveMapData(map, data)
-	file.CreateDir("snd_mwclassic/maps")
-	local path = "snd_mwclassic/maps/" .. map .. ".lua"
-	
-	local out = "return {\n"
-	out = out .. "\tsites = {\n"
-	for _, s in ipairs(data.sites or {}) do
-		out = out .. string.format("\t\t{ id = %q, plantPos = Vector(%f, %f, %f), defuseRadius = %f },\n", s.id, s.plantPos.x, s.plantPos.y, s.plantPos.z, s.defuseRadius)
-	end
-	out = out .. "\t},\n"
-
-	-- Preserve existing spawns if they exist
-	if data.spawns then
-		out = out .. "\tspawns = {\n"
-		out = out .. "\t\tattack = {\n"
-		for _, s in ipairs(data.spawns.attack or {}) do
-			out = out .. string.format("\t\t\t{ pos = Vector(%f, %f, %f), ang = Angle(%f, %f, %f) },\n", s.pos.x, s.pos.y, s.pos.z, s.ang.p, s.ang.y, s.ang.r)
-		end
-		out = out .. "\t\t},\n"
-		out = out .. "\t\tdefend = {\n"
-		for _, s in ipairs(data.spawns.defend or {}) do
-			out = out .. string.format("\t\t\t{ pos = Vector(%f, %f, %f), ang = Angle(%f, %f, %f) },\n", s.pos.x, s.pos.y, s.pos.z, s.ang.p, s.ang.y, s.ang.r)
-		end
-		out = out .. "\t\t}\n\t}\n"
-	end
-	out = out .. "}"
-	
-	file.Write(path, out)
-end
-
 concommand.Add("snd_site_add", function(ply, cmd, args)
 	if IsValid(ply) and not ply:IsSuperAdmin() then return end
 	local id = (args[1] or "A"):upper()
@@ -178,8 +148,7 @@ concommand.Add("snd_site_add", function(ply, cmd, args)
 		table.insert(sites, { id = id, plantPos = pos, defuseRadius = radius })
 	end
 
-	local fullData = { sites = SND.Config.MapSites[map], spawns = SND.Config.MapSpawns[map] }
-	saveMapData(map, fullData)
+	SND.Config.SaveMapData(map)
 	
 	broadcastSites()
 	SND.Sites.RefreshEntities()
@@ -191,8 +160,7 @@ concommand.Add("snd_site_clear", function(ply)
 	local map = game.GetMap()
 	SND.Config.MapSites[map] = {}
 	
-	local fullData = { sites = SND.Config.MapSites[map], spawns = SND.Config.MapSpawns[map] }
-	saveMapData(map, fullData)
+	SND.Config.SaveMapData(map)
 	
 	broadcastSites()
 	SND.Sites.RefreshEntities()

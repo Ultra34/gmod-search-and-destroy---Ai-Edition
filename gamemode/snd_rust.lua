@@ -130,7 +130,6 @@ end
 
 function SND.Rust.InitPostEntity()
 	local map = game.GetMap()
-	SND.Config.LoadMapOverrides(map)
 
 	if map == RUST_MAP then
 		local sitesEmpty = not SND.Config.MapSites[map] or #SND.Config.MapSites[map] < 2

@@ -124,35 +124,6 @@ hook.Add("Think", "SND_DebugGhostManager", function()
 end)
 
 -- ── Manual Spawn Management ──────────────────────────────────────────────
-local function saveMapData(map, data)
-	file.CreateDir("snd_mwclassic/maps")
-	local path = "snd_mwclassic/maps/" .. map .. ".lua"
-	
-	local out = "return {\n"
-	-- Preserve existing sites if they exist
-	if data.sites then
-		out = out .. "\tsites = {\n"
-		for _, s in ipairs(data.sites) do
-			out = out .. string.format("\t\t{ id = %q, plantPos = Vector(%f, %f, %f), defuseRadius = %f },\n", s.id, s.plantPos.x, s.plantPos.y, s.plantPos.z, s.defuseRadius)
-		end
-		out = out .. "\t},\n"
-	end
-
-	out = out .. "\tspawns = {\n"
-	out = out .. "\t\tattack = {\n"
-	for _, s in ipairs(data.spawns.attack or {}) do
-		out = out .. string.format("\t\t\t{ pos = Vector(%f, %f, %f), ang = Angle(%f, %f, %f) },\n", s.pos.x, s.pos.y, s.pos.z, s.ang.p, s.ang.y, s.ang.r)
-	end
-	out = out .. "\t\t},\n"
-	out = out .. "\t\tdefend = {\n"
-	for _, s in ipairs(data.spawns.defend or {}) do
-		out = out .. string.format("\t\t\t{ pos = Vector(%f, %f, %f), ang = Angle(%f, %f, %f) },\n", s.pos.x, s.pos.y, s.pos.z, s.ang.p, s.ang.y, s.ang.r)
-	end
-	out = out .. "\t\t}\n\t}\n}"
-	
-	file.Write(path, out)
-end
-
 local function addSpawnCommand(ply, teamKey)
 	if IsValid(ply) and not ply:IsSuperAdmin() then return end
 	local map = game.GetMap()
@@ -165,8 +136,7 @@ local function addSpawnCommand(ply, teamKey)
 	table.insert(SND.Config.MapSpawns[map][teamKey], { pos = pos, ang = ang })
 	
 	-- We include existing site data in the save to avoid wiping it
-	local fullData = { sites = SND.Config.MapSites[map], spawns = SND.Config.MapSpawns[map] }
-	saveMapData(map, fullData)
+	SND.Config.SaveMapData(map)
 	
 	ply:ChatPrint("[SND] Added " .. teamKey .. " spawn at your position and saved to data.")
 	if SND.Round.Phase == SND.PHASE_DEBUG then
@@ -180,7 +150,7 @@ concommand.Add("snd_spawn_clear", function(ply)
 	if IsValid(ply) and not ply:IsSuperAdmin() then return end
 	local map = game.GetMap()
 	SND.Config.MapSpawns[map] = { attack = {}, defend = {} }
-	saveMapData(map, { sites = SND.Config.MapSites[map], spawns = SND.Config.MapSpawns[map] })
+	SND.Config.SaveMapData(map)
 	clearDebugGhosts()
 	ply:ChatPrint("[SND] Cleared all custom spawns for " .. map)
 end)
@@ -205,7 +175,7 @@ concommand.Add("snd_spawn_remove_nearest", function(ply)
 
 	if bestIdx and math.sqrt(bestDist) < 200 then
 		table.remove(SND.Config.MapSpawns[map][bestTeam], bestIdx)
-		saveMapData(map, { sites = SND.Config.MapSites[map], spawns = SND.Config.MapSpawns[map] })
+		SND.Config.SaveMapData(map)
 		ply:ChatPrint("[SND] Removed nearest " .. bestTeam .. " spawn.")
 	else
 		ply:ChatPrint("[SND] No spawn point close enough to remove.")
