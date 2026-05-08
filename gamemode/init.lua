@@ -79,13 +79,18 @@ function GM:GetFallDamage(ply, speed)
 end
 
 local function sendNavToPlayer(ply)
-	if not navmesh.IsLoaded() then return end
+	if not navmesh.IsLoaded() then 
+		print("[SND] Minimap Warning: No nav mesh loaded for this map. Geometry will not show.")
+		return 
+	end
+
 	local areas = navmesh.GetAllNavAreas()
 	local data = {}
-	-- Pack corner coordinates into a flat table for compression
 	for _, a in ipairs(areas) do
 		local c1, c2 = a:GetCorner(0), a:GetCorner(2)
-		table.insert(data, {math.Round(c1.x), math.Round(c1.y), math.Round(c2.x), math.Round(c2.y)})
+		-- Use flat array to save JSON characters
+		table.insert(data, math.Round(c1.x)) table.insert(data, math.Round(c1.y))
+		table.insert(data, math.Round(c2.x)) table.insert(data, math.Round(c2.y))
 	end
 	
 	local compressed = util.Compress(util.TableToJSON(data))

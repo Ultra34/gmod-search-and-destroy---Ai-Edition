@@ -119,6 +119,37 @@ local function drawGroundRing(pos, radius, col)
 	end
 end
 
+-- ── Screen-Space HUD Marker ──────────────────────────────────────────────
+function SND.DrawSiteHUDMarker(worldPos, id, col, alphaMult)
+	local scr = worldPos:ToScreen()
+	if not scr.visible then return end
+
+	local x, y = scr.x, scr.y
+	local lp = LocalPlayer()
+	local dist = lp:GetPos():Distance(worldPos)
+	local meters = math.floor(dist / 52.49)
+	local isPlanted = SND.Bomb and SND.Bomb.PlantedSite == id
+
+	local size = 12
+	local pulse = isPlanted and (0.6 + math.abs(math.sin(CurTime() * 8)) * 0.4) or 1
+
+	-- Draw Shadow
+	SND.DrawSiteDiamond(x + 2, y + 2, size + 2, Color(0, 0, 0, 150 * alphaMult * pulse))
+	-- Draw Main
+	SND.DrawSiteDiamond(x, y, size, Color(col.r, col.g, col.b, 230 * alphaMult * pulse))
+
+	draw.SimpleText(id, "SND_BO3_Header", x, y, Color(255, 255, 255, 255 * alphaMult * pulse), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+	draw.SimpleText(meters .. "M", "DermaDefault", x, y + size + 4, Color(255, 255, 255, 200 * alphaMult), TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
+
+	-- Render bomb timer
+	if isPlanted and SND.Bomb.PlantTime then
+		local remaining = math.max(0, SND.Settings.Get("bomb_fuse_time", 45) - (CurTime() - SND.Bomb.PlantTime))
+		local timeStr   = string.format("%.1f", remaining)
+		local urgency   = remaining < 10 and Color(255, 60, 40, 255 * alphaMult) or Color(255, 210, 40, 255 * alphaMult)
+		draw.SimpleText(timeStr, "DermaDefaultBold", x, y - size - 12, urgency, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+	end
+end
+
 -- ── 3D2D World Markers ───────────────────────────────────────────────────
 hook.Add("PostDrawTranslucentRenderables", "SND_Site3D2D", function()
 	local lp = LocalPlayer()
@@ -136,62 +167,18 @@ hook.Add("PostDrawTranslucentRenderables", "SND_Site3D2D", function()
 	local sites = SND.Client.Sites or {}
 	if #sites == 0 then return end
 
-	local isADS = lp:Alive() and not debugMode and lp:KeyDown(IN_ATTACK2)
 	local eyePos = lp:EyePos()
 	local eyeAng = lp:EyeAngles()
 
 	for _, site in ipairs(sites) do
-		if isADS then continue end
-
 		-- Defenders only see markers for the site where the bomb is actually active
 		local isThisPlanted = SND.Bomb and SND.Bomb.PlantedSite == site.id
 		if lp:Team() == SND.TEAM_DEFEND and not debugMode and not isThisPlanted then continue end
 
+		-- ── World Visuals (Ground Rings & Beacons) ──
 		local col = SND.GetSiteColor(site.id)
-		local pos = site.pos + Vector(0, 0, 85) -- Slightly lower anchor for better visibility
-		local dist = eyePos:Distance(pos)
-		local meters = math.floor(dist / 52.49)
+		local pulse = 0.6 + math.abs(math.sin(CurTime() * (isThisPlanted and 4 or 2))) * 0.4
 
-		-- ── Billboarding & Constant Scaling ──
-		-- Keep the icon facing the player but locked vertically (upright)
-		local drawAng = Angle(0, eyeAng.y - 90, 90)
-		
-		-- Formula to keep the icon roughly the same size on screen regardless of distance
-		local scale = math.Clamp(dist * 0.00015, 0.04, 0.18)
-
-		-- cam.Start3D2D handles the transformation into world-space
-		cam.Start3D2D(pos, drawAng, scale)
-			-- Objective markers are typically visible through walls for attackers
-			render.OverrideDepthEnable(true, false)
-			
-			local diamondSize = 100
-			local diamondPulse = isThisPlanted and (math.abs(math.sin(CurTime() * 8)) * 0.5 + 0.5) or 1
-			
-			-- Draw stylized "COD" container (Shadow -> Background -> Border)
-			SND.DrawSiteDiamond(0, 0, diamondSize + 10, Color(0, 0, 0, 180 * diamondPulse))
-			SND.DrawSiteDiamond(0, 0, diamondSize, Color(col.r, col.g, col.b, 230 * diamondPulse))
-
-			draw.SimpleText(site.id, "SND_MW2_3D2D", 0, 0, Color(255, 255, 255, 255), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
-			
-			-- Render Distance using cam-space coordinates
-			draw.SimpleText(meters .. "M", "SND_BO3_Score", 0, diamondSize + 20, Color(255, 255, 255, 220), TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
-
-			-- Render bomb timer in world-space
-			if isPlanted and SND.Bomb.PlantTime then
-				local remaining = math.max(0, 45 - (CurTime() - SND.Bomb.PlantTime))
-				local timeStr   = string.format("%.1f", remaining)
-				local urgency   = remaining < 10 and Color(255, 60, 40) or Color(255, 210, 40)
-				
-				draw.SimpleText(timeStr, "SND_MW2_3D2D", 0, diamondSize + 120, urgency, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
-			end
-			
-			render.OverrideDepthEnable(false, false)
-		cam.End3D2D()
-
-		-- ── Reworked Ground Zone Visuals ──
-		local ringPulseSpeed = isThisPlanted and 4 or 2
-		local pulse = 0.6 + math.abs(math.sin(CurTime() * ringPulseSpeed)) * 0.4
-		
 		-- Outer glowing ring
 		drawGroundRing(site.pos, (site.radius or 120) + 2, Color(col.r, col.g, col.b, 50 * pulse))
 		-- Main inner ring

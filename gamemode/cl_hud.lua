@@ -178,23 +178,27 @@ local function drawMinimap(sw, sh, sc, lp)
 	-- 2. Nav Mesh Geometry (Floorplan)
 	if navData then
 		render.SetScissorRect(mx - radius, my - radius, mx + radius, my + radius, true)
-		for _, a in ipairs(navData) do
-			-- Dist check to save performance
-			local cx, cy = (a[1] + a[3]) / 2, (a[2] + a[4]) / 2
-			local distSq = (cx - pPos.x)^2 + (cy - pPos.y)^2
-			if distSq > 4000000 then continue end -- 2000 units
+		surface.SetDrawColor(100, 105, 110, 180) -- Lightened and more opaque
+		draw.NoTexture()
 
-			local x1, y1 = (a[1] - pPos.x) * minimapScale, (a[2] - pPos.y) * minimapScale
-			local x2, y2 = (a[3] - pPos.x) * minimapScale, (a[4] - pPos.y) * minimapScale
+		for i = 1, #navData, 4 do
+			local xMin, yMin, xMax, yMax = navData[i], navData[i+1], navData[i+2], navData[i+3]
+			
+			-- Distance check (Increased from 2000 to 4000 units)
+			local cx, cy = (xMin + xMax) / 2, (yMin + yMax) / 2
+			local distSq = (cx - pPos.x)^2 + (cy - pPos.y)^2
+			if distSq > 16000000 then continue end 
+
+			local x1, y1 = (xMin - pPos.x) * minimapScale, (yMin - pPos.y) * minimapScale
+			local x2, y2 = (xMax - pPos.x) * minimapScale, (yMax - pPos.y) * minimapScale
 			
 			-- Rotate relative to player
-			local rx1, ry1 = rotatePoint(x1, y1, -pAng + 90)
-			local rx2, ry2 = rotatePoint(x2, y2, -pAng + 90)
-			local rx3, ry3 = rotatePoint(x2, y1, -pAng + 90)
-			local rx4, ry4 = rotatePoint(x1, y2, -pAng + 90)
+			local rot = -pAng + 90
+			local rx1, ry1 = rotatePoint(x1, y1, rot)
+			local rx2, ry2 = rotatePoint(x2, y2, rot)
+			local rx3, ry3 = rotatePoint(x2, y1, rot)
+			local rx4, ry4 = rotatePoint(x1, y2, rot)
 
-			surface.SetDrawColor(80, 82, 85, 120)
-			draw.NoTexture()
 			surface.DrawPoly({
 				{x = mx + rx1, y = my - ry1},
 				{x = mx + rx3, y = my - ry3},
@@ -691,7 +695,9 @@ hook.Add("HUDPaint", "SND_HUD", function()
 			local labelPos = site.pos + Vector(0, 0, 95)
 			
 			-- Draw off-screen arrows (purely 2D logic to point to the 3D objective)
-			SND.DrawSiteOffscreenArrow(labelPos, col, 1)
+			if not SND.DrawSiteOffscreenArrow(labelPos, col, 1) then
+				SND.DrawSiteHUDMarker(labelPos, site.id, col, 1)
+			end
 		end
 	end
 
