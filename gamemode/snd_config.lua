@@ -299,16 +299,17 @@ if SERVER then
         local defend = spawns.defend or {}
 
         local path = "snd_mwclassic/maps/" .. map .. ".lua"
+        local dir = string.GetPathFromFilename(path)
 
-        -- Recursive directory creation for Workshop maps (paths with slashes)
-        file.CreateDir(string.GetPathFromFilename(path))
+        -- Ensure directory exists (handles recursive folders for Workshop maps)
+        if dir and dir ~= "" then file.CreateDir(dir) end
 
         local out = "-- Auto-generated Map Configuration for " .. map .. "\n"
         out = out .. "return {\n"
         out = out .. "\tsites = {\n"
         for _, s in ipairs(sites) do
             local p = s.plantPos or s.pos or Vector(0,0,0)
-            out = out .. string.format("\t\t{ id = %q, plantPos = Vector(%f, %f, %f), defuseRadius = %f },\n", s.id, p.x, p.y, p.z, s.defuseRadius or 120)
+            out = out .. string.format("\t\t{ id = %q, plantPos = Vector(%f, %f, %f), defuseRadius = %f },\n", s.id or "?", p.x, p.y, p.z, s.defuseRadius or 120)
         end
         out = out .. "\t},\n"
 

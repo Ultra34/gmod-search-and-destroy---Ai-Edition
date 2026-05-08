@@ -118,7 +118,10 @@ end)
 
 -- ── Manual Site Management ──────────────────────────────────────────────
 concommand.Add("snd_site_add", function(ply, cmd, args)
-	if IsValid(ply) and not ply:IsSuperAdmin() then return end
+	if IsValid(ply) and not ply:IsSuperAdmin() then 
+		ply:ChatPrint("[SND] ERROR: You must be a SuperAdmin to save map data.")
+		return 
+	end
 	local id = (args[1] or "A"):upper()
 	local radius = tonumber(args[2]) or 120
 	local map = game.GetMap()

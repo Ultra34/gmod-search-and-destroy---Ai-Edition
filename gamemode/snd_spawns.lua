@@ -14,9 +14,12 @@ function SND.Spawns.Apply(ply)
 	local map = game.GetMap()
 	local data = SND.Config.MapSpawns[map]
 	
-	-- Fallback: If no map data, split all info_player_start entities by location
-	if not data then
+	-- Fallback: If no map data OR data is empty, split all info_player_start entities
+	local hasData = data and ((data.attack and #data.attack > 0) or (data.defend and #data.defend > 0))
+	if not hasData then
 		local spawns = ents.FindByClass("info_player_start")
+		if #spawns == 0 then spawns = ents.FindByClass("info_player_deathmatch") end
+		
 		table.sort(spawns, function(a, b) return a:GetPos().x < b:GetPos().x end)
 		
 		local mid = math.floor(#spawns / 2)
@@ -125,7 +128,10 @@ end)
 
 -- ── Manual Spawn Management ──────────────────────────────────────────────
 local function addSpawnCommand(ply, teamKey)
-	if IsValid(ply) and not ply:IsSuperAdmin() then return end
+	if IsValid(ply) and not ply:IsSuperAdmin() then 
+		ply:ChatPrint("[SND] ERROR: You must be a SuperAdmin to save map data.")
+		return 
+	end
 	local map = game.GetMap()
 	SND.Config.MapSpawns[map] = SND.Config.MapSpawns[map] or { attack = {}, defend = {} }
 	SND.Config.MapSpawns[map].attack = SND.Config.MapSpawns[map].attack or {}
