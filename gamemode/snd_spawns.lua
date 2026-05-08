@@ -128,6 +128,8 @@ local function addSpawnCommand(ply, teamKey)
 	if IsValid(ply) and not ply:IsSuperAdmin() then return end
 	local map = game.GetMap()
 	SND.Config.MapSpawns[map] = SND.Config.MapSpawns[map] or { attack = {}, defend = {} }
+	SND.Config.MapSpawns[map].attack = SND.Config.MapSpawns[map].attack or {}
+	SND.Config.MapSpawns[map].defend = SND.Config.MapSpawns[map].defend or {}
 	
 	local pos = ply:GetPos() + Vector(0, 0, 8) -- Slight offset to prevent floor sticking
 	local ang = ply:EyeAngles()

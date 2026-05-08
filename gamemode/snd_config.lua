@@ -270,30 +270,11 @@ function SND.Config.LoadMapOverrides(map)
 end
 
 if SERVER then
-	function SND.Config.RegisterMapForVoting(map)
-		local path = "snd_mwclassic/maps.txt"
-		local content = file.Exists(path, "DATA") and file.Read(path, "DATA") or ""
-
-		local found = false
-		for line in string.gmatch(content, "[^\r\n]+") do
-			if string.Trim(line) == map then
-				found = true
-				break
-			end
-		end
-
-		if not found then
-			file.CreateDir("snd_mwclassic")
-			local lastChar = string.sub(content, -1)
-			local prefix = (content ~= "" and lastChar ~= "\n") and "\n" or ""
-			file.Append(path, prefix .. map .. "\n")
-			print("[SND] Map " .. map .. " auto-registered in maps.txt for voting.")
-		end
-	end
-
     function SND.Config.SaveMapData(map)
         local sites = SND.Config.MapSites[map] or {}
-        local spawns = SND.Config.MapSpawns[map] or { attack = {}, defend = {} }
+        local spawns = SND.Config.MapSpawns[map] or {}
+        local attack = spawns.attack or {}
+        local defend = spawns.defend or {}
 
         file.CreateDir("snd_mwclassic/maps")
         local path = "snd_mwclassic/maps/" .. map .. ".lua"
@@ -307,14 +288,14 @@ if SERVER then
 
         out = out .. "\tspawns = {\n"
         out = out .. "\t\tattack = {\n"
-        for _, s in ipairs(spawns.attack or {}) do
+        for _, s in ipairs(attack) do
             local p = s.pos or Vector(0,0,0)
             local a = s.ang or Angle(0,0,0)
             out = out .. string.format("\t\t\t{ pos = Vector(%f, %f, %f), ang = Angle(%f, %f, %f) },\n", p.x, p.y, p.z, a.p, a.y, a.r)
         end
         out = out .. "\t\t},\n"
         out = out .. "\t\tdefend = {\n"
-        for _, s in ipairs(spawns.defend or {}) do
+        for _, s in ipairs(defend) do
             local p = s.pos or Vector(0,0,0)
             local a = s.ang or Angle(0,0,0)
             out = out .. string.format("\t\t\t{ pos = Vector(%f, %f, %f), ang = Angle(%f, %f, %f) },\n", p.x, p.y, p.z, a.p, a.y, a.r)
@@ -323,6 +304,5 @@ if SERVER then
 
         file.Write(path, out)
         print("[SND] Saved map configuration: " .. path)
-		SND.Config.RegisterMapForVoting(map)
     end
 end
