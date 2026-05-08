@@ -2,6 +2,11 @@
 
 SND.Spawns = SND.Spawns or {}
 
+-- Ensure config tables are initialized to prevent nil errors during setup
+SND.Config = SND.Config or {}
+SND.Config.MapSites = SND.Config.MapSites or {}
+SND.Config.MapSpawns = SND.Config.MapSpawns or {}
+
 function SND.Spawns.Apply(ply)
 	if not SERVER then return end
 	if not IsValid(ply) or not ply:Alive() then return end

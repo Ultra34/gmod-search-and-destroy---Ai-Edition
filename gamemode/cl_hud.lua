@@ -701,7 +701,9 @@ hook.Add("HUDPaint", "SND_HUD", function()
 	
 	local isADS = lp:Alive() and not debugMode and lp:KeyDown(IN_ATTACK2)
 
-	if not isADS and (lp:Team() == SND.TEAM_ATTACK or debugMode or isPlanted) and (phase == SND.PHASE_LIVE or phase == SND.PHASE_FREEZE or phase == SND.PHASE_DEBUG) then
+	-- Show markers regardless of team or convar if in the dedicated Debug Phase
+	local showMarkers = debugMode or isPlanted or (lp:Team() == SND.TEAM_ATTACK) or (phase == SND.PHASE_DEBUG)
+	if not isADS and showMarkers and (phase == SND.PHASE_LIVE or phase == SND.PHASE_FREEZE or phase == SND.PHASE_DEBUG) then
 		for _, site in ipairs(SND.Client.Sites or {}) do
 			-- Defenders only see the site where the bomb is actually planted
 			if lp:Team() == SND.TEAM_DEFEND and not debugMode and (not isPlanted or SND.Bomb.PlantedSite ~= site.id) then continue end

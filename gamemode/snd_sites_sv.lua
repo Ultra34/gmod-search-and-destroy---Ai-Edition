@@ -3,6 +3,11 @@
      Add to init.lua:  include("snd_sites_sv.lua")
 ]]
 
+-- Ensure config tables are initialized to prevent nil errors during setup
+SND.Config = SND.Config or {}
+SND.Config.MapSites = SND.Config.MapSites or {}
+SND.Config.MapSpawns = SND.Config.MapSpawns or {}
+
 util.AddNetworkString("SND_SpawnData")
 util.AddNetworkString("SND_SiteData")
 
@@ -144,7 +149,7 @@ end
 
 concommand.Add("snd_site_add", function(ply, cmd, args)
 	if IsValid(ply) and not ply:IsSuperAdmin() then return end
-	local id = args[1] or "A"
+	local id = (args[1] or "A"):upper()
 	local radius = tonumber(args[2]) or 120
 	local map = game.GetMap()
 
@@ -158,8 +163,21 @@ concommand.Add("snd_site_add", function(ply, cmd, args)
 	})
 	local pos = tr.Hit and tr.HitPos or ply:GetPos()
 
-	table.insert(SND.Config.MapSites[map], { id = id, plantPos = pos, defuseRadius = radius })
+	-- Replace existing site with same ID if it exists, otherwise insert new
+	local sites = SND.Config.MapSites[map]
+	local found = false
+	for k, s in ipairs(sites) do
+		if s.id == id then
+			sites[k] = { id = id, plantPos = pos, defuseRadius = radius }
+			found = true
+			break
+		end
+	end
 	
+	if not found then
+		table.insert(sites, { id = id, plantPos = pos, defuseRadius = radius })
+	end
+
 	local fullData = { sites = SND.Config.MapSites[map], spawns = SND.Config.MapSpawns[map] }
 	saveMapData(map, fullData)
 	
