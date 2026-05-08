@@ -109,7 +109,7 @@ local function drawGroundRing(pos, radius, col)
 		-- Trace down to stick to ground
 		local tr = util.TraceLine({
 			start = worldP,
-			endpos = worldP - Vector(0, 0, 50),
+			endpos = worldP - Vector(0, 0, 100),
 			mask = MASK_SOLID_BRUSHONLY
 		})
 		local drawP = tr.Hit and (tr.HitPos + tr.HitNormal) or worldP
@@ -127,8 +127,10 @@ hook.Add("PostDrawTranslucentRenderables", "SND_Site3D2D", function()
 	local phase = SND.Client and SND.Client.Phase or SND.PHASE_WAIT
 	local debugMode = GetConVar("snd_debug_mode"):GetBool()
 
-	-- Show for Attackers normally, or everyone in Debug Mode
-	if lp:Team() ~= SND.TEAM_ATTACK and not debugMode then return end
+	local isPlanted = SND.Bomb and SND.Bomb.State == SND.BOMB_STATE_PLANTED
+
+	-- Show for Attackers normally, everyone in Debug Mode, or if the bomb is planted
+	if lp:Team() ~= SND.TEAM_ATTACK and not debugMode and not isPlanted then return end
 	if phase ~= SND.PHASE_LIVE and phase ~= SND.PHASE_FREEZE and phase ~= SND.PHASE_DEBUG then return end
 
 	local sites = SND.Client.Sites or {}
@@ -139,6 +141,10 @@ hook.Add("PostDrawTranslucentRenderables", "SND_Site3D2D", function()
 	local drawAng = Angle(0, eyeAng.y - 90, 90)
 
 	for _, site in ipairs(sites) do
+		-- Defenders only see markers for the site where the bomb is actually active
+		local isThisPlanted = SND.Bomb and SND.Bomb.PlantedSite == site.id
+		if lp:Team() == SND.TEAM_DEFEND and not debugMode and not isThisPlanted then continue end
+
 		local col = SND.GetSiteColor(site.id)
 		local pos = site.pos + Vector(0, 0, 95) -- Anchor point in world
 		local dist = lp:GetPos():Distance(site.pos)
@@ -150,11 +156,10 @@ hook.Add("PostDrawTranslucentRenderables", "SND_Site3D2D", function()
 			render.OverrideDepthEnable(true, false)
 			
 			local diamondSize = 140
-			local isPlanted = SND.Bomb and SND.Bomb.PlantedSite == site.id
-			local pulse = isPlanted and (math.abs(math.sin(CurTime() * 5)) * 0.3 + 0.7) or 1
+			local diamondPulse = isThisPlanted and (math.abs(math.sin(CurTime() * 8)) * 0.4 + 0.6) or 1
 			
 			SND.DrawSiteDiamond(2, 2, diamondSize, Color(0, 0, 0, 150)) -- Shadow
-			SND.DrawSiteDiamond(0, 0, diamondSize, Color(col.r, col.g, col.b, 200 * pulse))
+			SND.DrawSiteDiamond(0, 0, diamondSize, Color(col.r, col.g, col.b, 200 * diamondPulse))
 
 			draw.SimpleText(site.id, "SND_MW2_3D2D", 0, 0, Color(255, 255, 255, 255), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
 			
@@ -173,10 +178,22 @@ hook.Add("PostDrawTranslucentRenderables", "SND_Site3D2D", function()
 			render.OverrideDepthEnable(false, false)
 		cam.End3D2D()
 
-		-- Draw the ground zone ring
-		local pulse = 0.5 + math.abs(math.sin(CurTime() * 2)) * 0.5
-		local ringCol = Color(col.r, col.g, col.b, 100 * pulse)
-		drawGroundRing(site.pos, site.radius or 120, ringCol)
+		-- ── Reworked Ground Zone Visuals ──
+		local ringPulseSpeed = isThisPlanted and 4 or 2
+		local pulse = 0.6 + math.abs(math.sin(CurTime() * ringPulseSpeed)) * 0.4
+		
+		-- Outer glowing ring
+		drawGroundRing(site.pos, (site.radius or 120) + 2, Color(col.r, col.g, col.b, 50 * pulse))
+		-- Main inner ring
+		drawGroundRing(site.pos, site.radius or 120, Color(col.r, col.g, col.b, 150 * pulse))
+
+		-- Vertical Beacon Effect for active objectives
+		if isThisPlanted or debugMode then
+			render.SetColorMaterial()
+			local beamAlpha = isThisPlanted and (80 * pulse) or 30
+			local beamHeight = isThisPlanted and (600 + math.sin(CurTime() * 5) * 50) or 200
+			render.DrawBeam(site.pos, site.pos + Vector(0,0,beamHeight), 12, 0, 1, Color(col.r, col.g, col.b, beamAlpha))
+		end
 
 		-- Draw the defuse radius ring in world-space during Debug Mode
 		if debugMode or phase == SND.PHASE_DEBUG then
