@@ -385,20 +385,17 @@ end)
 hook.Add("InitPostEntity", "SND_MapInitialization", function()
 	if SERVER then
 		local map = game.GetMap()
-
-		-- 1. Initialize memory tables so saving commands work immediately
-		SND.Config.MapSites[map] = SND.Config.MapSites[map] or {}
-		SND.Config.MapSpawns[map] = SND.Config.MapSpawns[map] or { attack = {}, defend = {} }
-
-		-- 2. Load existing overrides from data/snd_mwclassic/maps/
+		
+		-- 1. Load existing data or initialize empty tables
 		SND.Config.LoadMapOverrides(map)
 
-		-- 3. Run auto-inference logic (like the Rust logic)
+		-- 2. Run fallbacks (like Rust auto-logic)
 		SND.Rust.InitPostEntity()
 
-		-- 4. Auto-create the .lua file if it's missing so you can start saving
+		-- 3. Auto-create the .lua file if it's missing so the system is ready to save
 		local path = "snd_mwclassic/maps/" .. map .. ".lua"
 		if not file.Exists(path, "DATA") then
+			print("[SND] No map config found. Auto-generating template for: " .. map)
 			SND.Config.SaveMapData(map)
 		end
 		

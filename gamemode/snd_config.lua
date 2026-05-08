@@ -160,39 +160,8 @@ table.RemoveByValue(SND.Config.BotPrimaries, "iw4_riotshield")
 SND.Config.BotSecondaries = table.Copy(SND.Config.Mw2eSecondaries)
 
 -- ── Bomb sites ────────────────────────────────────────────────────────────
-SND.Config.MapSites = {
-	["ttt_rust_v1a"] = {
-		{ id = "A", plantPos = Vector(1116, 912, -159), defuseRadius = 120 },
-		{ id = "B", plantPos = Vector(10, 10, -159), defuseRadius = 120 },
-	},
-	["ttt_rust_v2c"] = {
-		{ id = "A", plantPos = Vector(1116, 912, -159), defuseRadius = 120 },
-		{ id = "B", plantPos = Vector(10, 10, -159), defuseRadius = 120 },
-	}
-}
-
-SND.Config.MapSpawns = SND.Config.MapSpawns or {
-	["ttt_rust_v2c"] = {
-		defend = {
-			{ pos = Vector(-2570.527588, 1319.567383, 147.059326), ang = Angle(0, 0, 0) },
-			{ pos = Vector(-2570.527588, 1319.567383, 147.059326), ang = Angle(0, 0, 0) },
-			{ pos = Vector(-2613.168457, 1399.106201, 140.516693), ang = Angle(0, 0, 0) },
-			{ pos = Vector(-2690.790283, 1426.989746, 133.994644), ang = Angle(0, 0, 0) },
-			{ pos = Vector(-2755.063721, 1428.191284, 135.288757), ang = Angle(0, 0, 0) },
-			{ pos = Vector(-2829.149658, 1426.294434, 137.193253), ang = Angle(0, 0, 0) },
-			{ pos = Vector(-2828.301514, 1363.662964, 142.696136), ang = Angle(0, 0, 0) },
-		},
-		attack = {
-			{ pos = Vector(-4048.160645, 3264.419189, 143.669830), ang = Angle(0, 0, 0) },
-			{ pos = Vector(-4118.790039, 3246.260498, 144.481812), ang = Angle(0, 0, 0) },
-			{ pos = Vector(-4195.282715, 3239.670654, 148.363342), ang = Angle(0, 0, 0) },
-			{ pos = Vector(-4188.635254, 3167.535889, 139.509430), ang = Angle(0, 0, 0) },
-			{ pos = Vector(-4095.966553, 3167.609619, 139.759811), ang = Angle(0, 0, 0) },
-			{ pos = Vector(-4046.409668, 3172.174805, 143.584793), ang = Angle(0, 0, 0) },
-			{ pos = Vector(-4178.496094, 3059.424561, 138.180389), ang = Angle(0, 0, 0) },
-		}
-	}
-}
+SND.Config.MapSites = SND.Config.MapSites or {}
+SND.Config.MapSpawns = SND.Config.MapSpawns or {}
 
 -- ── CSS faction models ────────────────────────────────────────────────────
 SND.Config.Factions = {
@@ -259,14 +228,16 @@ function SND.Config.LoadMapOverrides(map)
 	local ok, result = pcall(fn)
 	if not ok then print("[SND] Map override run error: ", result) return end
 	if type(result) ~= "table" then return end
-	if result.sites and #result.sites > 0 then
-		SND.Config.MapSites[map] = result.sites
-		print("[SND] Loaded " .. #result.sites .. " site(s) for " .. map)
-	end
-	if result.spawns and (result.spawns.attack or result.spawns.defend) then
-		SND.Config.MapSpawns[map] = result.spawns
-		print("[SND] Loaded spawns for " .. map)
-	end
+
+	-- Always initialize the memory tables from the result, even if they are empty
+	SND.Config.MapSites[map] = result.sites or {}
+	SND.Config.MapSpawns[map] = result.spawns or { attack = {}, defend = {} }
+	
+	local sCount = #SND.Config.MapSites[map]
+	local aCount = #(SND.Config.MapSpawns[map].attack or {})
+	local dCount = #(SND.Config.MapSpawns[map].defend or {})
+	
+	print(string.format("[SND] Loaded Map Config (%s): %d Sites, %d Attack Spawns, %d Defend Spawns", map, sCount, aCount, dCount))
 end
 
 if SERVER then
@@ -299,10 +270,10 @@ if SERVER then
         local defend = spawns.defend or {}
 
         local path = "snd_mwclassic/maps/" .. map .. ".lua"
-        local dir = string.GetPathFromFilename(path)
-
-        -- Ensure directory exists (handles recursive folders for Workshop maps)
-        if dir and dir ~= "" then file.CreateDir(dir) end
+        
+        -- Force create the directory path (crucial for Workshop maps with slashes)
+        local dir = "snd_mwclassic/maps/" .. (string.match(map, "(.-/)[^/]+$") or "")
+        file.CreateDir(dir)
 
         local out = "-- Auto-generated Map Configuration for " .. map .. "\n"
         out = out .. "return {\n"
@@ -330,7 +301,7 @@ if SERVER then
         out = out .. "\t\t}\n\t}\n}\n"
 
         file.Write(path, out)
-        print("[SND] Saved map configuration: " .. path)
+        print(string.format("[SND] AUTO-SAVED: %d Sites, %d Spawns to %s", #sites, (#attack + #defend), path))
 
         -- Ensure this map is eligible for the end-of-match vote
         SND.Config.RegisterMapForVoting(map)

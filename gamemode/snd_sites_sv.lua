@@ -31,14 +31,6 @@ local function broadcastSites(ply)
 	local map   = game.GetMap()
 	local sites = SND.Config.MapSites[map]
 
-	-- Fall back to gm_construct defaults if no site data for this map
-	if not sites or #sites == 0 then
-		sites = {
-			{ id = "A", plantPos = Vector(-2176, -896, -144), defuseRadius = 96 },
-			{ id = "B", plantPos = Vector( 2176,  896, -144), defuseRadius = 96 },
-		}
-	end
-
 	local function send(target)
 		net.Start("SND_SiteData")
 			net.WriteUInt(#sites, 8)
