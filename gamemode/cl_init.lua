@@ -327,6 +327,15 @@ hook.Add("PlayerButtonDown", "SND_QuickThrowInput", function(ply, btn)
 			RunConsoleCommand("snd_debug_toggle")
 		end
 	end
+
+	-- Debug Phase Shortcuts
+	local phase = SND.Client and SND.Client.Phase or SND.PHASE_WAIT
+	if phase == SND.PHASE_DEBUG and ply == LocalPlayer() and not vgui.CursorVisible() then
+		if btn == KEY_F5 then RunConsoleCommand("snd_site_add", "A") end
+		if btn == KEY_F6 then RunConsoleCommand("snd_site_add", "B") end
+		if btn == KEY_F7 then RunConsoleCommand("snd_spawn_add_attack") end
+		if btn == KEY_F8 then RunConsoleCommand("snd_spawn_add_defend") end
+	end
 end)
 
 hook.Add("ScoreboardShow", "SND_ScoreboardShow", function()

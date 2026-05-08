@@ -13,7 +13,8 @@ One life per round, bomb plant and defuse, team scoring, optional map voting, Lu
 
 - **One life per round** — no mid-round respawns; die and spectate teammates until the next round.
 - **Bomb mechanics** — attacker carries the bomb, plants it by looking at the ground in a site and holding **E**; defenders defuse by standing on the bomb and holding **E**. CSS plant, defuse, and beep sounds included.
-- **3D site markers** — floating **A** (gold) and **B** (blue) labels visible through the level with off-screen directional arrows and a live countdown when the bomb is planted.
+- **Dynamic Minimap** — CoD-style minimap with Nav Mesh-based floorplans, player rotation, and "red dot" pings that reveal enemy positions when they fire their weapons.
+- **Screen-Space Objective Markers** — High-clarity diamond icons with distance tracking and off-screen directional arrows. Replaces traditional 3D2D world text for a jitter-free, modern UI feel.
 - **Freeze phase** — nobody moves until the round goes live; a countdown progress bar fills the screen.
 - **COD-styled Leaderboard** — High-fidelity Call of Duty (Black Ops III) inspired leaderboard with sleek translucent backgrounds, team headers, level icons, and UI scaling.
 - **Calling Cards & Emblems** — MW2-style kill banners that slide onto the screen for both the killer and the victim. Supports custom titles, background images (PNG/JPG/GIF), and Steam avatars.
@@ -22,13 +23,24 @@ One life per round, bomb plant and defuse, team scoring, optional map voting, Lu
 - **Quick Grenade Throw** — Dedicated 'G' key for instant grenade usage that automatically switches back to your previous weapon.
 - **Health Regeneration** — Authentic CoD-style health regen with red damage vignettes and screen tinting.
 - **MW2 Movement** — Tactical movement including sprint stamina, jump/landing fatigue, and authentic camera sway.
-- **Gun picker UI** — during freeze time a Derma panel lets every player choose their primary and secondary from the full `iw4_*` pool before the round starts.
+- **Gun picker UI** — Persistent 10-slot loadout manager. Restricted to the pre-game phase to ensure competitive integrity once the match begins.
 - **Lua bots** — state-machine AI (Patrol → Engage → Chase → Plant → Defuse → Reload) with a **1–10 skill slider** that scales aim noise, reaction time, engage range, and reload thresholds. Bots switch weapons when empty and reload proactively when ammo is low.
 - **CSS player models** — Terrorist and Counter-Terrorist skins on both factions; bots and players share the same model system.
 - **Team-only spectating** — dead players follow living teammates only (**M1** next / **M2** previous); free-roam when all teammates are dead.
 - **Map voting** — end-of-match vote driven by `data/snd_mwclassic/maps.txt`.
 - **SuperAdmin settings panel** — live ConVar sliders accessible via `!snd_settings` or `snd_open_settings`.
+- **Integrated Map Editor** — Dedicated Debug Mode (`F4`) with hotkeys for rapid placement of bomb sites and spawn points, with automatic saving to map-specific Lua data files.
 - **Noclip disabled** — four independent enforcement layers prevent noclip for all players at all times.
+
+### Debug & Map Editing (SuperAdmin Only)
+
+| Action | Key |
+|---|---|
+| Toggle Debug Mode | **F4** |
+| Set Bomb Site A | **F5** |
+| Set Bomb Site B | **F6** |
+| Add Attacker Spawn | **F7** |
+| Add Defender Spawn | **F8** |
 
 ---
 

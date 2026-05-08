@@ -154,7 +154,7 @@ local function addSpawnCommand(ply, teamKey)
 	SND.Config.MapSpawns[map] = SND.Config.MapSpawns[map] or { attack = {}, defend = {} }
 	
 	local pos = ply:GetPos() + Vector(0, 0, 8) -- Slight offset to prevent floor sticking
-	local ang = ply:GetEyeAngles()
+	local ang = ply:EyeAngles()
 	ang.p = 0 -- Keep spawns level
 
 	table.insert(SND.Config.MapSpawns[map][teamKey], { pos = pos, ang = ang })

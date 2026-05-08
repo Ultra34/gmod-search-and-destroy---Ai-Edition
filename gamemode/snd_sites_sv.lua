@@ -154,7 +154,7 @@ concommand.Add("snd_site_add", function(ply, cmd, args)
 	local tr = util.TraceLine({
 		start = ply:GetPos() + Vector(0,0,10),
 		endpos = ply:GetPos() - Vector(0,0,100),
-		mask = MASK_SOLID_BRUSHONLY
+		mask = MASK_SOLID
 	})
 	local pos = tr.Hit and tr.HitPos or ply:GetPos()
 
