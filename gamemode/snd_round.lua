@@ -220,7 +220,8 @@ concommand.Add("snd_debug_toggle", function(ply)
 		SND.Round.RoundTimerEnd = 0
 		game.ConsoleCommand("snd_debug_mode 1\n")
 		game.ConsoleCommand("sv_cheats 1\n")
-		ply:ChatPrint("[SND] DEBUG PHASE ENABLED. Match logic paused. Use 'v' or 'snd_noclip' to fly.")
+		ply:SetMoveType(MOVETYPE_NOCLIP)
+		ply:ChatPrint("[SND] DEBUG PHASE ENABLED. Match logic paused. Noclip ENABLED.")
 	else
 		SND.Round.Phase = SND.PHASE_FREEZE
 		game.ConsoleCommand("snd_debug_mode 0\n")
