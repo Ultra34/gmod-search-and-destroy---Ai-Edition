@@ -29,7 +29,7 @@ SND.Sites = SND.Sites or {}
 -- ── Broadcasting & Sync ──────────────────────────────────────────────────
 local function broadcastSites(ply)
 	local map   = game.GetMap()
-	local sites = SND.Config.MapSites[map]
+	local sites = SND.Config.MapSites[map] or {}
 
 	local function send(target)
 		net.Start("SND_SiteData")
@@ -42,7 +42,7 @@ local function broadcastSites(ply)
 		if target then net.Send(target) else net.Broadcast() end
 
 		-- Also send spawn data for debug visualization
-		local spawns = SND.Config.MapSpawns[map]
+		local spawns = SND.Config.MapSpawns[map] or {}
 		net.Start("SND_SpawnData")
 			if spawns and spawns.attack then
 				net.WriteUInt(#spawns.attack, 8)
