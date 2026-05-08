@@ -147,6 +147,24 @@ local function rotatePoint(x, y, ang)
 	return x * cos - y * sin, x * sin + y * cos
 end
 
+-- ── Colours ───────────────────────────────────────────────────────────────
+local function col(r, g, b, a) return Color(r, g, b, a or 255) end
+
+local C_WHITE  = col(230, 235, 245)
+local C_DIM    = col(160, 170, 190)
+local C_ATTACK = col(220,  70,  50)
+local C_DEFEND = col( 60, 140, 220)
+local C_BOMB   = col(255, 200,  60)
+local C_DANGER = col(255,  60,  40) -- Used for "OUT OF AMMO" and match defeat
+local C_GREEN  = col( 80, 220, 100)
+local C_BG     = col(  0,   0,   0, 160)
+local C_PILL   = col( 35,  38,  48, 210) -- Slightly lighter for score background
+
+-- ── Rounded pill helper ───────────────────────────────────────────────────
+local function pill(x, y, w, h, c)
+	draw.RoundedBox(6, x, y, w, h, c)
+end
+
 local function drawMinimap(sw, sh, sc, lp)
 	local size = 150 * sc
 	local mx, my = 16 * sc + size/2, 16 * sc + size/2
@@ -260,24 +278,6 @@ local function drawMinimap(sw, sh, sc, lp)
 	surface.DrawOutlinedRect(mx - radius, my - radius, size, size, 2)
 	
 	return size
-end
-
--- ── Colours ───────────────────────────────────────────────────────────────
-local function col(r, g, b, a) return Color(r, g, b, a or 255) end
-
-local C_WHITE  = col(230, 235, 245)
-local C_DIM    = col(160, 170, 190)
-local C_ATTACK = col(220,  70,  50)
-local C_DEFEND = col( 60, 140, 220)
-local C_BOMB   = col(255, 200,  60)
-local C_DANGER = col(255,  60,  40) -- Used for "OUT OF AMMO" and match defeat
-local C_GREEN  = col( 80, 220, 100)
-local C_BG     = col(  0,   0,   0, 160)
-local C_PILL   = col( 35,  38,  48, 210) -- Slightly lighter for score background
-
--- ── Rounded pill helper ───────────────────────────────────────────────────
-local function pill(x, y, w, h, c)
-	draw.RoundedBox(6, x, y, w, h, c)
 end
 
 -- ── Crosshair ────────────────────────────────────────────────────────────
