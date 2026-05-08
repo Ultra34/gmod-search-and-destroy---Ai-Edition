@@ -94,6 +94,31 @@ function SND.GetSiteColor(siteId)
 	return siteId == "A" and COL_A or COL_B
 end
 
+-- ── Ground Ring Helper ───────────────────────────────────────────────────
+local function drawGroundRing(pos, radius, col)
+	render.SetColorMaterial()
+	local segments = 32
+	local step = (math.pi * 2) / segments
+	local lastPos = nil
+	
+	for i = 0, segments do
+		local ang = i * step
+		local offset = Vector(math.cos(ang) * radius, math.sin(ang) * radius, 10)
+		local worldP = pos + offset
+		
+		-- Trace down to stick to ground
+		local tr = util.TraceLine({
+			start = worldP,
+			endpos = worldP - Vector(0, 0, 50),
+			mask = MASK_SOLID_BRUSHONLY
+		})
+		local drawP = tr.Hit and (tr.HitPos + tr.HitNormal) or worldP
+		
+		if lastPos then render.DrawLine(lastPos, drawP, col, true) end
+		lastPos = drawP
+	end
+end
+
 -- ── 3D2D World Markers ───────────────────────────────────────────────────
 hook.Add("PostDrawTranslucentRenderables", "SND_Site3D2D", function()
 	local lp = LocalPlayer()
@@ -147,6 +172,11 @@ hook.Add("PostDrawTranslucentRenderables", "SND_Site3D2D", function()
 			
 			render.OverrideDepthEnable(false, false)
 		cam.End3D2D()
+
+		-- Draw the ground zone ring
+		local pulse = 0.5 + math.abs(math.sin(CurTime() * 2)) * 0.5
+		local ringCol = Color(col.r, col.g, col.b, 100 * pulse)
+		drawGroundRing(site.pos, site.radius or 120, ringCol)
 
 		-- Draw the defuse radius ring in world-space during Debug Mode
 		if debugMode or phase == SND.PHASE_DEBUG then

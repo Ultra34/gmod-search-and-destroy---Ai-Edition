@@ -60,28 +60,29 @@ local function stopBeepTimer()
 end
 
 -- ── Sites helper ──────────────────────────────────────────────────────────
-local function getSites()
-	local map = game.GetMap()
-	local t   = SND.Config.MapSites[map]
-	if not t or #t == 0 then
-		local o = Vector(0, 0, 0)
-		for _, e in ipairs(ents.FindByClass("info_player_start")) do o = e:GetPos() break end
-		return {
-			{ id = "A", plantPos = o + Vector( 400,   0, 0), defuseRadius = 96 },
-			{ id = "B", plantPos = o + Vector(-400, 200, 0), defuseRadius = 96 },
-		}
-	end
-	return t
-end
-
 local function nearestSite(ply)
 	local best, bi
-	local sites = getSites()
-	for i, s in ipairs(sites) do
-		local d = ply:GetPos():Distance2D(s.plantPos)
-		if not best or d < best then best, bi = d, i end
+	local sites = ents.FindByClass("snd_site")
+	if #sites == 0 then 
+		-- Fallback to config if entities haven't spawned yet
+		local mapSites = SND.Config.MapSites[game.GetMap()] or {}
+		for i, s in ipairs(mapSites) do
+			local d = ply:GetPos():Distance2D(s.plantPos)
+			if not best or d < best then 
+				best, bi = d, { id = s.id, pos = s.plantPos, radius = s.defuseRadius } 
+			end
+		end
+		return bi and bi.id, bi, best
 	end
-	return bi, sites[bi], best
+	
+	for _, s in ipairs(sites) do
+		local d = ply:GetPos():Distance2D(s:GetPos())
+		if not best or d < best then
+			best = d
+			bi = { id = s:GetNWString("SND_SiteID"), pos = s:GetPos(), radius = s:GetNWFloat("SND_SiteRadius") }
+		end
+	end
+	return bi and bi.id, bi, best
 end
 
 -- ── Ground-look trace ─────────────────────────────────────────────────────

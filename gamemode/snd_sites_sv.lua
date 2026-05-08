@@ -6,6 +6,22 @@
 util.AddNetworkString("SND_SpawnData")
 util.AddNetworkString("SND_SiteData")
 
+-- ── Bomb Site Entity ─────────────────────────────────────────────────────
+local SITE_ENT = {
+	Type = "point",
+	Base = "base_point",
+}
+
+function SITE_ENT:Initialize()
+	self:SetNWString("SND_SiteID", self.SiteID or "A")
+	self:SetNWFloat("SND_SiteRadius", self.SiteRadius or 120)
+end
+
+scripted_ents.Register(SITE_ENT, "snd_site")
+
+SND.Sites = SND.Sites or {}
+
+-- ── Broadcasting & Sync ──────────────────────────────────────────────────
 local function broadcastSites(ply)
 	local map   = game.GetMap()
 	local sites = SND.Config.MapSites[map]
@@ -59,15 +75,34 @@ local function broadcastSites(ply)
 	end
 end
 
+function SND.Sites.RefreshEntities()
+	for _, e in ipairs(ents.FindByClass("snd_site")) do e:Remove() end
+
+	local map = game.GetMap()
+	local sites = SND.Config.MapSites[map] or {}
+	
+	for _, s in ipairs(sites) do
+		local e = ents.Create("snd_site")
+		e.SiteID = s.id
+		e.SiteRadius = s.defuseRadius or 120
+		e:SetPos(s.plantPos)
+		e:Spawn()
+	end
+end
+
 -- Send to everyone when freeze starts (so markers appear before round goes live)
 hook.Add("SND_RoundStart_Freeze", "SND_BroadcastSites", function()
 	broadcastSites()
+	SND.Sites.RefreshEntities()
 end)
 
 -- Send to a joining player so they get site data mid-round
 hook.Add("PlayerInitialSpawn", "SND_SendSitesToNewPlayer", function(ply)
 	timer.Simple(1, function()
-		if IsValid(ply) then broadcastSites(ply) end
+		if IsValid(ply) then 
+			broadcastSites(ply)
+			-- Entities are networked automatically, no need to refresh for one player
+		end
 	end)
 end)
 
@@ -129,6 +164,7 @@ concommand.Add("snd_site_add", function(ply, cmd, args)
 	saveMapData(map, fullData)
 	
 	broadcastSites()
+	SND.Sites.RefreshEntities()
 	ply:ChatPrint("[SND] Added site " .. id .. " at your position and saved to data.")
 end)
 
@@ -141,6 +177,7 @@ concommand.Add("snd_site_clear", function(ply)
 	saveMapData(map, fullData)
 	
 	broadcastSites()
+	SND.Sites.RefreshEntities()
 	ply:ChatPrint("[SND] Cleared all custom sites for " .. map)
 end)
 
