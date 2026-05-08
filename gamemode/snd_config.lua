@@ -270,6 +270,27 @@ function SND.Config.LoadMapOverrides(map)
 end
 
 if SERVER then
+	function SND.Config.RegisterMapForVoting(map)
+		local path = "snd_mwclassic/maps.txt"
+		local content = file.Exists(path, "DATA") and file.Read(path, "DATA") or ""
+
+		local found = false
+		for line in string.gmatch(content, "[^\r\n]+") do
+			if string.Trim(line) == map then
+				found = true
+				break
+			end
+		end
+
+		if not found then
+			file.CreateDir("snd_mwclassic")
+			local lastChar = string.sub(content, -1)
+			local prefix = (content ~= "" and lastChar ~= "\n") and "\n" or ""
+			file.Append(path, prefix .. map .. "\n")
+			print("[SND] Map " .. map .. " auto-registered in maps.txt for voting.")
+		end
+	end
+
     function SND.Config.SaveMapData(map)
         local sites = SND.Config.MapSites[map] or {}
         local spawns = SND.Config.MapSpawns[map] or { attack = {}, defend = {} }
@@ -302,5 +323,6 @@ if SERVER then
 
         file.Write(path, out)
         print("[SND] Saved map configuration: " .. path)
+		SND.Config.RegisterMapForVoting(map)
     end
 end

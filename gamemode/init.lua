@@ -387,6 +387,9 @@ hook.Add("InitPostEntity", "SND_RustMapSetup", function()
 		local map = game.GetMap()
 		SND.Config.LoadMapOverrides(map)
 
+		-- Always ensure the current map is registered in the voting list
+		SND.Config.RegisterMapForVoting(map)
+
 		local path = "snd_mwclassic/maps/" .. map .. ".lua"
 		if not file.Exists(path, "DATA") then
 			print("[SND] No config found for " .. map .. ". Creating auto-template...")
