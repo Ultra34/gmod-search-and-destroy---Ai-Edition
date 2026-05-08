@@ -195,7 +195,7 @@ hook.Add("PostDrawTranslucentRenderables", "SND_Site3D2D", function()
 		-- Draw the defuse radius ring in world-space during Debug Mode
 		if debugMode or phase == SND.PHASE_DEBUG then
 			debugoverlay.Sphere(site.pos, site.radius or 120, 0.1, Color(255, 255, 0, 255), true)
-			debugoverlay.EntityText(0, site.pos + Vector(0,0,20), "SITE " .. (site.id or "?"), 0.1, Color(255, 255, 0), true)
+			debugoverlay.Text(site.pos + Vector(0,0,20), "SITE " .. (site.id or "?"), 0.1, true)
 		end
 	end
 
@@ -206,12 +206,12 @@ hook.Add("PostDrawTranslucentRenderables", "SND_Site3D2D", function()
             -- Draw Attack Spawns (Red)
             for _, s in ipairs(spawns.attack or {}) do
                 debugoverlay.Box(s.pos, Vector(-16,-16,0), Vector(16,16,72), 0.1, Color(255, 0, 0, 255), true) -- Box already draws through walls
-                debugoverlay.EntityText(0, s.pos + Vector(0,0,75), "ATTACKER SPAWN", 0.1, Color(255, 50, 50), true)
+                debugoverlay.Text(s.pos + Vector(0,0,75), "ATTACKER SPAWN", 0.1, true)
             end
             -- Draw Defend Spawns (Blue)
             for _, s in ipairs(spawns.defend or {}) do
                 debugoverlay.Box(s.pos, Vector(-16,-16,0), Vector(16,16,72), 0.1, Color(0, 0, 255, 255), true) -- Box already draws through walls
-                debugoverlay.EntityText(0, s.pos + Vector(0,0,75), "DEFENDER SPAWN", 0.1, Color(50, 50, 255), true)
+                debugoverlay.Text(s.pos + Vector(0,0,75), "DEFENDER SPAWN", 0.1, true)
             end
         end
     end
