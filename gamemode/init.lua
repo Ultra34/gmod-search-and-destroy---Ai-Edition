@@ -397,7 +397,7 @@ hook.Add("InitPostEntity", "SND_MapInitialization", function()
 	if SERVER then
 		-- Delay slightly to ensure filesystem readiness
 		timer.Simple(1, function()
-			local map = string.lower(game.GetMap()):Trim("/")
+			local map = string.lower(game.GetMap())
 			
 			-- 1. Load existing data or initialize empty tables
 			SND.Config.LoadMapOverrides(map)

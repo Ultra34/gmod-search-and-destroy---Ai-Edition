@@ -217,19 +217,19 @@ end
 
 function SND.Config.LoadMapOverrides(map)
 	if not SERVER or not map then return end
-	map = string.lower(map)
+	map = string.lower(tostring(map))
 	local path = "snd_mwclassic/maps/" .. map .. ".lua"
 
 	-- Always initialize the tables in memory even if the file is missing
-	SND.Config.MapSites[map] = SND.Config.MapSites[map] or {}
-	SND.Config.MapSpawns[map] = SND.Config.MapSpawns[map] or { attack = {}, defend = {} }
+	SND.Config.MapSites[map] = {}
+	SND.Config.MapSpawns[map] = { attack = {}, defend = {} }
 
 	if not file.Exists(path, "DATA") then return end
 	local src = file.Read(path, "DATA")
 	if not src or src == "" then return end
-	local fn = CompileString(src, path)
+	local fn = CompileString(src, "DATA/" .. path)
 	if type(fn) ~= "function" then
-		print("[SND] Map override compile error (" .. path .. "): ", fn) return
+		print("[SND] Map override compile error (" .. path .. "): " .. tostring(fn)) return
 	end
 	local ok, result = pcall(fn)
 	if not ok then print("[SND] Map override run error: ", result) return end
@@ -269,15 +269,13 @@ if SERVER then
 	end
 
     function SND.Config.SaveMapData(map)
-        map = string.lower(map):Trim("/") -- Ensure no leading/trailing slashes in map name
+        map = string.lower(tostring(map))
         
         -- Ensure we are pulling the most recent data from memory
-        local sites = SND.Config.MapSites[map]
-        local spawns = SND.Config.MapSpawns[map]
+        local sites = SND.Config.MapSites[map] or {}
+        local spawns = SND.Config.MapSpawns[map] or { attack = {}, defend = {} }
         
         -- Safety check: if memory tables don't exist, create them as empty
-        if not sites then sites = {} SND.Config.MapSites[map] = sites end
-        if not spawns then spawns = { attack = {}, defend = {} } SND.Config.MapSpawns[map] = spawns end
         
         local attack = spawns.attack or {}
         local defend = spawns.defend or {}
@@ -317,9 +315,14 @@ if SERVER then
         
         -- Verify the write worked and print success to console
         if file.Exists(path, "DATA") then
-            print(string.format("[SND] SUCCESS: Saved %d Sites, %d Spawns to %s", #sites, (#attack + #defend), path))
+            print(string.format("[SND] SUCCESS: Saved %d Sites, %d Attack Spawns, %d Defend Spawns to %s", #sites, #attack, #defend, path))
+            
+            -- Notify admins in-game
+            for _, p in ipairs(player.GetAll()) do
+                if p:IsSuperAdmin() then p:EmitSound("buttons/button14.wav", 60, 100) end
+            end
         else
-            print("[SND] ERROR: Failed to write map configuration to " .. path)
+            print("[SND] CRITICAL ERROR: Failed to write file to DATA/" .. path .. ". Check folder permissions!")
         end
 
         -- Ensure this map is eligible for the end-of-match vote

@@ -329,13 +329,18 @@ hook.Add("PlayerButtonDown", "SND_QuickThrowInput", function(ply, btn)
 	end
 
 	-- Debug Phase Shortcuts
-	local phase = SND.Client and SND.Client.Phase or SND.PHASE_WAIT
-	if phase == SND.PHASE_DEBUG and ply == LocalPlayer() and not vgui.CursorVisible() then
-		if btn == KEY_F5 then RunConsoleCommand("snd_site_add", "A") end
-		if btn == KEY_F6 then RunConsoleCommand("snd_site_add", "B") end
-		if btn == KEY_F7 then RunConsoleCommand("snd_spawn_add_attack") end
-		if btn == KEY_F8 then RunConsoleCommand("snd_spawn_add_defend") end
-	end
+    if ply == LocalPlayer() and not vgui.CursorVisible() and not gui.IsGameUIVisible() then
+        local isDebugKey = (btn >= KEY_F5 and btn <= KEY_F8)
+        local phase = SND.Client and SND.Client.Phase or SND.PHASE_WAIT
+        if isDebugKey and phase ~= SND.PHASE_DEBUG and ply:IsSuperAdmin() then
+            chat.AddText(Color(255, 50, 50), "[SND] TIP: ", Color(255, 255, 255), "Press F4 to enter Debug Mode before using editor keys.")
+        elseif phase == SND.PHASE_DEBUG then
+            if btn == KEY_F5 then RunConsoleCommand("snd_site_add", "A") end
+            if btn == KEY_F6 then RunConsoleCommand("snd_site_add", "B") end
+            if btn == KEY_F7 then RunConsoleCommand("snd_spawn_add_attack") end
+            if btn == KEY_F8 then RunConsoleCommand("snd_spawn_add_defend") end
+        end
+    end
 end)
 
 hook.Add("ScoreboardShow", "SND_ScoreboardShow", function()
