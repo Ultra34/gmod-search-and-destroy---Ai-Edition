@@ -37,6 +37,7 @@ file.CreateDir("snd_mwclassic/banners")
 file.CreateDir("snd_mwclassic/emblems")
 file.CreateDir("snd_mwclassic/titles")
 file.CreateDir("snd_mwclassic/game_icons")
+file.CreateDir("snd_mwclassic/maps")
 
 print("[SND] Calling Card & Emblem System initialized successfully.")
 
@@ -384,23 +385,31 @@ end)
 
 hook.Add("InitPostEntity", "SND_MapInitialization", function()
 	if SERVER then
-		local map = string.lower(game.GetMap())
-		
-		-- 1. Load existing data or initialize empty tables
-		SND.Config.LoadMapOverrides(map)
+		-- Delay slightly to ensure filesystem readiness
+		timer.Simple(1, function()
+			local map = string.lower(game.GetMap())
+			
+			-- 1. Load existing data or initialize empty tables
+			SND.Config.LoadMapOverrides(map)
 
-		-- 2. Run fallbacks (like Rust auto-logic)
-		SND.Rust.InitPostEntity()
+			-- 2. Run fallbacks (like Rust auto-logic)
+			SND.Rust.InitPostEntity()
 
-		-- 3. Auto-create the .lua file if it's missing so the system is ready to save
-		local path = "snd_mwclassic/maps/" .. map .. ".lua"
-		if not file.Exists(path, "DATA") then
-			print("[SND] No map config found. Auto-generating template for: " .. map)
-			SND.Config.SaveMapData(map)
-		end
-		
-		-- 5. Always ensure the map is in the voting rotation
-		SND.Config.RegisterMapForVoting(map)
+			-- 3. Auto-create the .lua file if it's missing
+			local path = "snd_mwclassic/maps/" .. map .. ".lua"
+			if not file.Exists(path, "DATA") then
+				print("[SND] No map config found. Auto-generating template for: " .. map)
+				SND.Config.SaveMapData(map)
+				
+				-- Notify SuperAdmins in chat
+				for _, p in ipairs(player.GetAll()) do
+					if p:IsSuperAdmin() then p:ChatPrint("[SND] Created new map config: data/" .. path) end
+				end
+			end
+			
+			-- 5. Always ensure the map is in the voting rotation
+			SND.Config.RegisterMapForVoting(map)
+		end)
 	end
 end)
 

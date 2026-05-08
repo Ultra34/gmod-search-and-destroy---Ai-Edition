@@ -285,8 +285,8 @@ if SERVER then
         local path = "snd_mwclassic/maps/" .. map .. ".lua"
         
         -- Ensure the entire directory tree exists
-        local dir = string.GetPathFromFilename(path)
-        if dir and dir ~= "" then file.CreateDir(dir) end
+        local dir = string.GetPathFromFilename(path):TrimRight("/")
+        if dir ~= "" then file.CreateDir(dir) end
 
         local out = "-- Auto-generated Map Configuration for " .. map .. "\n"
         out = out .. "return {\n"
