@@ -226,7 +226,12 @@ concommand.Add("snd_debug_toggle", function(ply)
 		SND.Round.Phase = SND.PHASE_FREEZE
 		game.ConsoleCommand("snd_debug_mode 0\n")
 		game.ConsoleCommand("sv_cheats 0\n")
-		ply:SetMoveType(MOVETYPE_WALK)
+		-- Force everyone back to walk mode when exiting debug
+		for _, p in ipairs(player.GetAll()) do
+			if p:GetMoveType() == MOVETYPE_NOCLIP then
+				p:SetMoveType(MOVETYPE_WALK)
+			end
+		end
 		ply:ChatPrint("[SND] DEBUG PHASE DISABLED. Restarting round...")
 		SND.Round.StartNewRound()
 	end
@@ -243,8 +248,10 @@ concommand.Add("snd_noclip", function(ply)
 
 	if ply:GetMoveType() == MOVETYPE_NOCLIP then
 		ply:SetMoveType(MOVETYPE_WALK)
+		ply:ChatPrint("[SND] Noclip: OFF")
 	else
 		ply:SetMoveType(MOVETYPE_NOCLIP)
+		ply:ChatPrint("[SND] Noclip: ON")
 	end
 end)
 

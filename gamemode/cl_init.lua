@@ -336,6 +336,18 @@ hook.Add("ScoreboardHide", "SND_ScoreboardHide", function()
 	end
 end)
 
+hook.Add("PlayerBindPress", "SND_DebugNoclipBind", function(ply, bind, pressed)
+    if not pressed then return end
+    if bind == "noclip" then
+        local isDebug = GetConVar("snd_debug_mode"):GetBool()
+        local phase = SND.Client and SND.Client.Phase or SND.PHASE_WAIT
+        if isDebug or phase == SND.PHASE_DEBUG then
+            RunConsoleCommand("snd_noclip")
+            return true -- Block the engine's built-in noclip attempt
+        end
+    end
+end)
+
 concommand.Add("snd_open_settings", function()
 	SND.OpenSettingsMenu()
 end)
