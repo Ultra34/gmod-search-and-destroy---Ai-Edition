@@ -39,6 +39,16 @@ file.CreateDir("snd_mwclassic/titles")
 file.CreateDir("snd_mwclassic/game_icons")
 file.CreateDir("snd_mwclassic/maps")
 
+-- Perform a write-access test to alert the user if the folder is read-only
+local testPath = "snd_mwclassic/write_test.txt"
+file.Write(testPath, "ok")
+if file.Exists(testPath, "DATA") then
+	file.Delete(testPath)
+	print("[SND] Filesystem Check: Write access confirmed.")
+else
+	print("[SND] CRITICAL ERROR: The 'garrysmod/data' folder is READ-ONLY. Map saving and player data will NOT work.")
+end
+
 print("[SND] Calling Card & Emblem System initialized successfully.")
 
 util.AddNetworkString("SND_ShowCallingCard")
