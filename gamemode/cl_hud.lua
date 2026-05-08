@@ -132,7 +132,7 @@ end)
 
 -- ── Minimap State ─────────────────────────────────────────────────────────
 local navData = nil
-local minimapScale = 0.08
+local minimapScale = 0.15
 net.Receive("SND_NavData", function()
 	local len = net.ReadUInt(32)
 	local compressed = net.ReadData(len)
@@ -248,7 +248,7 @@ local function drawMinimap(sw, sh, sc, lp)
 			
 			local d = math.sqrt(rx*rx + ry*ry)
 			if d < radius then
-				surface.DrawRect(mx + rx - 2, my - ry - 2, 4, 4)
+				surface.DrawRect(mx + rx - 3, my - ry - 3, 6, 6) -- Slightly larger teammate icons for closer zoom
 			end
 		end
 
