@@ -539,8 +539,10 @@ hook.Add("HUDPaint", "SND_HUD", function()
 	-- ── Bomb Site Markers (Attacker Only) ─────────────────────────────────
 	local debugMode = GetConVar("snd_debug_mode"):GetBool()
 	local isPlanted = SND.Bomb and SND.Bomb.State == SND.BOMB_STATE_PLANTED
+	
+	local isADS = lp:Alive() and not debugMode and lp:KeyDown(IN_ATTACK2)
 
-	if (lp:Team() == SND.TEAM_ATTACK or debugMode or isPlanted) and (phase == SND.PHASE_LIVE or phase == SND.PHASE_FREEZE or phase == SND.PHASE_DEBUG) then
+	if not isADS and (lp:Team() == SND.TEAM_ATTACK or debugMode or isPlanted) and (phase == SND.PHASE_LIVE or phase == SND.PHASE_FREEZE or phase == SND.PHASE_DEBUG) then
 		for _, site in ipairs(SND.Client.Sites or {}) do
 			-- Defenders only see the site where the bomb is actually planted
 			if lp:Team() == SND.TEAM_DEFEND and not debugMode and (not isPlanted or SND.Bomb.PlantedSite ~= site.id) then continue end

@@ -136,35 +136,45 @@ hook.Add("PostDrawTranslucentRenderables", "SND_Site3D2D", function()
 	local sites = SND.Client.Sites or {}
 	if #sites == 0 then return end
 
-	-- Calculate a billboard angle that faces the player but stays upright
+	local isADS = lp:Alive() and not debugMode and lp:KeyDown(IN_ATTACK2)
+	local eyePos = lp:EyePos()
 	local eyeAng = lp:EyeAngles()
-	local drawAng = Angle(0, eyeAng.y - 90, 90)
 
 	for _, site in ipairs(sites) do
+		if isADS then continue end
+
 		-- Defenders only see markers for the site where the bomb is actually active
 		local isThisPlanted = SND.Bomb and SND.Bomb.PlantedSite == site.id
 		if lp:Team() == SND.TEAM_DEFEND and not debugMode and not isThisPlanted then continue end
 
 		local col = SND.GetSiteColor(site.id)
-		local pos = site.pos + Vector(0, 0, 95) -- Anchor point in world
-		local dist = lp:GetPos():Distance(site.pos)
+		local pos = site.pos + Vector(0, 0, 85) -- Slightly lower anchor for better visibility
+		local dist = eyePos:Distance(pos)
 		local meters = math.floor(dist / 52.49)
 
+		-- ── Billboarding & Constant Scaling ──
+		-- Keep the icon facing the player but locked vertically (upright)
+		local drawAng = Angle(0, eyeAng.y - 90, 90)
+		
+		-- Formula to keep the icon roughly the same size on screen regardless of distance
+		local scale = math.Clamp(dist * 0.00015, 0.04, 0.18)
+
 		-- cam.Start3D2D handles the transformation into world-space
-		cam.Start3D2D(pos, drawAng, 0.08)
+		cam.Start3D2D(pos, drawAng, scale)
 			-- Objective markers are typically visible through walls for attackers
 			render.OverrideDepthEnable(true, false)
 			
-			local diamondSize = 140
-			local diamondPulse = isThisPlanted and (math.abs(math.sin(CurTime() * 8)) * 0.4 + 0.6) or 1
+			local diamondSize = 100
+			local diamondPulse = isThisPlanted and (math.abs(math.sin(CurTime() * 8)) * 0.5 + 0.5) or 1
 			
-			SND.DrawSiteDiamond(2, 2, diamondSize, Color(0, 0, 0, 150)) -- Shadow
-			SND.DrawSiteDiamond(0, 0, diamondSize, Color(col.r, col.g, col.b, 200 * diamondPulse))
+			-- Draw stylized "COD" container (Shadow -> Background -> Border)
+			SND.DrawSiteDiamond(0, 0, diamondSize + 10, Color(0, 0, 0, 180 * diamondPulse))
+			SND.DrawSiteDiamond(0, 0, diamondSize, Color(col.r, col.g, col.b, 230 * diamondPulse))
 
 			draw.SimpleText(site.id, "SND_MW2_3D2D", 0, 0, Color(255, 255, 255, 255), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
 			
 			-- Render Distance using cam-space coordinates
-			draw.SimpleText(meters .. "M", "SND_BO3_Score", 0, diamondSize + 10, Color(255, 255, 255, 200), TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
+			draw.SimpleText(meters .. "M", "SND_BO3_Score", 0, diamondSize + 20, Color(255, 255, 255, 220), TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
 
 			-- Render bomb timer in world-space
 			if isPlanted and SND.Bomb.PlantTime then
