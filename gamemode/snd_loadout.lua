@@ -273,10 +273,6 @@ hook.Add("SND_RoundEnd", "SND_ClearGunPicker", function()
     SND.Loadout.PlayerChoices = {}
 end)
 
-hook.Add("SND_RoundStart_Freeze", "SND_OpenLoadoutMenu", function()
-	SND.Loadout.OpenPickerForAll()
-end)
-
 -- ── ConVars ───────────────────────────────────────────────────────────────
 if SERVER then
 	CreateConVar("snd_loadout_attack_pri", "", FCVAR_ARCHIVE)

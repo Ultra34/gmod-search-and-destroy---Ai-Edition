@@ -53,6 +53,8 @@ util.AddNetworkString("SND_QuickThrow")
 util.AddNetworkString("SND_SelectLoadoutSlot")
 util.AddNetworkString("SND_SaveLoadoutName")
 util.AddNetworkString("SND_ClearLoadoutSlot")
+util.AddNetworkString("SND_MinimapPing")
+util.AddNetworkString("SND_NavData")
 
 DEFINE_BASECLASS("gamemode_base")
 
@@ -74,6 +76,25 @@ function GM:GetFallDamage(ply, speed)
 
 	-- Linear scaling between minimal pain and near-death
 	return math.Remap(speed, 500, 1000, 30, 110)
+end
+
+local function sendNavToPlayer(ply)
+	if not navmesh.IsLoaded() then return end
+	local areas = navmesh.GetAllNavAreas()
+	local data = {}
+	-- Pack corner coordinates into a flat table for compression
+	for _, a in ipairs(areas) do
+		local c1, c2 = a:GetCorner(0), a:GetCorner(2)
+		table.insert(data, {math.Round(c1.x), math.Round(c1.y), math.Round(c2.x), math.Round(c2.y)})
+	end
+	
+	local compressed = util.Compress(util.TableToJSON(data))
+	if compressed then
+		net.Start("SND_NavData")
+			net.WriteUInt(#compressed, 32)
+			net.WriteData(compressed, #compressed)
+		net.Send(ply)
+	end
 end
 
 function GM:PlayerInitialSpawn(ply)
@@ -98,6 +119,13 @@ function GM:PlayerInitialSpawn(ply)
 	ply:SetNWInt("SND_ActiveLoadoutSlot", savedSlot)
 
 	SND.Teams.ApplyFactionModel(ply)
+	
+	-- Send nav mesh data for the minimap
+	timer.Simple(2, function()
+		if IsValid(ply) then 
+			sendNavToPlayer(ply) 
+		end
+	end)
 end
 
 function GM:PlayerSpawn(ply)
@@ -262,6 +290,31 @@ hook.Add("Think", "SND_HealthRegen", function()
 			end
 		end
 	end
+end)
+
+-- ── Minimap Ping on Enemy Fire ───────────────────────────────────────────
+hook.Add("EntityFireBullets", "SND_MinimapEnemyPing", function(ent, data)
+    -- Only ping for valid, alive players firing damaging shots
+    if not IsValid(ent) or not ent:IsPlayer() or not ent:Alive() then return end
+    if data.Damage <= 0 then return end
+
+    -- Debounce pings from the same player to prevent spamming
+    local pingCooldown = 0.5 -- seconds between pings from one player
+    if ent.SND_LastMinimapPing and CurTime() < ent.SND_LastMinimapPing + pingCooldown then return end
+    ent.SND_LastMinimapPing = CurTime()
+
+    local pingPos = ent:GetPos()
+    local pingDuration = 1.5 -- seconds the ping remains visible
+
+    for _, ply in ipairs(player.GetAll()) do
+        -- Send ping only to enemies
+        if IsValid(ply) and ply:Alive() and ply:Team() ~= ent:Team() then
+            net.Start("SND_MinimapPing")
+                net.WriteVector(pingPos)
+                net.WriteFloat(pingDuration)
+            net.Send(ply)
+        end
+    end
 end)
 
 hook.Add("EntityTakeDamage", "SND_RegenTracker", function(target, dmg)

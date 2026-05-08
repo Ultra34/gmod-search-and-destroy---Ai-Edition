@@ -122,6 +122,146 @@ SND.Client.ActiveCallingCard = SND.Client.ActiveCallingCard or nil
 local cardSlideIn = 0
 local cardAvatar = nil
 
+-- ── Minimap Pings ─────────────────────────────────────────────────────────
+SND.Client.MinimapPings = SND.Client.MinimapPings or {}
+net.Receive("SND_MinimapPing", function()
+	local pos = net.ReadVector()
+	local duration = net.ReadFloat()
+	table.insert(SND.Client.MinimapPings, { pos = pos, endTime = CurTime() + duration, duration = duration })
+end)
+
+-- ── Minimap State ─────────────────────────────────────────────────────────
+local navData = nil
+local minimapScale = 0.08
+net.Receive("SND_NavData", function()
+	local len = net.ReadUInt(32)
+	local compressed = net.ReadData(len)
+	local json = util.Decompress(compressed)
+	navData = util.JSONToTable(json or "[]")
+end)
+
+local function rotatePoint(x, y, ang)
+	local rad = math.rad(ang)
+	local cos = math.cos(rad)
+	local sin = math.sin(rad)
+	return x * cos - y * sin, x * sin + y * cos
+end
+
+local function drawMinimap(sw, sh, sc, lp)
+	local size = 150 * sc
+	local mx, my = 16 * sc + size/2, 16 * sc + size/2
+	local radius = size / 2
+	local pPos = lp:GetPos()
+	local pAng = lp:EyeAngles().y
+
+	-- 1. Background
+	pill(mx - radius, my - radius, size, size, col(0, 0, 0, 180))
+	
+	-- 2. Nav Mesh Geometry (Floorplan)
+	if navData then
+		render.SetScissorRect(mx - radius, my - radius, mx + radius, my + radius, true)
+		for _, a in ipairs(navData) do
+			-- Dist check to save performance
+			local cx, cy = (a[1] + a[3]) / 2, (a[2] + a[4]) / 2
+			local distSq = (cx - pPos.x)^2 + (cy - pPos.y)^2
+			if distSq > 4000000 then continue end -- 2000 units
+
+			local x1, y1 = (a[1] - pPos.x) * minimapScale, (a[2] - pPos.y) * minimapScale
+			local x2, y2 = (a[3] - pPos.x) * minimapScale, (a[4] - pPos.y) * minimapScale
+			
+			-- Rotate relative to player
+			local rx1, ry1 = rotatePoint(x1, y1, -pAng + 90)
+			local rx2, ry2 = rotatePoint(x2, y2, -pAng + 90)
+			local rx3, ry3 = rotatePoint(x2, y1, -pAng + 90)
+			local rx4, ry4 = rotatePoint(x1, y2, -pAng + 90)
+
+			surface.SetDrawColor(80, 82, 85, 120)
+			draw.NoTexture()
+			surface.DrawPoly({
+				{x = mx + rx1, y = my - ry1},
+				{x = mx + rx3, y = my - ry3},
+				{x = mx + rx2, y = my - ry2},
+				{x = mx + rx4, y = my - ry4}
+			})
+		end
+
+		-- 3. Bomb Sites
+		for _, site in ipairs(SND.Client.Sites or {}) do
+			local dx, dy = (site.pos.x - pPos.x) * minimapScale, (site.pos.y - pPos.y) * minimapScale
+			local rx, ry = rotatePoint(dx, dy, -pAng + 90)
+			
+			-- Clamp to map edge
+			local d = math.sqrt(rx*rx + ry*ry)
+			if d > radius - 10 then
+				rx, ry = (rx/d)*(radius-10), (ry/d)*(radius-10)
+			end
+
+			local siteCol = SND.GetSiteColor(site.id)
+			draw.SimpleText(site.id, "SND_BO3_Header", mx + rx, my - ry, siteCol, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+		end
+
+		-- 4. Teammates
+		local lpTeam = lp:Team()
+		surface.SetDrawColor(C_DEFEND.r, C_DEFEND.g, C_DEFEND.b, 255)
+		for _, p in ipairs(player.GetAll()) do
+			if not IsValid(p) or not p:Alive() or p == lp or p:Team() ~= lpTeam then continue end
+			local dx, dy = (p:GetPos().x - pPos.x) * minimapScale, (p:GetPos().y - pPos.y) * minimapScale
+			local rx, ry = rotatePoint(dx, dy, -pAng + 90)
+			
+			local d = math.sqrt(rx*rx + ry*ry)
+			if d < radius then
+				surface.DrawRect(mx + rx - 2, my - ry - 2, 4, 4)
+			end
+		end
+		render.SetScissorRect(0, 0, 0, 0, false)
+
+		-- 4.5. Enemy Pings
+		for i = #SND.Client.MinimapPings, 1, -1 do
+			local ping = SND.Client.MinimapPings[i]
+			if CurTime() > ping.endTime then
+				table.remove(SND.Client.MinimapPings, i)
+				continue
+			end
+
+			local dx, dy = (ping.pos.x - pPos.x) * minimapScale, (ping.pos.y - pPos.y) * minimapScale
+			local rx, ry = rotatePoint(dx, dy, -pAng + 90)
+			
+			-- Clamp to map edge
+			local d = math.sqrt(rx*rx + ry*ry)
+			if d > radius - 10 then
+				rx, ry = (rx/d)*(radius-10), (ry/d)*(radius-10)
+			end
+
+			-- Fade out effect
+			local alpha = math.Clamp((ping.endTime - CurTime()) / ping.duration, 0, 1) * 255
+			surface.SetDrawColor(C_DANGER.r, C_DANGER.g, C_DANGER.b, alpha)
+			surface.DrawRect(mx + rx - 3, my - ry - 3, 6, 6) -- Draw a small red square
+		end
+	end
+
+	-- 5. Compass Letters
+	local compass = { {90, "N"}, {0, "E"}, {-90, "S"}, {180, "W"} }
+	for _, c in ipairs(compass) do
+		local rx, ry = rotatePoint(0, radius - 8, c[1] - pAng + 90)
+		draw.SimpleText(c[2], "DermaDefault", mx + rx, my - ry, C_DIM, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+	end
+
+	-- 6. Player Arrow (Center)
+	surface.SetDrawColor(255, 255, 255, 255)
+	draw.NoTexture()
+	surface.DrawPoly({
+		{x = mx, y = my - 6},
+		{x = mx + 4, y = my + 4},
+		{x = mx - 4, y = my + 4}
+	})
+
+	-- 7. Outer Border
+	surface.SetDrawColor(255, 120, 0, 150)
+	surface.DrawOutlinedRect(mx - radius, my - radius, size, size, 2)
+	
+	return size
+end
+
 -- ── Colours ───────────────────────────────────────────────────────────────
 local function col(r, g, b, a) return Color(r, g, b, a or 255) end
 
@@ -586,9 +726,12 @@ hook.Add("HUDPaint", "SND_HUD", function()
 		surface.DrawRect(0, 0, sw, sh)
 	end
 
+	-- ── Minimap ──
+	local mSize = drawMinimap(sw, sh, sc, lp)
+
 	-- ── Score bar (top-left) ───────────────────────────────────────────────
 	local scoreW, scoreH = 220 * sc, 44 * sc
-	local sx, sy = 16 * sc, 16 * sc
+	local sx, sy = 32 * sc + mSize, 16 * sc
 
 	pill(sx, sy, scoreW, scoreH, C_PILL)
 

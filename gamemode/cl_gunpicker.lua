@@ -157,10 +157,9 @@ local saveNameButton = nil
 function SND.GunPicker.Open()
 	if IsValid(pickerFrame) then pickerFrame:Remove() end -- Close any existing panel
 
-	-- Safety: Do not open the menu if the match is in progress and the player is alive.
+	-- Strictly only allow opening during the Pre-Game phase (Waiting for players)
 	local phase = SND.Client and SND.Client.Phase or SND.PHASE_WAIT
-	local lp = LocalPlayer()
-	if phase ~= SND.PHASE_WAIT and IsValid(lp) and lp:Alive() then return end
+	if phase ~= SND.PHASE_WAIT then return end
 
 	local groups = SND.GunPicker.PrimaryGroups or {}
 	local secondaries = SND.GunPicker.Secondaries or {}
