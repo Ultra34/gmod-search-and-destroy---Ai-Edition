@@ -320,6 +320,12 @@ hook.Add("PlayerButtonDown", "SND_QuickThrowInput", function(ply, btn)
 			net.SendToServer()
 		end
 	end
+
+	if btn == KEY_F4 and not vgui.CursorVisible() and not gui.IsGameUIVisible() then
+		if ply == LocalPlayer() and ply:IsSuperAdmin() then
+			RunConsoleCommand("snd_debug_toggle")
+		end
+	end
 end)
 
 hook.Add("ScoreboardShow", "SND_ScoreboardShow", function()

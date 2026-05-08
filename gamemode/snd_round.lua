@@ -212,6 +212,18 @@ function SND.Round.OnPlayerDeath(victim, attacker)
 	end
 end
 
+local function startRoundTickTimer()
+	timer.Create("SND_RoundTick", 0.25, 0, function()
+		SND.Round.CheckTime()
+		SND.Round.CheckElimination()
+		nextBalanceCheck = nextBalanceCheck + 0.25
+		if nextBalanceCheck >= 30 then
+			nextBalanceCheck = 0
+			SND.TeamBalance.Tick()
+		end
+	end)
+end
+
 concommand.Add("snd_debug_toggle", function(ply)
 	if IsValid(ply) and not ply:IsSuperAdmin() then return end
 	
@@ -221,6 +233,7 @@ concommand.Add("snd_debug_toggle", function(ply)
 		game.ConsoleCommand("snd_debug_mode 1\n")
 		game.ConsoleCommand("sv_cheats 1\n")
 		ply:SetMoveType(MOVETYPE_NOCLIP)
+		timer.Remove("SND_RoundTick") -- Stop the round tick timer
 		ply:ChatPrint("[SND] DEBUG PHASE ENABLED. Match logic paused. Noclip ENABLED.")
 	else
 		SND.Round.Phase = SND.PHASE_FREEZE
@@ -234,6 +247,7 @@ concommand.Add("snd_debug_toggle", function(ply)
 		end
 		ply:ChatPrint("[SND] DEBUG PHASE DISABLED. Restarting round...")
 		SND.Round.StartNewRound()
+		startRoundTickTimer() -- Restart the round tick timer
 	end
 	SND.Round.Sync()
 end)
@@ -288,15 +302,7 @@ hook.Add("PlayerInitialSpawn", "SND_RoundTrack", function(ply)
 	end)
 end)
 
-timer.Create("SND_RoundTick", 0.25, 0, function()
-	SND.Round.CheckTime()
-	SND.Round.CheckElimination()
-	nextBalanceCheck = nextBalanceCheck + 0.25
-	if nextBalanceCheck >= 30 then
-		nextBalanceCheck = 0
-		SND.TeamBalance.Tick()
-	end
-end)
+startRoundTickTimer() -- Initial start of the round tick timer
 
 util.AddNetworkString("SND_RoundState")
 util.AddNetworkString("SND_Halftime")
