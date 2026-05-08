@@ -217,7 +217,13 @@ end
 
 function SND.Config.LoadMapOverrides(map)
 	if not SERVER or not map then return end
+	map = string.lower(map)
 	local path = "snd_mwclassic/maps/" .. map .. ".lua"
+
+	-- Always initialize the tables in memory even if the file is missing
+	SND.Config.MapSites[map] = SND.Config.MapSites[map] or {}
+	SND.Config.MapSpawns[map] = SND.Config.MapSpawns[map] or { attack = {}, defend = {} }
+
 	if not file.Exists(path, "DATA") then return end
 	local src = file.Read(path, "DATA")
 	if not src or src == "" then return end
@@ -229,13 +235,12 @@ function SND.Config.LoadMapOverrides(map)
 	if not ok then print("[SND] Map override run error: ", result) return end
 	if type(result) ~= "table" then return end
 
-	-- Always initialize the memory tables from the result, even if they are empty
 	SND.Config.MapSites[map] = result.sites or {}
 	SND.Config.MapSpawns[map] = result.spawns or { attack = {}, defend = {} }
 	
 	local sCount = #SND.Config.MapSites[map]
-	local aCount = #(SND.Config.MapSpawns[map].attack or {})
-	local dCount = #(SND.Config.MapSpawns[map].defend or {})
+	local aCount = SND.Config.MapSpawns[map].attack and #SND.Config.MapSpawns[map].attack or 0
+	local dCount = SND.Config.MapSpawns[map].defend and #SND.Config.MapSpawns[map].defend or 0
 	
 	print(string.format("[SND] Loaded Map Config (%s): %d Sites, %d Attack Spawns, %d Defend Spawns", map, sCount, aCount, dCount))
 end
@@ -264,6 +269,7 @@ if SERVER then
 	end
 
     function SND.Config.SaveMapData(map)
+        map = string.lower(map)
         local sites = SND.Config.MapSites[map] or {}
         local spawns = SND.Config.MapSpawns[map] or { attack = {}, defend = {} }
         local attack = spawns.attack or {}
@@ -271,9 +277,9 @@ if SERVER then
 
         local path = "snd_mwclassic/maps/" .. map .. ".lua"
         
-        -- Force create the directory path (crucial for Workshop maps with slashes)
-        local dir = "snd_mwclassic/maps/" .. (string.match(map, "(.-/)[^/]+$") or "")
-        file.CreateDir(dir)
+        -- Ensure the entire directory tree exists
+        local dir = string.GetPathFromFilename(path)
+        if dir and dir ~= "" then file.CreateDir(dir) end
 
         local out = "-- Auto-generated Map Configuration for " .. map .. "\n"
         out = out .. "return {\n"

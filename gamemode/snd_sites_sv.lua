@@ -110,7 +110,7 @@ end)
 
 -- ── Manual Site Management ──────────────────────────────────────────────
 concommand.Add("snd_site_add", function(ply, cmd, args)
-	if IsValid(ply) and not ply:IsSuperAdmin() then 
+	if IsValid(ply) and not (ply:IsSuperAdmin() or game.SinglePlayer() or ply:IsListenServerHost()) then 
 		ply:ChatPrint("[SND] ERROR: You must be a SuperAdmin to save map data.")
 		return 
 	end
@@ -151,7 +151,7 @@ concommand.Add("snd_site_add", function(ply, cmd, args)
 end)
 
 concommand.Add("snd_site_clear", function(ply)
-	if IsValid(ply) and not ply:IsSuperAdmin() then return end
+	if IsValid(ply) and not (ply:IsSuperAdmin() or game.SinglePlayer() or ply:IsListenServerHost()) then return end
 	local map = game.GetMap()
 	SND.Config.MapSites[map] = {}
 	
