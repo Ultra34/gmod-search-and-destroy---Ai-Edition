@@ -34,6 +34,8 @@ One life per round, bomb plant and defuse, team scoring, optional map voting, Lu
 
 ### Debug & Map Editing (SuperAdmin Only)
 
+**IMPORTANT:** Map configuration and Debug Mode must be used in **Single Player** to ensure the `.lua` configuration files are created and saved correctly to your local `garrysmod/data/` folder.
+
 | Action | Key |
 |---|---|
 | Toggle Debug Mode | **F4** |
