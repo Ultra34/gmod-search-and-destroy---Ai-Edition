@@ -163,7 +163,7 @@ concommand.Add("snd_site_clear", function(ply)
 end)
 
 concommand.Add("snd_site_goto", function(ply, cmd, args)
-	if IsValid(ply) and not ply:IsSuperAdmin() then return end
+	if IsValid(ply) and not (ply:IsSuperAdmin() or game.SinglePlayer() or ply:IsListenServerHost()) then return end
 	local id = (args[1] or "A"):upper()
 	local sites = SND.Config.MapSites[game.GetMap()]
 	if not sites then return end

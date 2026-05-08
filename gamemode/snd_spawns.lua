@@ -164,7 +164,7 @@ concommand.Add("snd_spawn_clear", function(ply)
 end)
 
 concommand.Add("snd_spawn_remove_nearest", function(ply)
-	if IsValid(ply) and not ply:IsSuperAdmin() then return end
+	if IsValid(ply) and not (ply:IsSuperAdmin() or game.SinglePlayer() or ply:IsListenServerHost()) then return end
 	local map = game.GetMap()
 	local spawns = SND.Config.MapSpawns[map]
 	if not spawns then return end
@@ -191,7 +191,7 @@ concommand.Add("snd_spawn_remove_nearest", function(ply)
 end)
 
 concommand.Add("snd_spawn_goto", function(ply, cmd, args)
-	if IsValid(ply) and not ply:IsSuperAdmin() then return end
+	if IsValid(ply) and not (ply:IsSuperAdmin() or game.SinglePlayer() or ply:IsListenServerHost()) then return end
 	local teamKey = (args[1] or "attack"):lower()
 	local idx = tonumber(args[2]) or 1
 	
