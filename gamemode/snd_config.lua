@@ -276,8 +276,10 @@ if SERVER then
         local attack = spawns.attack or {}
         local defend = spawns.defend or {}
 
-        file.CreateDir("snd_mwclassic/maps")
         local path = "snd_mwclassic/maps/" .. map .. ".lua"
+
+        -- Ensure all subdirectories (especially for Workshop maps) are created
+        file.CreateDir(string.GetPathFromFilename(path))
 
         local out = "return {\n"
         out = out .. "\tsites = {\n"
