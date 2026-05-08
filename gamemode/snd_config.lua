@@ -269,7 +269,7 @@ if SERVER then
 	end
 
     function SND.Config.SaveMapData(map)
-        map = string.lower(map)
+        map = string.lower(map):Trim("/") -- Ensure no leading/trailing slashes in map name
         
         -- Ensure we are pulling the most recent data from memory
         local sites = SND.Config.MapSites[map]
@@ -285,8 +285,8 @@ if SERVER then
         local path = "snd_mwclassic/maps/" .. map .. ".lua"
         
         -- Ensure the entire directory tree exists
-        local dir = string.GetPathFromFilename(path):TrimRight("/")
-        if dir ~= "" then file.CreateDir(dir) end
+        local dir = string.GetPathFromFilename(path)
+        if dir and dir ~= "" then file.CreateDir(dir) end
 
         local out = "-- Auto-generated Map Configuration for " .. map .. "\n"
         out = out .. "return {\n"

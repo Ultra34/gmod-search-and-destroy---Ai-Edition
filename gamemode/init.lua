@@ -387,7 +387,7 @@ hook.Add("InitPostEntity", "SND_MapInitialization", function()
 	if SERVER then
 		-- Delay slightly to ensure filesystem readiness
 		timer.Simple(1, function()
-			local map = string.lower(game.GetMap())
+			local map = string.lower(game.GetMap()):Trim("/")
 			
 			-- 1. Load existing data or initialize empty tables
 			SND.Config.LoadMapOverrides(map)
@@ -397,6 +397,7 @@ hook.Add("InitPostEntity", "SND_MapInitialization", function()
 
 			-- 3. Auto-create the .lua file if it's missing
 			local path = "snd_mwclassic/maps/" .. map .. ".lua"
+			file.CreateDir("snd_mwclassic/maps") -- Double check directory existence
 			if not file.Exists(path, "DATA") then
 				print("[SND] No map config found. Auto-generating template for: " .. map)
 				SND.Config.SaveMapData(map)
