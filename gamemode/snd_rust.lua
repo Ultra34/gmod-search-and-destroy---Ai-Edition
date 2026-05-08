@@ -47,8 +47,8 @@ local function collectSpawnPoints()
 end
 
 function SND.Rust.ApplyAutoLayout()
-	local map = RUST_MAP
-	if game.GetMap() ~= map then return end
+	local map = string.lower(game.GetMap())
+	if map ~= RUST_MAP then return end
 
 	local needSites = not SND.Config.MapSites[map] or #SND.Config.MapSites[map] < 2
 	local sp = SND.Config.MapSpawns[map]
@@ -129,7 +129,7 @@ function SND.Rust.ApplyAutoLayout()
 end
 
 function SND.Rust.InitPostEntity()
-	local map = game.GetMap()
+	local map = string.lower(game.GetMap())
 
 	if map == RUST_MAP then
 		local sitesEmpty = not SND.Config.MapSites[map] or #SND.Config.MapSites[map] < 2

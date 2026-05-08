@@ -384,7 +384,7 @@ end)
 
 hook.Add("InitPostEntity", "SND_MapInitialization", function()
 	if SERVER then
-		local map = game.GetMap()
+		local map = string.lower(game.GetMap())
 		
 		-- 1. Load existing data or initialize empty tables
 		SND.Config.LoadMapOverrides(map)

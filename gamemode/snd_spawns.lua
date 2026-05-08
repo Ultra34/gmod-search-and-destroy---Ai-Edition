@@ -11,7 +11,7 @@ function SND.Spawns.Apply(ply)
 	if not SERVER then return end
 	if not IsValid(ply) or not ply:Alive() then return end
 
-	local map = game.GetMap()
+	local map = string.lower(game.GetMap())
 	local data = SND.Config.MapSpawns[map]
 	
 	-- Fallback: If no map data OR data is empty, split all info_player_start entities
@@ -89,7 +89,7 @@ end
 
 local function spawnDebugGhosts()
 	clearDebugGhosts()
-	local map = game.GetMap()
+	local map = string.lower(game.GetMap())
 	local data = SND.Config.MapSpawns[map]
 	if not data then return end
 
@@ -132,7 +132,7 @@ local function addSpawnCommand(ply, teamKey)
 		ply:ChatPrint("[SND] ERROR: You must be a SuperAdmin to save map data.")
 		return 
 	end
-	local map = game.GetMap()
+	local map = string.lower(game.GetMap())
 	SND.Config.MapSpawns[map] = SND.Config.MapSpawns[map] or { attack = {}, defend = {} }
 	SND.Config.MapSpawns[map].attack = SND.Config.MapSpawns[map].attack or {}
 	SND.Config.MapSpawns[map].defend = SND.Config.MapSpawns[map].defend or {}
@@ -156,7 +156,7 @@ concommand.Add("snd_spawn_add_attack", function(ply) addSpawnCommand(ply, "attac
 concommand.Add("snd_spawn_add_defend", function(ply) addSpawnCommand(ply, "defend") end)
 concommand.Add("snd_spawn_clear", function(ply)
 	if IsValid(ply) and not (ply:IsSuperAdmin() or game.SinglePlayer() or ply:IsListenServerHost()) then return end
-	local map = game.GetMap()
+	local map = string.lower(game.GetMap())
 	SND.Config.MapSpawns[map] = { attack = {}, defend = {} }
 	SND.Config.SaveMapData(map)
 	clearDebugGhosts()
@@ -165,7 +165,7 @@ end)
 
 concommand.Add("snd_spawn_remove_nearest", function(ply)
 	if IsValid(ply) and not (ply:IsSuperAdmin() or game.SinglePlayer() or ply:IsListenServerHost()) then return end
-	local map = game.GetMap()
+	local map = string.lower(game.GetMap())
 	local spawns = SND.Config.MapSpawns[map]
 	if not spawns then return end
 
@@ -195,7 +195,8 @@ concommand.Add("snd_spawn_goto", function(ply, cmd, args)
 	local teamKey = (args[1] or "attack"):lower()
 	local idx = tonumber(args[2]) or 1
 	
-	local spawns = SND.Config.MapSpawns[game.GetMap()]
+	local map = string.lower(game.GetMap())
+	local spawns = SND.Config.MapSpawns[map]
 	if not spawns or not spawns[teamKey] or #spawns[teamKey] == 0 then
 		ply:ChatPrint("[SND] No " .. teamKey .. " spawns configured.")
 		return

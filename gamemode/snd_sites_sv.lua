@@ -28,7 +28,7 @@ SND.Sites = SND.Sites or {}
 
 -- ── Broadcasting & Sync ──────────────────────────────────────────────────
 local function broadcastSites(ply)
-	local map   = game.GetMap()
+	local map   = string.lower(game.GetMap())
 	local sites = SND.Config.MapSites[map] or {}
 
 	local function send(target)
@@ -75,7 +75,7 @@ end
 function SND.Sites.RefreshEntities()
 	for _, e in ipairs(ents.FindByClass("snd_site")) do e:Remove() end
 
-	local map = game.GetMap()
+	local map = string.lower(game.GetMap())
 	local sites = SND.Config.MapSites[map] or {}
 	
 	for _, s in ipairs(sites) do
@@ -116,7 +116,7 @@ concommand.Add("snd_site_add", function(ply, cmd, args)
 	end
 	local id = (args[1] or "A"):upper()
 	local radius = tonumber(args[2]) or 120
-	local map = game.GetMap()
+	local map = string.lower(game.GetMap())
 
 	SND.Config.MapSites[map] = SND.Config.MapSites[map] or {}
 	
@@ -152,7 +152,7 @@ end)
 
 concommand.Add("snd_site_clear", function(ply)
 	if IsValid(ply) and not (ply:IsSuperAdmin() or game.SinglePlayer() or ply:IsListenServerHost()) then return end
-	local map = game.GetMap()
+	local map = string.lower(game.GetMap())
 	SND.Config.MapSites[map] = {}
 	
 	SND.Config.SaveMapData(map)
@@ -165,7 +165,8 @@ end)
 concommand.Add("snd_site_goto", function(ply, cmd, args)
 	if IsValid(ply) and not (ply:IsSuperAdmin() or game.SinglePlayer() or ply:IsListenServerHost()) then return end
 	local id = (args[1] or "A"):upper()
-	local sites = SND.Config.MapSites[game.GetMap()]
+	local map = string.lower(game.GetMap())
+	local sites = SND.Config.MapSites[map]
 	if not sites then return end
 
 	for _, s in ipairs(sites) do
