@@ -382,26 +382,27 @@ net.Receive("SND_SetCvar", function(_, ply)
 	end
 end)
 
-hook.Add("InitPostEntity", "SND_RustMapSetup", function()
+hook.Add("InitPostEntity", "SND_MapInitialization", function()
 	if SERVER then
 		local map = game.GetMap()
-		SND.Config.LoadMapOverrides(map)
 
-		-- Ensure map tables are initialized even if no file exists yet
+		-- 1. Initialize memory tables so saving commands work immediately
 		SND.Config.MapSites[map] = SND.Config.MapSites[map] or {}
 		SND.Config.MapSpawns[map] = SND.Config.MapSpawns[map] or { attack = {}, defend = {} }
 
-		-- Execute map-specific logic (e.g., auto-layout for Rust)
+		-- 2. Load existing overrides from data/snd_mwclassic/maps/
+		SND.Config.LoadMapOverrides(map)
+
+		-- 3. Run auto-inference logic (like the Rust logic)
 		SND.Rust.InitPostEntity()
 
-		-- Auto-create template if it doesn't exist
+		-- 4. Auto-create the .lua file if it's missing so you can start saving
 		local path = "snd_mwclassic/maps/" .. map .. ".lua"
 		if not file.Exists(path, "DATA") then
-			print("[SND] No config found for " .. map .. ". Creating auto-template...")
 			SND.Config.SaveMapData(map)
 		end
 		
-		-- Always ensure voting registration is up to date
+		-- 5. Always ensure the map is in the voting rotation
 		SND.Config.RegisterMapForVoting(map)
 	end
 end)
