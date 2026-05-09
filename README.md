@@ -29,7 +29,7 @@ One life per round, bomb plant and defuse, team scoring, visual map voting, Lua-
 - **Team-only spectating** — dead players follow living teammates only (**M1** next / **M2** previous); free-roam when all teammates are dead.
 - **Map voting** — end-of-match vote driven by `data/snd_mwclassic/maps.txt`.
 - **SuperAdmin settings panel** — live ConVar sliders accessible via `!snd_settings` or `snd_open_settings`.
-- **Integrated Map Editor** — Dedicated Debug Mode (`F4`) with hotkeys for rapid placement of bomb sites and spawn points, with automatic saving to map-specific Lua data files.
+- **Integrated Map Editor** — Dedicated Debug Mode (`F4`) with hotkeys for rapid placement of bomb sites and spawn points, with automatic saving to map-specific **JSON** data files.
 - **Noclip disabled** — four independent enforcement layers prevent noclip for all players at all times.
 
 ### Debug & Map Editing (SuperAdmin Only)
@@ -49,6 +49,9 @@ One life per round, bomb plant and defuse, team scoring, visual map voting, Lua-
 | Requirement | Notes |
 |---|---|
 | Garry's Mod (Steam) | Updated to the current branch |
+| **[TFA] Call of Duty World at War SWEPs** | Workshop — provides `robotnik_waw_*` classes |
+| **[TFA][AT] CoD Black Ops SWEPs Pack** | Workshop — provides `robotnik_bo1_*` classes |
+| **[TFA][AT] CoD Black Ops II SWEPs** | Workshop — provides `mac_bo2_*` classes |
 | **[TFA][AT] Call of Duty 4: Modern Warfare Weapons Pack** | Workshop — provides all `iw3_*` SWEP classes |
 | **[TFA][AT] Call of Duty: Modern Warfare 2 Weapons Pack** | Workshop — provides all `iw4_*` SWEP classes |
 | **[TFA][AT] Call of Duty: Modern Warfare 3 Weapons Pack** | Workshop — provides all `iw5_*` SWEP classes |
@@ -121,6 +124,12 @@ The gamemode supports weapons from CoD4 (IW3), MW2 (IW4), and MW3 (IW5) TFA pack
 
 | Game | Category | Classes (Examples) |
 |---|---|---|
+| **WaW (Robotnik)** | Rifles / SMGs | `robotnik_waw_stg` `robotnik_waw_mp40` |
+| | Special | `robotnik_waw_rg` (Ray Gun) |
+| **Black Ops (Robotnik)** | ARs / SMGs | `robotnik_bo1_ak47` `robotnik_bo1_74u` |
+| | Special | `robotnik_bo1_dm` (Death Machine) |
+| **Black Ops II ([MAC])** | ARs / SMGs | `mac_bo2_an94` `mac_bo2_mp7` |
+| | Special | `mac_bo2_warmach` (War Machine) |
 | **CoD4 (IW3)** | Assault Rifles | `iw3_ak47` `iw3_m16a4` `iw3_g36c` |
 | | SMGs | `iw3_mp5` `iw3_p90` `iw3_ak74u` |
 | | Sniper Rifles | `iw3_barrett` `iw3_m40a3` `iw3_dragunov` |
