@@ -20,50 +20,54 @@ hook.Add("TranslateActivity", "SND_CSSAnimTranslate", function(ply, act)
 	local isCSS = string.find(model, "models/player/ct_") ~= nil or string.find(model, "models/player/t_") ~= nil
 	if not isCSS then return end
 
-	local wep = ply:GetActiveWeapon()
-	local hold = IsValid(wep) and wep:GetHoldType() or "normal"
+    local wep = ply:GetActiveWeapon()
+    local isBot = ply:IsBot() or ply:GetNWBool("SND_IsBot", false)
 
-	-- 1. Prioritize Weapon-Specific Translation (Fixes floating guns/TFA alignment)
-	if IsValid(wep) and wep.TranslateActivity then
-		local translated = wep:TranslateActivity(act)
-		if translated and translated ~= -1 then return translated end
-	end
+    -- 1. TFA/ARC9 Weapon Translation
+    if IsValid(wep) and wep.TranslateActivity then
+        local translated = wep:TranslateActivity(act)
+        if translated and translated ~= -1 then return translated end
+    end
 
-	-- 2. "Original Style" mapping (Activity based)
-	-- Maps weapon hold types to standard HL2MP activities which CSS models support.
-	local map = {
-		["pistol"]   = "PISTOL",
-		["revolver"] = "REVOLVER",
-		["smg"]      = "SMG1",
-		["ar2"]      = "AR2",
-		["shotgun"]  = "SHOTGUN",
-		["rpg"]      = "RPG",
-		["melee"]    = "MELEE",
-		["knife"]    = "KNIFE",
-		["melee2"]   = "MELEE2",
-		["fist"]     = "FIST",
-		["grenade"]  = "GRENADE",
-		["slam"]     = "SLAM",
-		["passive"]  = "PASSIVE",
-	}
+    -- 2. BOT-SPECIFIC CSS SEQUENCE MAPPING
+    -- NextBots fail to translate generic activities. We must return the "base" 
+    -- CSS activities (ACT_IDLE_RIFLE, etc.) which have arm poses baked in.
+    if isBot then
+        local h = IsValid(wep) and wep:GetHoldType() or "normal"
+        local isRifle = (h == "ar2" or h == "smg" or h == "rpg" or h == "shotgun" or h == "crossbow")
+        local isPistol = (h == "pistol" or h == "revolver")
 
-	local suffix = map[hold] or "AR2"
+        if act == ACT_MP_STAND_IDLE then
+            if isRifle then return ACT_IDLE_RIFLE
+            elseif isPistol then return ACT_IDLE_PISTOL
+            else return ACT_IDLE end
+        elseif act == ACT_MP_WALK then
+            if isRifle then return ACT_WALK_RIFLE
+            elseif isPistol then return ACT_WALK_PISTOL
+            else return ACT_WALK end
+        elseif act == ACT_MP_RUN then
+            if isRifle then return ACT_RUN_RIFLE
+            elseif isPistol then return ACT_RUN_PISTOL
+            else return ACT_RUN end
+        elseif act == ACT_MP_CROUCH_IDLE then
+            return ACT_CROUCHIDLE
+        elseif act == ACT_MP_CROUCHWALK then
+            return ACT_WALK -- CSS models use move_x/y pose params for crouchwalk
+        end
+    end
 
-	if act == ACT_MP_STAND_IDLE then
-		return _G["ACT_HL2MP_IDLE_" .. suffix] or ACT_HL2MP_IDLE_AR2
-	elseif act == ACT_MP_WALK then
-		return _G["ACT_HL2MP_WALK_" .. suffix] or ACT_HL2MP_WALK_AR2
-	elseif act == ACT_MP_RUN then
-		return _G["ACT_HL2MP_RUN_" .. suffix] or ACT_HL2MP_RUN_AR2
-	elseif act == ACT_MP_CROUCH_IDLE then
-		return _G["ACT_HL2MP_IDLE_CROUCH_" .. suffix] or ACT_HL2MP_IDLE_CROUCH_AR2
-	elseif act == ACT_MP_CROUCHWALK then
-		return _G["ACT_HL2MP_WALK_CROUCH_" .. suffix] or ACT_HL2MP_WALK_CROUCH_AR2
-	elseif act == ACT_MP_JUMP or act == ACT_MP_JUMP_START or act == ACT_MP_JUMP_FLOAT then
-		return ACT_HL2MP_JUMP_AR2 -- Generic jump activity
-	elseif act == ACT_MP_JUMP_LAND then
-		return ACT_HL2MP_IDLE_AR2 -- Landing reset
-	end
+    -- 3. HUMAN PLAYER FALLBACK
+    local h = IsValid(wep) and wep:GetHoldType() or "normal"
+    local map = { ["pistol"]="PISTOL", ["revolver"]="REVOLVER", ["smg"]="SMG1", ["ar2"]="AR2", ["shotgun"]="SHOTGUN", ["rpg"]="RPG" }
+    local sfx = map[h] or "AR2"
+
+    if act == ACT_MP_STAND_IDLE then return _G["ACT_HL2MP_IDLE_" .. sfx] or ACT_HL2MP_IDLE_AR2
+    elseif act == ACT_MP_WALK then return _G["ACT_HL2MP_WALK_" .. sfx] or ACT_HL2MP_WALK_AR2
+    elseif act == ACT_MP_RUN then return _G["ACT_HL2MP_RUN_" .. sfx] or ACT_HL2MP_RUN_AR2
+    elseif act == ACT_MP_CROUCH_IDLE then return _G["ACT_HL2MP_IDLE_CROUCH_" .. sfx] or ACT_HL2MP_IDLE_CROUCH_AR2
+    elseif act == ACT_MP_CROUCHWALK then return _G["ACT_HL2MP_WALK_CROUCH_" .. sfx] or ACT_HL2MP_WALK_CROUCH_AR2
+    elseif act == ACT_MP_JUMP or act == ACT_MP_JUMP_START or act == ACT_MP_JUMP_FLOAT then return ACT_HL2MP_JUMP_AR2
+    elseif act == ACT_MP_JUMP_LAND then return ACT_HL2MP_IDLE_AR2 end
 
 	return act
 end)
@@ -99,16 +103,10 @@ if SERVER then
 			local eyeAng  = bot:EyeAngles()
 			local bodyAng = bot:GetAngles() -- Direction feet are facing
 
-			if speed > 1 then
-				bot:SetAngles(Angle(0, eyeAng.y, 0))
-			end
-
-			-- CSS models and TFA weapons use aim_yaw and aim_pitch for arm alignment.
-			-- This fixes "floating guns" by making the arms follow the eyes.
-			local aimYaw = math.NormalizeAngle(eyeAng.y - bodyAng.y)
-			bot:SetPoseParameter("aim_yaw", aimYaw)
-			local aimPitch = math.NormalizeAngle(eyeAng.p)
-			bot:SetPoseParameter("aim_pitch", aimPitch)
+            -- Force the bot's physics body to align with their aim when moving
+            if speed > 5 then
+                bot:SetAngles(Angle(0, eyeAng.y, 0))
+            end
 
 			if speed > 10 then
 				local moveDir = vel:Angle()
@@ -128,8 +126,10 @@ if SERVER then
 			-- body_pitch: match eye pitch (so they appear to aim up/down)
 			local pitch = math.NormalizeAngle(eyeAng.p)
 			bot:SetPoseParameter("body_pitch", math.Clamp(pitch, -60, 60))
-			bot:SetPoseParameter("head_pitch", math.Clamp(pitch, -45, 45))
-			bot:SetPoseParameter("head_yaw",   0) -- Handled by turning body
+            
+            -- These are the two most important pose params for TFA weapon alignment
+            bot:SetPoseParameter("aim_pitch", pitch)
+            bot:SetPoseParameter("aim_yaw", math.NormalizeAngle(eyeAng.y - bodyAng.y))
 		end
 	end)
 end
@@ -146,53 +146,31 @@ if CLIENT then
 		                or string.find(ply:GetModel(), "models/player/t_")  ~= nil
 		if not isCSSModel then return end
 
-		local speed = velocity:Length2D()
+		local speed = velocity:Length()
 		local isBot = ply:IsBot() or ply:GetNWBool("SND_IsBot", false)
+        local eyeAng = ply:EyeAngles()
+        local bodyAng = ply:GetAngles()
 
-		-- Manually drive frame advancement on the client for NextBots to prevent static sliding
-		if isBot then
-			ply:FrameAdvance(FrameTime())
-			if speed > 1 then
-				ply:SetPlaybackRate(math.Clamp(speed / math.max(maxSeqGroundSpeed, 0.1), 0, 2))
-			else
-				ply:SetPlaybackRate(1)
-			end
-		end
+        -- NextBots need manual frame advance and playback rate on client
+        if isBot then
+            ply:FrameAdvance(FrameTime())
+            local rate = (speed > 10) and math.Clamp(speed / maxSeqGroundSpeed, 0.1, 2) or 1
+            ply:SetPlaybackRate(rate)
+        end
 		
-		-- Update the move_x and move_y pose parameters for animations
-		if speed > 1 then
+		-- Update 8-way movement pose parameters
+		if speed > 10 then
 			ply:SetPoseParameter("move_x", (velocity:Dot(ply:GetForward()) / speed))
 			ply:SetPoseParameter("move_y", (velocity:Dot(ply:GetRight()) / speed) * -1)
 		end
 
-		-- Resolve the hold type from the active weapon so the arms look right
-		local wep     = ply:GetActiveWeapon()
-		local hold    = IsValid(wep) and wep:GetHoldType() or "normal"
+		-- Torso and Aim rotation (Fixes floating guns and stiff neck)
+		ply:SetPoseParameter("aim_yaw", math.NormalizeAngle(eyeAng.y - bodyAng.y))
+        ply:SetPoseParameter("aim_pitch", math.NormalizeAngle(eyeAng.p))
 
-		-- Map hold type to a gesture layer sequence name that CSS models have.
-		-- CSS models have: "idle_all_aim", "walk_all", "run_all", "crouch_all_aim"
-		-- The standard GMod animation system handles hold-type overlays via
-		-- ACT_ activities, but we also reinforce aim and movement here.
-
-		local eyeAng = ply:EyeAngles()
-		local bodyAng = ply:GetAngles()
-
-		-- Torso rotation and pitch for high-fidelity aiming
-		local aimYaw = math.NormalizeAngle(eyeAng.y - bodyAng.y)
-		ply:SetPoseParameter("aim_yaw", aimYaw)
-		local pitch = math.NormalizeAngle(eyeAng.p)
-		ply:SetPoseParameter("body_pitch", math.Clamp(pitch, -60, 60))
-		ply:SetPoseParameter("head_pitch", math.Clamp(pitch, -45, 45))
-
-		local moveYaw = 0
-		if speed > 10 then
-			local moveDir = velocity:Angle()
-			moveYaw = math.NormalizeAngle(moveDir.y - bodyAng.y)
-			-- Smooth out yaw to prevent erratic animation snapping
-			local prevYaw = ply:GetPoseParameter("move_yaw") or 0
-			moveYaw = Lerp(0.15, prevYaw, moveYaw)
-		end
-		ply:SetPoseParameter("move_yaw",   moveYaw)
+        local pitch = math.NormalizeAngle(eyeAng.p)
+        ply:SetPoseParameter("body_pitch", math.Clamp(pitch, -60, 60))
+        ply:SetPoseParameter("head_pitch", math.Clamp(pitch, -45, 45))
 	end)
 end
 
