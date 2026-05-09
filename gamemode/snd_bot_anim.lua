@@ -103,9 +103,16 @@ if SERVER then
 				bot:SetAngles(Angle(0, eyeAng.y, 0))
 			end
 
+			-- CSS models and TFA weapons use aim_yaw and aim_pitch for arm alignment.
+			-- This fixes "floating guns" by making the arms follow the eyes.
+			local aimYaw = math.NormalizeAngle(eyeAng.y - bodyAng.y)
+			bot:SetPoseParameter("aim_yaw", aimYaw)
+			local aimPitch = math.NormalizeAngle(eyeAng.p)
+			bot:SetPoseParameter("aim_pitch", aimPitch)
+
 			if speed > 10 then
 				local moveDir = vel:Angle()
-				moveYaw = math.NormalizeAngle(moveDir.y - eyeAng.y)
+				moveYaw = math.NormalizeAngle(moveDir.y - bodyAng.y)
 				-- Smooth out yaw changes to reduce jitter
 				local prevYaw = bot:GetPoseParameter("move_yaw") or 0
 				moveYaw = Lerp(0.15, prevYaw, moveYaw)
@@ -117,10 +124,6 @@ if SERVER then
 			local targetLean = (localVel.y / 320) * 15
 			local curLean = bot:GetPoseParameter("body_yaw") or 0
 			bot:SetPoseParameter("body_yaw", Lerp(0.1, curLean, targetLean))
-
-			-- Torso rotation: Upper body looks at target while feet move independently
-			local aimYaw = math.NormalizeAngle(eyeAng.y - bodyAng.y)
-			bot:SetPoseParameter("aim_yaw", aimYaw)
 
 			-- body_pitch: match eye pitch (so they appear to aim up/down)
 			local pitch = math.NormalizeAngle(eyeAng.p)
@@ -191,37 +194,38 @@ if CLIENT then
 		end
 		ply:SetPoseParameter("move_yaw",   moveYaw)
 	end)
-
-	-- ── CalcMainActivity: tell the engine which activity to use ───────────
-	-- This is the hook that controls whether the player plays IDLE, WALK, or RUN.
-	-- Without this, bots may get stuck on IDLE regardless of their velocity.
-	hook.Add("CalcMainActivity", "SND_BotCalcActivity", function(ply, velocity)
-		if not ply:Alive() then return end
-
-		local isCSSModel = string.find(ply:GetModel(), "models/player/ct_") ~= nil
-		                or string.find(ply:GetModel(), "models/player/t_")  ~= nil
-		if not isCSSModel then return end
-
-		local speed = velocity:Length2D()
-		local onGround = ply:IsOnGround()
-
-		if not onGround then
-			return ACT_MP_JUMP, -1
-		end
-
-		if ply:Crouching() or ply:GetNWBool("SND_BotCrouching", false) then
-			return speed < 10 and ACT_MP_CROUCH_IDLE or ACT_MP_CROUCHWALK, -1
-		end
-
-		if speed < 10 then
-			return ACT_MP_STAND_IDLE, -1
-		elseif speed < 140 then
-			return ACT_MP_WALK, -1
-		else
-			return ACT_MP_RUN, -1
-		end
-	end)
 end
+
+-- ── CalcMainActivity: tell the engine which activity to use ───────────
+-- SHARED: This MUST run on both server and client for bots to animate.
+-- This is the hook that controls whether the player plays IDLE, WALK, or RUN.
+hook.Add("CalcMainActivity", "SND_BotCalcActivity", function(ply, velocity)
+	if not ply:Alive() then return end
+
+	local model = ply:GetModel() or ""
+	local isCSSModel = string.find(model, "models/player/ct_") ~= nil
+					or string.find(model, "models/player/t_")  ~= nil
+	if not isCSSModel then return end
+
+	local speed = velocity:Length2D()
+	local onGround = ply:IsOnGround()
+
+	if not onGround then
+		return ACT_MP_JUMP, -1
+	end
+
+	if ply:Crouching() or ply:GetNWBool("SND_BotCrouching", false) then
+		return speed < 10 and ACT_MP_CROUCH_IDLE or ACT_MP_CROUCHWALK, -1
+	end
+
+	if speed < 10 then
+		return ACT_MP_STAND_IDLE, -1
+	elseif speed < 140 then
+		return ACT_MP_WALK, -1
+	else
+		return ACT_MP_RUN, -1
+	end
+end)
 
 -- ── SERVER: force correct weapon world-model hold type on bots ────────────
 -- When a bot spawns with an ARC9 weapon the worldmodel (3rd-person visible gun)

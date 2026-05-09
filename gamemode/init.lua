@@ -18,6 +18,7 @@ AddCSLuaFile("snd_round.lua")         -- Round manager
 
 include("shared.lua")
 include("snd_settings.lua")
+include("snd_bot_anim.lua") -- Load animation fixes early
 include("snd_teams.lua")
 include("snd_bomb.lua")
 include("snd_round.lua")
@@ -29,7 +30,6 @@ include("snd_bots.lua")
 include("snd_spawns.lua")
 include("snd_rust.lua")
 include("snd_spectate.lua")
-include("snd_bot_anim.lua")
 include("snd_sites_sv.lua")
 include("snd_rules.lua")
 include("snd_levels.lua")
