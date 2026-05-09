@@ -149,7 +149,7 @@ concommand.Add("snd_rust_dump_spawn_line", function(ply)
 	local p = who:GetPos()
 	local a = who:EyeAngles()
 	local line = string.format("  { pos = Vector(%.2f, %.2f, %.2f), ang = Angle(%.2f, %.2f, %.2f) },", p.x, p.y, p.z, a.p, a.y, a.r)
-	MsgN("[SND] Paste into data/snd_mwclassic/maps/" .. game.GetMap() .. ".lua → spawns:")
+	MsgN("[SND] Paste into data/snd_mwclassic/maps/" .. game.GetMap() .. ".json → spawns:")
 	MsgN(line)
 	if IsValid(ply) then ply:ChatPrint("[SND] Printed one spawn line to server console.") end
 end)

@@ -405,11 +405,11 @@ hook.Add("InitPostEntity", "SND_MapInitialization", function()
 			-- 2. Run fallbacks (like Rust auto-logic)
 			SND.Rust.InitPostEntity()
 
-			-- 3. Auto-create the .lua file if it's missing
-			local path = "snd_mwclassic/maps/" .. map .. ".lua"
+			-- 3. Auto-create the .json file if it's missing
+			local path = "snd_mwclassic/maps/" .. map .. ".json"
 			file.CreateDir("snd_mwclassic/maps") -- Double check directory existence
 			if not file.Exists(path, "DATA") then
-				print("[SND] No map config found. Auto-generating template for: " .. map)
+				print("[SND] No map JSON config found. Auto-generating template for: " .. map)
 				SND.Config.SaveMapData(map)
 				
 				-- Notify SuperAdmins in chat

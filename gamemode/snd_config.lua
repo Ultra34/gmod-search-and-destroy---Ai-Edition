@@ -218,25 +218,50 @@ end
 function SND.Config.LoadMapOverrides(map)
 	if not SERVER or not map then return end
 	map = string.lower(tostring(map))
-	local path = "snd_mwclassic/maps/" .. map .. ".lua"
+	local path = "snd_mwclassic/maps/" .. map .. ".json"
 
 	-- Always initialize the tables in memory even if the file is missing
 	SND.Config.MapSites[map] = {}
 	SND.Config.MapSpawns[map] = { attack = {}, defend = {} }
 
-	if not file.Exists(path, "DATA") then return end
-	local src = file.Read(path, "DATA")
-	if not src or src == "" then return end
-	local fn = CompileString(src, "DATA/" .. path)
-	if type(fn) ~= "function" then
-		print("[SND] Map override compile error (" .. path .. "): " .. tostring(fn)) return
+	if not file.Exists(path, "DATA") then 
+		-- Fallback to legacy .lua check for existing setups
+		local legacy = "snd_mwclassic/maps/" .. map .. ".lua"
+		if file.Exists(legacy, "DATA") then
+			local fn = CompileString(file.Read(legacy, "DATA") or "", legacy)
+			if type(fn) == "function" then
+				local ok, res = pcall(fn)
+				if ok and type(res) == "table" then
+					SND.Config.MapSites[map] = res.sites or {}
+					SND.Config.MapSpawns[map] = res.spawns or { attack = {}, defend = {} }
+					print("[SND] Imported legacy Lua Map Config: " .. legacy)
+					return
+				end
+			end
+		end
+		return 
 	end
-	local ok, result = pcall(fn)
-	if not ok then print("[SND] Map override run error: ", result) return end
-	if type(result) ~= "table" then return end
 
-	SND.Config.MapSites[map] = result.sites or {}
-	SND.Config.MapSpawns[map] = result.spawns or { attack = {}, defend = {} }
+	local data = util.JSONToTable(file.Read(path, "DATA") or "{}")
+	if not data then return end
+
+	-- Convert JSON strings back to Vectors/Angles
+	if data.sites then
+		for _, s in ipairs(data.sites) do
+			if s.plantPos then s.plantPos = Vector(s.plantPos) end
+		end
+	end
+	if data.spawns then
+		for team, spawnList in pairs(data.spawns) do
+			for _, s in ipairs(spawnList) do
+				if s.pos then s.pos = Vector(s.pos) end
+				if s.ang then s.ang = Angle(s.ang) end
+			end
+		end
+	end
+
+	SND.Config.MapSites[map] = data.sites or {}
+	SND.Config.MapSpawns[map] = data.spawns or { attack = {}, defend = {} }
 	
 	local sCount = #SND.Config.MapSites[map]
 	local aCount = SND.Config.MapSpawns[map].attack and #SND.Config.MapSpawns[map].attack or 0
@@ -270,48 +295,37 @@ if SERVER then
 
     function SND.Config.SaveMapData(map)
         map = string.lower(tostring(map))
-        
-        -- Ensure we are pulling the most recent data from memory
         local sites = SND.Config.MapSites[map] or {}
         local spawns = SND.Config.MapSpawns[map] or { attack = {}, defend = {} }
-        
-        -- Safety check: if memory tables don't exist, create them as empty
-        
-        local attack = spawns.attack or {}
-        local defend = spawns.defend or {}
 
-        local path = "snd_mwclassic/maps/" .. map .. ".lua"
-        
-        -- Ensure the entire directory tree exists
+		-- Prepare a clone for JSON serialization
+		local saveObj = {
+			sites = {},
+			spawns = { attack = {}, defend = {} }
+		}
+
+		for _, s in ipairs(sites) do
+			table.insert(saveObj.sites, {
+				id = s.id,
+				plantPos = tostring(s.plantPos or s.pos),
+				defuseRadius = s.defuseRadius or 120
+			})
+		end
+
+		for teamKey, spawnList in pairs(spawns) do
+			for _, s in ipairs(spawnList or {}) do
+				table.insert(saveObj.spawns[teamKey], {
+					pos = tostring(s.pos),
+					ang = tostring(s.ang)
+				})
+			end
+		end
+
+        local path = "snd_mwclassic/maps/" .. map .. ".json"
         local dir = string.GetPathFromFilename(path)
         if dir and dir ~= "" then file.CreateDir(dir) end
 
-        local out = "-- Auto-generated Map Configuration for " .. map .. "\n"
-        out = out .. "return {\n"
-        out = out .. "\tsites = {\n"
-        for _, s in ipairs(sites) do
-            local p = s.plantPos or s.pos or Vector(0,0,0)
-            out = out .. string.format("\t\t{ id = %q, plantPos = Vector(%.2f, %.2f, %.2f), defuseRadius = %.1f },\n", s.id or "?", p.x, p.y, p.z, s.defuseRadius or 120)
-        end
-        out = out .. "\t},\n"
-
-        out = out .. "\tspawns = {\n"
-        out = out .. "\t\tattack = {\n"
-        for _, s in ipairs(attack) do
-            local p = s.pos or Vector(0,0,0)
-            local a = s.ang or Angle(0,0,0)
-            out = out .. string.format("\t\t\t{ pos = Vector(%.2f, %.2f, %.2f), ang = Angle(%.2f, %.2f, %.2f) },\n", p.x, p.y, p.z, a.p, a.y, a.r)
-        end
-        out = out .. "\t\t},\n"
-        out = out .. "\t\tdefend = {\n"
-        for _, s in ipairs(defend) do
-            local p = s.pos or Vector(0,0,0)
-            local a = s.ang or Angle(0,0,0)
-            out = out .. string.format("\t\t\t{ pos = Vector(%.2f, %.2f, %.2f), ang = Angle(%.2f, %.2f, %.2f) },\n", p.x, p.y, p.z, a.p, a.y, a.r)
-        end
-        out = out .. "\t\t}\n\t}\n}\n"
-
-        file.Write(path, out)
+        file.Write(path, util.TableToJSON(saveObj, true))
         
         -- Verify the write worked and print success to console
         if file.Exists(path, "DATA") then
