@@ -1,5 +1,6 @@
 --[[ Bot AI — state machine, skill 1-10, weapon reload/switch, bomb objectives
---[[ Bot AI Reworked — Roam, Investigate, & Objective Play ]]
+--[[ Bot AI — "Pro Edition" Overhaul ]]
+-- Improved combat movement, recoil control, grenade usage, and tactical pathfinding.
 
 SND.Bots = SND.Bots or {}
 
@@ -34,12 +35,14 @@ local BS_PLANT     = 5   -- Moving to plant
 local BS_DEFUSE    = 6   -- Moving to defuse
 local BS_FOLLOW    = 7   -- Escorting the carrier
 local BS_RECOVER   = 8   -- Recovering dropped bomb
+local BS_GRENADE   = 9   -- Preparing/throwing equipment
 
 -- ── Skill 1-10 → internal float helpers ──────────────────────────────────
 local function skillT(s)       return (math.Clamp(s, 1, 10) - 1) / 9 end
 local function getSkill()      return SND.Settings.GetInt("bot_skill", 5) end
-local function aimNoise(s)     return Lerp(skillT(s), 15, 0.2) end
-local function reactionSec(s)  return Lerp(skillT(s), 0.8, 0.1) end
+local function aimNoise(s)     return Lerp(skillT(s), 18, 0.1) end
+-- Elite bots have 100ms reaction, level 1 has ~1.2s
+local function reactionSec(s)  return Lerp(skillT(s)^1.5, 1.2, 0.1) end
 local function engageRange(s)  return Lerp(skillT(s), 2000, 6000) end
 local function botMoveSpeed(s) return Lerp(skillT(s), 180, 320) end
 
@@ -53,6 +56,7 @@ local function newAI()
 		searchPoints  = {},      -- Points to check when "investigating"
 		currentSearchIdx = 1,
 		nextSearchSwitch = 0,
+		nextGrenade   = 0,
 		
 		shootGate     = 0,
 		nextJump      = 0,
@@ -145,7 +149,7 @@ function SND.Bots.EnsureCount()
 		end
 
 		local bot = player.CreateNextBot("[BOT] " .. string.sub(rawName, 1, 25))
-		if not IsValid(bot) then
+		if not IsValid(bot) or not bot:IsPlayer() then
 			print("[SND Bots] CreateNextBot failed (slot " .. i .. ").")
 			timer.Simple(2, function() SND.Bots.EnsureCount() end)
 			break
@@ -156,7 +160,7 @@ function SND.Bots.EnsureCount()
 		bot.SND_IsReady = true -- Bots are always ready
 		
 		-- Forced Identity: Random Text Titles, Unified Background & Emblem
-		local botTitles = {"Lone Wolf", "Shadow", "Elite", "Hunter", "Stalker", "New Recruit"}
+		local botTitles = {"Lone Wolf", "Shadow", "Elite", "Hunter", "Stalker", "Marksman", "Vanguard"}
 		bot:SetNWString("SND_CardTitle", table.Random(botTitles))
 
 		-- Forced: MW2 transparent grey background
@@ -243,13 +247,9 @@ local function weaponCheck(bot, cmd)
 	local max = wep:GetMaxClip1()
 	local clip = wep:Clip1() or 0
 
-	-- 1. Mid-fight emergency switch: Primary is empty, pull out secondary
+	-- 1. Mid-fight emergency switch: If primary is dry, swap to secondary FAST
 	if ai.state == BS_ENGAGE and max > 0 and (clip <= 0) then
-		local isPri = false
-		for _, pClass in ipairs(SND.Config.BotPrimaries) do
-			if wep:GetClass() == pClass then isPri = true break end
-		end
-
+		local isPri = table.HasValue(SND.Config.BotPrimaries, wep:GetClass())
 		if isPri then
 			for _, sClass in ipairs(SND.Config.Mw2eSecondaries) do
 				local swep = bot:GetWeapon(sClass)
@@ -261,29 +261,35 @@ local function weaponCheck(bot, cmd)
 		end
 	end
 
-	-- 2. Reloading: If empty, or safe and needs a top-off (checking reserve ammo)
+	-- 2. Reloading: If empty, or safe and needs a top-off
 	local isSafe = (ai.state == BS_PATROL or ai.state == BS_SEARCH or ai.state == BS_IDLE)
 	local hasReserve = bot:GetAmmoCount(wep:GetPrimaryAmmoType()) > 0
 	if max > 0 and hasReserve then
 		if clip <= 0 or (isSafe and clip < max) then
 			cmd:SetButtons(bit.bor(cmd:GetButtons(), IN_RELOAD))
-		end
-	end
-
-	-- 3. Recovery: Switch back to primary once the area is clear
-	if isSafe and clip >= 0 then
-		for _, pClass in ipairs(SND.Config.BotPrimaries) do
-			local pwep = bot:GetWeapon(pClass)
-			if IsValid(pwep) and pwep ~= wep and pwep:Clip1() > 0 then
-				timer.Simple(0.5, function() if IsValid(bot) then bot:SelectWeapon(pClass) end end)
-				break
+			-- Duck while reloading if in a fight
+			if ai.state == BS_ENGAGE then
+				cmd:SetButtons(bit.bor(cmd:GetButtons(), IN_DUCK))
 			end
 		end
 	end
 end
 
+-- Switch back to any primary that has ammo once combat ends
 local function switchToFilledWeapon(bot)
-	-- Implementation already handled in weaponCheck
+	local wep = bot:GetActiveWeapon()
+	if not IsValid(wep) then return end
+	
+	local isSec = table.HasValue(SND.Config.Mw2eSecondaries, wep:GetClass())
+	if isSec then
+		for _, pClass in ipairs(SND.Config.BotPrimaries) do
+			local pwep = bot:GetWeapon(pClass)
+			if IsValid(pwep) and pwep:Clip1() > 0 then
+				bot:SelectWeapon(pClass)
+				break
+			end
+		end
+	end
 end
 
 -- ── Navigation ────────────────────────────────────────────────────────────
@@ -302,9 +308,12 @@ local function moveToward(bot, cmd, targetPos, speed)
 		end
 
 		-- Recompute path if goal moves significantly or path is stale
-		if not ai.path:IsValid() or CurTime() > ai.nextPathUpdate or ai.lastPathGoal:DistToSqr(targetPos) > 4096 then
-			ai.path:Compute(bot, targetPos)
-			ai.nextPathUpdate = CurTime() + 2.0
+		local goalShift = ai.lastPathGoal:DistToSqr(targetPos)
+		if not ai.path:IsValid() or CurTime() > ai.nextPathUpdate or goalShift > 4096 then
+			-- Add slight jitter to pathfinding goal for human-like variance
+			local jitter = Vector(math.Rand(-50, 50), math.Rand(-50, 50), 0)
+			ai.path:Compute(bot, targetPos + jitter)
+			ai.nextPathUpdate = CurTime() + math.Rand(1.5, 3.0)
 			ai.lastPathGoal = targetPos
 		end
 
@@ -407,26 +416,32 @@ local function moveToward(bot, cmd, targetPos, speed)
 		bot:SetEyeAngles(curAng)
 	end
 
-	-- If we are currently trying to wiggle out of a stuck spot, don't overwrite the move buttons
-	if not isStuck then
-		cmd:SetForwardMove(speed * math.Clamp(distToGoal / 100, 0.5, 1))
-	end
+	if not isStuck then cmd:SetForwardMove(speed) end
 	return dist
 end
 
--- Lead aiming: Predict where the player will be based on velocity
-local function getAimVector(bot, target, noise)
+-- Advanced Aiming: Lead, Recoil Control, and Jitter
+local function getAimVector(bot, target, noise, skill)
 	local targetPos = target:GetPos() + Vector(0, 0, 55) -- Aim for chest/head
 	local dist = bot:EyePos():Distance(targetPos)
 	
-	-- Prediction: Bullet travel time simulation
+	-- 1. Prediction: Lead the target
 	local velocity = target:GetVelocity()
-	local prediction = (dist / 15000) * velocity -- Adjust 15000 based on average bullet speed
+	local prediction = (dist / 16000) * velocity
 	targetPos = targetPos + prediction
 
 	local aimAng = (targetPos - bot:EyePos()):Angle()
-	aimAng.p = aimAng.p + math.Rand(-noise, noise) * (dist / 1000)
-	aimAng.y = aimAng.y + math.Rand(-noise, noise) * (dist / 1000)
+
+	-- 2. Recoil Control: High skill bots pull down
+	if bot:KeyDown(IN_ATTACK) then
+		local pull = Lerp(skillT(skill), 0, 2.5)
+		aimAng.p = aimAng.p + pull
+	end
+
+	-- 3. Skill-based Jitter
+	local spread = noise * (dist / 1200)
+	aimAng.p = aimAng.p + math.Rand(-spread, spread)
+	aimAng.y = aimAng.y + math.Rand(-spread, spread)
 
 	return aimAng
 end
@@ -464,7 +479,9 @@ hook.Add("StartCommand", "SND_BotAI", function(bot, cmd)
 		elseif isRetaker then ai.state = BS_DEFUSE
 		elseif isRecoverer then ai.state = BS_RECOVER
 		elseif allyCarrier and allyCarrier ~= bot then ai.state = BS_FOLLOW
-		elseif ai.state == BS_IDLE then ai.state = BS_PATROL end
+		elseif ai.state == BS_IDLE or ai.state == BS_INVESTIGATE or ai.state == BS_SEARCH then
+			ai.state = BS_PATROL 
+		end
 	end
 
 	if ai.state == BS_PATROL or ai.state == BS_PLANT or ai.state == BS_DEFUSE or ai.state == BS_FOLLOW or ai.state == BS_RECOVER then
@@ -491,9 +508,21 @@ hook.Add("StartCommand", "SND_BotAI", function(bot, cmd)
 
 	-- Combat Scanning
 	local enemy, dist = nearestEnemy(bot, true)
-	
-	-- Mission Focus: Carriers only engage if the enemy is a direct, close-range threat
+
+	-- ── Tactical Equipment (Grenades) ───────────────────────────────────
+	if IsValid(enemy) and now > ai.nextGrenade and dist > 400 and dist < 1200 then
+		local lethal = bot:GetNWString("SND_Lethal", "")
+		if lethal ~= "" and math.random() < (0.2 + skillT(skill) * 0.3) then
+			ai.state = BS_GRENADE
+			bot:ConCommand("snd_quickthrow") -- Use existing quick-throw system
+			ai.nextGrenade = now + math.Rand(15, 30)
+		end
+	end
+
+	-- ── Combat Engagement ───────────────────────────────────────────────
 	local shouldEngage = IsValid(enemy) and dist < engageRange(skill)
+
+	-- Carriers only engage if the enemy is a direct, close-range threat
 	if isCarrier and shouldEngage and dist > 800 then shouldEngage = false end
 
 	if shouldEngage then
@@ -501,17 +530,16 @@ hook.Add("StartCommand", "SND_BotAI", function(bot, cmd)
 		ai.lastKnownPos = enemy:GetPos()
 		ai.lastKnownTime = now
 
-		-- Aiming
-		local aim = getAimVector(bot, enemy, aimNoise(skill))
-		bot:SetEyeAngles(LerpAngle(0.1 + (skill * 0.05), bot:EyeAngles(), aim))
+		-- Aiming: High skill = faster snap
+		local aim = getAimVector(bot, enemy, aimNoise(skill), skill)
+		bot:SetEyeAngles(LerpAngle(0.12 + (skillT(skill) * 0.2), bot:EyeAngles(), aim))
 
 		-- Shooting with burst logic
 		if now > ai.nextShot then
 			if now > ai.shootGate then
-				cmd:SetButtons(bit.bor(cmd:GetButtons(), IN_ATTACK))
-				
-				-- Real trigger control: High skill bots tap at range
-				local burst = (dist > 1000) and math.Rand(0.1, 0.3) or 0.05
+				cmd:SetButtons(bit.bor(cmd:GetButtons(), IN_ATTACK)) -- Use IN_ATTACK directly on cmd
+
+				local burst = (dist > 1200) and math.Rand(0.08, 0.25) or 0.05
 				ai.nextShot = now + burst
 			else
 				-- Reaction time simulation
@@ -522,10 +550,15 @@ hook.Add("StartCommand", "SND_BotAI", function(bot, cmd)
 			end
 		end
 
-		-- Combat movement (Strafe)
+		-- Tactical Dodging: ADAD Strafing + Random Jumps
 		if now > ai.strafeFlip then
 			ai.strafeDir = -ai.strafeDir
-			ai.strafeFlip = now + math.Rand(1, 3)
+			ai.strafeFlip = now + math.Rand(0.5, 1.5)
+			
+			-- High skill bots jump to dodge bullets
+			if skill > 7 and math.random() < 0.3 and bot:IsOnGround() then
+				cmd:SetButtons(bit.bor(cmd:GetButtons(), IN_JUMP))
+			end
 		end
 		cmd:SetSideMove(ai.strafeDir * speed)
 
@@ -536,7 +569,7 @@ hook.Add("StartCommand", "SND_BotAI", function(bot, cmd)
 			cmd:SetForwardMove(-speed)
 		end
 
-		-- Smart crouching
+		-- Tactical Crouching
 		if skill > 7 and dist > 800 then
 			cmd:SetButtons(bit.bor(cmd:GetButtons(), IN_DUCK))
 		end
@@ -544,18 +577,14 @@ hook.Add("StartCommand", "SND_BotAI", function(bot, cmd)
 		-- No enemy visible
 		ai.enemy = nil
 		ai.shootGate = 0
-		
-		-- FORCED: Mission-critical objective takes absolute priority over investigation.
-		-- If we just finished a fight (BS_ENGAGE) or were looking for someone, 
-		-- but the bomb needs attention, go straight to it.
+
 		if hasMissionCritical then
 			if isCarrier then ai.state = BS_PLANT 
 			elseif isRecoverer then ai.state = BS_RECOVER
 			else ai.state = BS_DEFUSE end
 		elseif ai.state == BS_ENGAGE and ai.lastKnownPos then
-			-- We lost sight of an enemy but have no bomb objective?
-			-- Head to last known pos to investigate.
 			ai.state = BS_INVESTIGATE
+			switchToFilledWeapon(bot)
 		end
 
 		-- Resolve Investigation vs Patrolling
@@ -600,7 +629,8 @@ hook.Add("StartCommand", "SND_BotAI", function(bot, cmd)
 						end
 					end
 
-					if bot:Team() == SND.TEAM_DEFEND and ai.state == BS_PATROL then
+					-- Camping sites (Defenders)
+					if bot:Team() == SND.TEAM_DEFEND and ai.state == BS_PATROL and distToGoal2D < 100 then
 						cmd:ClearMovement() -- Camping
 					end
 				end
