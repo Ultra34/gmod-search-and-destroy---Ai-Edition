@@ -20,67 +20,73 @@ hook.Add("TranslateActivity", "SND_CSSAnimTranslate", function(ply, act)
 	local isCSS = string.find(model, "models/player/ct_") ~= nil or string.find(model, "models/player/t_") ~= nil
 	if not isCSS then return end
 
-    local wep = ply:GetActiveWeapon()
-    
-    -- 1. Try Weapon-Specific Translation (Critical for TFA/ARC9)
-    if IsValid(wep) and wep.TranslateActivity then
-        local translated = wep:TranslateActivity(act)
-        if translated != -1 then 
-            -- If it's a bot, we must check if the translated activity is safe
-            -- because NextBots don't handle ACT_HL2MP_* well on CSS models.
-            if not ply.SND_IsBot then return translated end
-        end
-    end
+	local wep = ply:GetActiveWeapon()
+	local hold = IsValid(wep) and wep:GetHoldType() or "normal"
 
-    -- 2. Force CSS Model Native Activities for Bots
-    -- This prevents T-posing by using sequences the CSS skeleton actually possesses.
-    if ply.SND_IsBot then
-        local hold = IsValid(wep) and wep:GetHoldType() or "normal"
-        local isRifle = (hold == "ar2" or hold == "smg" or hold == "rpg" or hold == "shotgun")
-        local isPistol = (hold == "pistol" or hold == "revolver")
+	-- 1. Bot-Specific Native CSS Mapping
+	-- This uses weighted sequences to ensure the CSS skeleton picks the right animation
+	if ply.SND_IsBot then
+		local isRifle = (hold == "ar2" or hold == "smg" or hold == "rpg" or hold == "shotgun" or hold == "crossbow")
+		local isPistol = (hold == "pistol" or hold == "revolver")
+		local isMelee = (hold == "melee" or hold == "knife" or hold == "melee2" or hold == "fist")
 
-        if act == ACT_MP_STAND_IDLE then
-            if isRifle then return ACT_IDLE_RIFLE
-            elseif isPistol then return ACT_IDLE_PISTOL
-            else return ACT_IDLE end
-        elseif act == ACT_MP_WALK then
-            if isRifle then return ACT_WALK_RIFLE
-            elseif isPistol then return ACT_WALK_PISTOL
-            else return ACT_WALK end
-        elseif act == ACT_MP_RUN then
-            if isRifle then return ACT_RUN_RIFLE
-            elseif isPistol then return ACT_RUN_PISTOL
-            else return ACT_RUN end
-        elseif act == ACT_MP_CROUCH_IDLE then
-            return ACT_CROUCHIDLE
-        elseif act == ACT_MP_CROUCHWALK then
-            return ACT_WALK -- CSS models use standard walk for crouch-walk
-        end
-    end
+		if act == ACT_MP_STAND_IDLE then
+			local target = ACT_IDLE
+			if isRifle then target = ACT_IDLE_RIFLE
+			elseif isPistol then target = ACT_IDLE_PISTOL
+			elseif isMelee then target = ACT_IDLE_ANGRY end
+			return ply:SelectWeightedSequence(target)
+		elseif act == ACT_MP_WALK then
+			local target = ACT_WALK
+			if isRifle then target = ACT_WALK_RIFLE
+			elseif isPistol then target = ACT_WALK_PISTOL end
+			return ply:SelectWeightedSequence(target)
+		elseif act == ACT_MP_RUN then
+			local target = ACT_RUN
+			if isRifle then target = ACT_RUN_RIFLE
+			elseif isPistol then target = ACT_RUN_PISTOL end
+			return ply:SelectWeightedSequence(target)
+		elseif act == ACT_MP_CROUCH_IDLE then
+			return ply:SelectWeightedSequence(ACT_CROUCHIDLE)
+		elseif act == ACT_MP_CROUCHWALK then
+			-- CSS models use standard walk modified by body_pitch/yaw for crouch
+			return ply:SelectWeightedSequence(ACT_WALK)
+		elseif act == ACT_MP_ATTACK_STAND_PRIMARYFIRE or act == ACT_MP_ATTACK_CROUCH_PRIMARYFIRE then
+			-- TFA/ARC9 handle their own fire animations, but we provide a base
+			local target = ACT_GESTURE_RANGE_ATTACK_AR2
+			if isPistol then target = ACT_GESTURE_RANGE_ATTACK_PISTOL end
+			return ply:SelectWeightedSequence(target)
+		end
+	end
 
-    -- 3. Fallback for players/unknown types
-    local hold = IsValid(wep) and wep:GetHoldType() or "normal"
-    local map = {
-        ["pistol"] = "PISTOL", ["revolver"] = "REVOLVER", ["smg"] = "SMG1",
-        ["ar2"] = "AR2", ["shotgun"] = "SHOTGUN", ["rpg"] = "RPG"
-    }
-    local suffix = map[hold] or "AR2"
+	-- 2. Human Player / TFA Activity Translation
+	if IsValid(wep) and wep.TranslateActivity then
+		local translated = wep:TranslateActivity(act)
+		if translated != -1 then return translated end
+	end
 
-    if act == ACT_MP_STAND_IDLE then
-        return _G["ACT_HL2MP_IDLE_" .. suffix] or ACT_HL2MP_IDLE_AR2
-    elseif act == ACT_MP_WALK then
-        return _G["ACT_HL2MP_WALK_" .. suffix] or ACT_HL2MP_WALK_AR2
-    elseif act == ACT_MP_RUN then
-        return _G["ACT_HL2MP_RUN_" .. suffix] or ACT_HL2MP_RUN_AR2
-    elseif act == ACT_MP_CROUCH_IDLE then
-        return _G["ACT_HL2MP_IDLE_CROUCH_" .. suffix] or ACT_HL2MP_IDLE_CROUCH_AR2
-    elseif act == ACT_MP_CROUCHWALK then
-        return _G["ACT_HL2MP_WALK_CROUCH_" .. suffix] or ACT_HL2MP_WALK_CROUCH_AR2
-    elseif act == ACT_MP_JUMP or act == ACT_MP_JUMP_START or act == ACT_MP_JUMP_FLOAT then
-        return ACT_HOP
-    elseif act == ACT_MP_JUMP_LAND then
-        return ACT_IDLE
-    end
+	-- 3. Generic Fallback (The standard GMod system)
+	local map = {
+		["pistol"] = "PISTOL", ["revolver"] = "REVOLVER", ["smg"] = "SMG1",
+		["ar2"] = "AR2", ["shotgun"] = "SHOTGUN", ["rpg"] = "RPG"
+	}
+	local suffix = map[hold] or "AR2"
+
+	if act == ACT_MP_STAND_IDLE then
+		return _G["ACT_HL2MP_IDLE_" .. suffix] or ACT_HL2MP_IDLE_AR2
+	elseif act == ACT_MP_WALK then
+		return _G["ACT_HL2MP_WALK_" .. suffix] or ACT_HL2MP_WALK_AR2
+	elseif act == ACT_MP_RUN then
+		return _G["ACT_HL2MP_RUN_" .. suffix] or ACT_HL2MP_RUN_AR2
+	elseif act == ACT_MP_CROUCH_IDLE then
+		return _G["ACT_HL2MP_IDLE_CROUCH_" .. suffix] or ACT_HL2MP_IDLE_CROUCH_AR2
+	elseif act == ACT_MP_CROUCHWALK then
+		return _G["ACT_HL2MP_WALK_CROUCH_" .. suffix] or ACT_HL2MP_WALK_CROUCH_AR2
+	elseif act == ACT_MP_JUMP or act == ACT_MP_JUMP_START or act == ACT_MP_JUMP_FLOAT then
+		return ACT_HOP
+	elseif act == ACT_MP_JUMP_LAND then
+		return ACT_IDLE
+	end
 end)
 
 -- ── Damage Flinching (Gestures) ──────────────────────────────────────────
@@ -111,12 +117,15 @@ if SERVER then
 
 			-- move_yaw: direction of movement relative to feet
 			local moveYaw = 0
-			local eyeAng = bot:EyeAngles()
+			local eyeAng  = bot:EyeAngles()
 			local bodyAng = bot:GetAngles() -- Direction feet are facing
+
+			-- Ensure the bot's collision angles follow their movement to prevent "sideways sliding"
+			bot:SetAngles(Angle(0, eyeAng.y, 0))
 
 			if speed > 10 then
 				local moveDir = vel:Angle()
-				moveYaw = math.NormalizeAngle(moveDir.y - bodyAng.y)
+				moveYaw = math.NormalizeAngle(moveDir.y - eyeAng.y)
 				-- Smooth out yaw changes to reduce jitter
 				local prevYaw = bot:GetPoseParameter("move_yaw") or 0
 				moveYaw = Lerp(0.15, prevYaw, moveYaw)
@@ -219,7 +228,7 @@ if CLIENT then
 			return ACT_MP_JUMP, -1
 		end
 
-		if ply:Crouching() then
+		if ply:Crouching() or ply:GetNWBool("SND_BotCrouching", false) then
 			return speed < 10 and ACT_MP_CROUCH_IDLE or ACT_MP_CROUCHWALK, -1
 		end
 
