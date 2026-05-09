@@ -7,6 +7,7 @@ AddCSLuaFile("cl_levels.lua")         -- XP/Rank Client
 AddCSLuaFile("cl_gunpicker.lua")      -- Loadout UI
 AddCSLuaFile("cl_crosshair_menu.lua") -- Crosshair UI
 AddCSLuaFile("cl_sites.lua")          -- 3D Objective Markers
+AddCSLuaFile("cl_mapvote.lua")        -- Map Vote UI
 AddCSLuaFile("snd_settings.lua")      -- Replicated ConVars
 AddCSLuaFile("snd_bot_anim.lua")      -- Animation Fixes
 AddCSLuaFile("snd_movement.lua")      -- Movement & Stamina logic
@@ -67,6 +68,8 @@ util.AddNetworkString("SND_SaveLoadoutName")
 util.AddNetworkString("SND_ClearLoadoutSlot")
 util.AddNetworkString("SND_MinimapPing")
 util.AddNetworkString("SND_NavData")
+util.AddNetworkString("SND_SubmitMapVote")
+util.AddNetworkString("SND_MapVoteSync")
 
 DEFINE_BASECLASS("gamemode_base")
 

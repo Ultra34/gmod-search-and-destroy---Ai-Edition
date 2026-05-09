@@ -7,6 +7,7 @@ include("cl_settings.lua")
 include("cl_gunpicker.lua")
 include("cl_levels.lua")
 include("cl_sites.lua")
+include("cl_mapvote.lua")
 
 SND = SND or {}
 SND.Client = SND.Client or {}
@@ -87,16 +88,6 @@ end)
 net.Receive("SND_Halftime", function()
 	SND.Client.HalftimeTime = CurTime()
 	surface.PlaySound("ambient/levels/citadel/citadel_ambient_loop1.wav")
-end)
-
-
-net.Receive("SND_MapVote", function()
-	local n = net.ReadUInt(8)
-	local maps = {}
-	for i = 1, n do
-		maps[i] = net.ReadString()
-	end
-	chat.AddText(Color(120, 200, 255), "[SND] Map vote — candidates: ", Color(255, 255, 255), table.concat(maps, ", "))
 end)
 
 hook.Add("OnPlayerChat", "SND_PersonalizationCommand", function(ply, text)
