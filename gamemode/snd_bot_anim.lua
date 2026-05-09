@@ -23,61 +23,39 @@ hook.Add("TranslateActivity", "SND_CSSAnimTranslate", function(ply, act)
 	local wep = ply:GetActiveWeapon()
 	local hold = IsValid(wep) and wep:GetHoldType() or "normal"
 
-	local t = {}
+	local isRifle   = (hold == "ar2" or hold == "smg" or hold == "rpg")
+	local isPistol  = (hold == "pistol" or hold == "revolver")
+	local isShotgun = (hold == "shotgun")
+	local isMelee   = (hold == "melee" or hold == "knife" or hold == "melee2" or hold == "fist")
 
-	-- Map standard activities to HoldType specific ones for the CSS skeleton
-	-- This prevents weapons from "floating" by ensuring arms are in the correct pose
-	local holdMap = {
-		["pistol"]   = "PISTOL",
-		["revolver"] = "REVOLVER",
-		["smg"]      = "SMG1",
-		["ar2"]      = "AR2",
-		["shotgun"]  = "SHOTGUN",
-		["rpg"]      = "RPG",
-		["melee"]    = "MELEE",
-		["melee2"]   = "MELEE2",
-		["grenade"]  = "GRENADE",
-		["slam"]     = "SLAM",
-		["fist"]     = "FIST",
-		["passive"]  = "PASSIVE",
-		["knife"]    = "KNIFE",
-		["dual"]     = "DUAL"
-	}
-
-	local suffix = holdMap[hold] or "AR2" -- Default to AR2 for rifles and unknown types
-	
-	-- Idle
-	t[ACT_MP_STAND_IDLE] = _G["ACT_HL2MP_IDLE_" .. suffix] or ACT_HL2MP_IDLE
-	t[ACT_MP_CROUCH_IDLE] = _G["ACT_HL2MP_IDLE_CROUCH_" .. suffix] or ACT_HL2MP_IDLE_CROUCH
-	
-	-- Movement
-	t[ACT_MP_WALK] = _G["ACT_HL2MP_WALK_" .. suffix] or ACT_HL2MP_WALK
-	t[ACT_MP_RUN] = _G["ACT_HL2MP_RUN_" .. suffix] or ACT_HL2MP_RUN
-	t[ACT_MP_CROUCHWALK] = _G["ACT_HL2MP_WALK_CROUCH_" .. suffix] or ACT_HL2MP_WALK_CROUCH
-	
-	-- Attack
-	t[ACT_MP_ATTACK_STAND_PRIMARYFIRE] = _G["ACT_HL2MP_GESTURE_RANGE_ATTACK_" .. suffix] or ACT_HL2MP_GESTURE_RANGE_ATTACK_AR2
-	t[ACT_MP_ATTACK_CROUCH_PRIMARYFIRE] = _G["ACT_HL2MP_GESTURE_RANGE_ATTACK_" .. suffix] or ACT_HL2MP_GESTURE_RANGE_ATTACK_AR2
-	
-	-- Reload
-	t[ACT_MP_RELOAD_STAND] = _G["ACT_HL2MP_GESTURE_RELOAD_" .. suffix] or ACT_HL2MP_GESTURE_RELOAD_AR2
-	t[ACT_MP_RELOAD_CROUCH] = _G["ACT_HL2MP_GESTURE_RELOAD_" .. suffix] or ACT_HL2MP_GESTURE_RELOAD_AR2
-
-	if t[act] then return t[act] end
-
-	if ACT_MP_JUMP then t[ACT_MP_JUMP] = ACT_HOP end -- CS:S models use ACT_HOP for jumping
-	if ACT_MP_JUMP_START then t[ACT_MP_JUMP_START] = ACT_HOP end
-	if ACT_MP_JUMP_FLOAT then t[ACT_MP_JUMP_FLOAT] = ACT_HOP end
-	if ACT_MP_JUMP_LAND then t[ACT_MP_JUMP_LAND] = ACT_IDLE end -- Map landing to idle to prevent T-pose
-
-	-- Fallback for HL2MP holdtypes if the model supports standard activities
-	if not t[act] and act >= 1600 and act <= 2000 then
-		if string.find(tostring(act), "WALK") then return ACT_WALK end
-		if string.find(tostring(act), "RUN") then return ACT_RUN end
+	if act == ACT_MP_STAND_IDLE then
+		if isRifle then return ACT_IDLE_RIFLE
+		elseif isPistol then return ACT_IDLE_PISTOL
+		elseif isShotgun then return ACT_IDLE_SHOTGUN
+		elseif isMelee then return ACT_IDLE_ANGRY
+		else return ACT_IDLE end
+	elseif act == ACT_MP_WALK then
+		if isRifle then return ACT_WALK_RIFLE
+		elseif isPistol then return ACT_WALK_PISTOL
+		elseif isShotgun then return ACT_WALK_SHOTGUN
+		else return ACT_WALK end
+	elseif act == ACT_MP_RUN then
+		if isRifle then return ACT_RUN_RIFLE
+		elseif isPistol then return ACT_RUN_PISTOL
+		elseif isShotgun then return ACT_RUN_SHOTGUN
+		else return ACT_RUN end
+	elseif act == ACT_MP_CROUCH_IDLE then
+		return ACT_CROUCHIDLE
+	elseif act == ACT_MP_CROUCHWALK then
+		-- CSS models often use standard walk animations modified by pose params for crouch-walk
+		if isRifle then return ACT_WALK_RIFLE
+		elseif isPistol then return ACT_WALK_PISTOL
+		else return ACT_WALK end
+	elseif act == ACT_MP_JUMP or act == ACT_MP_JUMP_START or act == ACT_MP_JUMP_FLOAT then
+		return ACT_HOP
+	elseif act == ACT_MP_JUMP_LAND then
 		return ACT_IDLE
 	end
-
-	return t[act]
 end)
 
 -- ── Damage Flinching (Gestures) ──────────────────────────────────────────
@@ -152,6 +130,16 @@ if CLIENT then
 		if not isCSSModel then return end
 
 		local speed  = velocity:Length2D()
+
+		-- NextBots (Bots) need manual frame advancement and playback rate scaling
+		if ply.SND_IsBot then
+			ply:FrameAdvance(FrameTime())
+			if speed > 1 then
+				ply:SetPlaybackRate(math.Clamp(speed / math.max(maxSeqGroundSpeed, 0.1), 0, 2))
+			else
+				ply:SetPlaybackRate(1)
+			end
+		end
 		
 		-- Update the move_x and move_y pose parameters for animations
 		if speed > 1 then
