@@ -1,4 +1,5 @@
 --[[ Round state, win conditions, spectate rules, team balance hooks ]]
+--[[ SND Match Engine: Authoritative Round State Machine ]]
 
 AddCSLuaFile()
 
@@ -57,27 +58,29 @@ function SND.Round.CheckTime()
 end
 
 function SND.Round.EndRound(reason)
+	if SND.Round.Phase == SND.PHASE_POST then return end -- Prevent double-end
+	
 	SND.Round.Phase = SND.PHASE_POST
 	SND.Round.Winner = reason
 
-	if reason == SND.WIN_ATTACK_ELIM or reason == SND.WIN_ATTACK_PLANT then
-		SND.Round.AttackScore = SND.Round.AttackScore + 1
-	elseif reason == SND.WIN_DEFEND_ELIM or reason == SND.WIN_DEFEND_DEFUSE or reason == SND.WIN_TIME then
-		SND.Round.DefendScore = SND.Round.DefendScore + 1
+	-- Score increment logic
+	local scoreKey = (reason == SND.WIN_ATTACK_ELIM or reason == SND.WIN_ATTACK_PLANT) and "AttackScore" or "DefendScore"
+	if reason ~= SND.WIN_DRAW then
+		SND.Round[scoreKey] = SND.Round[scoreKey] + 1
 	end
 
 	SND.Announcer.OnRoundEnd(reason)
 	hook.Run("SND_RoundEnd", reason)
 	SND.Bomb.ResetForRound()
 
-	-- Sync phase to clients immediately
-	SND.Round.Sync()
+	SND.Round.Sync() -- Global update
 
 	local lim = SND.Settings.GetInt("win_limit", 4)
 	local totalRounds = SND.Round.AttackScore + SND.Round.DefendScore
 	local isHalftime = not SND.Round.HalftimeReached and totalRounds > 0 and totalRounds == (lim - 1)
+	local matchWon = (SND.Round.AttackScore >= lim or SND.Round.DefendScore >= lim)
 
-	if SND.Round.AttackScore >= lim or SND.Round.DefendScore >= lim then
+	if matchWon then
 		timer.Simple(8, function()
 			SND.MapVote.StartMatchEnd()
 		end)

@@ -161,6 +161,10 @@ local C_GREEN  = col( 80, 220, 100)
 local C_BG     = col(  0,   0,   0, 160)
 local C_PILL   = col( 35,  38,  48, 210) -- Slightly lighter for score background
 
+-- Smooth Lerp Targets
+local lerpStamina = 1
+local lerpHP = 100
+
 -- ── Rounded pill helper ───────────────────────────────────────────────────
 local function pill(x, y, w, h, c)
 	draw.RoundedBox(6, x, y, w, h, c)
@@ -348,8 +352,9 @@ end
 
 -- ── Stamina Bar ──────────────────────────────────────────────────────────
 local function drawStaminaBar(sw, sh, sc, lp)
-	local stamina = lp:GetNWFloat("SND_Stamina", 1.0)
-	if stamina >= 0.99 and not lp.SND_Sprinting then return end -- Hide if full and idle
+	local actualStamina = lp:GetNWFloat("SND_Stamina", 1.0)
+	lerpStamina = Lerp(FrameTime() * 10, lerpStamina, actualStamina)
+	if lerpStamina >= 0.99 and not lp.SND_Sprinting then return end
 
 	local w, h = 180 * sc, 4 * sc
 	local x, y = sw * 0.5 - w * 0.5, sh * 0.75
@@ -362,7 +367,7 @@ local function drawStaminaBar(sw, sh, sc, lp)
 	-- Fill
 	local barCol = isExhausted and Color(255, 60, 40, 200) or Color(255, 255, 255, 180)
 	surface.SetDrawColor(barCol)
-	surface.DrawRect(x, y, w * stamina, h)
+	surface.DrawRect(x, y, w * lerpStamina, h)
 end
 
 -- ── Level Up Popup ───────────────────────────────────────────────────────
@@ -380,8 +385,9 @@ end
 
 -- ── Red Damage Vignette ──────────────────────────────────────────────────
 local function drawDamageVignette(sw, sh, sc, hp)
-	if hp >= 100 then return end
-	local alpha = math.Clamp((100 - hp) / 75, 0, 1) * 200
+	lerpHP = Lerp(FrameTime() * 5, lerpHP, hp)
+	if lerpHP >= 99 then return end
+	local alpha = math.Clamp((100 - lerpHP) / 75, 0, 1) * 200
 	local size = 180 * sc
 	
 	surface.SetDrawColor(180, 0, 0, alpha)

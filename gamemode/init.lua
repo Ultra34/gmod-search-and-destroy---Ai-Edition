@@ -35,12 +35,13 @@ include("snd_rules.lua")
 include("snd_levels.lua")
 
 -- Ensure the directory structure exists in garrysmod/data/
-file.CreateDir("snd_mwclassic/players")
-file.CreateDir("snd_mwclassic/banners")
-file.CreateDir("snd_mwclassic/emblems")
-file.CreateDir("snd_mwclassic/titles")
-file.CreateDir("snd_mwclassic/game_icons")
-file.CreateDir("snd_mwclassic/maps")
+local function initializeDataFolders()
+	local folders = {"players", "banners", "emblems", "titles", "game_icons", "maps"}
+	for _, f in ipairs(folders) do
+		file.CreateDir("snd_mwclassic/" .. f)
+	end
+end
+initializeDataFolders()
 
 -- Perform a write-access test to alert the user if the folder is read-only
 local testPath = "snd_mwclassic/write_test.txt"
@@ -52,11 +53,13 @@ else
 	print("[SND] CRITICAL ERROR: The 'garrysmod/data' folder is READ-ONLY. Map saving and player data will NOT work.")
 end
 
-print("[SND] Calling Card & Emblem System initialized successfully.")
+print("[SND] Core Engine: Faction and Identity systems ready.")
 
+-- Professional Networking Registry
 util.AddNetworkString("SND_ShowCallingCard")
 util.AddNetworkString("SND_KillFeed")
 util.AddNetworkString("SND_SetEmblem")
+util.AddNetworkString("SND_SetTitle")
 util.AddNetworkString("SND_SetCallingCard")
 util.AddNetworkString("SND_SetShowTitle")
 util.AddNetworkString("SND_SetTitleMat")
@@ -123,15 +126,18 @@ end
 
 function GM:PlayerInitialSpawn(ply)
 	self.BaseClass.PlayerInitialSpawn(self, ply)
+	
+	-- Initialize internal state
+	ply.SND_Joined = true
+	ply.SND_IsReady = false
+	
 	if not ply.SND_Joined then
-		ply.SND_Joined = true
 		ply:SetTeam(math.random(1, 2) == 1 and SND.TEAM_ATTACK or SND.TEAM_DEFEND)
-		ply.SND_IsReady = false
 	end
 	
-	-- Load Calling Card
+	-- Load Persistence with fallbacks
 	ply:SetNWString("SND_CardTitle", ply:GetPData("snd_card_title", "New Recruit"))
-	local isBot = (ply:IsBot() or ply.SND_IsBot) -- Check if it's a bot
+	local isBot = (ply:IsBot() or ply.SND_IsBot)
 	ply:SetNWString("SND_CardMat", ply:GetPData("snd_card_mat", isBot and (SND.Config.DefaultBotBanner or "") or "")) -- Default to transparent for players/bots
 	ply:SetNWBool("SND_ShowTitle", ply:GetPData("snd_show_title", "1") == "1")
 	ply:SetNWBool("SND_UseTitleMat", ply:GetPData("snd_use_title_mat", "0") == "1")
@@ -144,11 +150,12 @@ function GM:PlayerInitialSpawn(ply)
 
 	SND.Teams.ApplyFactionModel(ply)
 	
-	-- Send nav mesh data for the minimap
-	timer.Simple(2, function()
-		if IsValid(ply) then 
-			sendNavToPlayer(ply) 
-		end
+	-- Standardized Data Sync
+	timer.Simple(1.5, function()
+		if not IsValid(ply) then return end
+		sendNavToPlayer(ply)
+		SND.Round.Sync(ply)
+		SND.Loadout.SendLoadoutData(ply)
 	end)
 end
 
