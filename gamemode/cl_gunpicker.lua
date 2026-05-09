@@ -291,13 +291,15 @@ function SND.GunPicker.Open()
 	local groups = SND.GunPicker.PrimaryGroups or {}
 	local secondaries = SND.GunPicker.Secondaries or {}
 
+	local sc = math.Clamp(GetConVar("snd_hud_scale"):GetFloat() or 1, 0.75, 1.5)
+
 	if #groups == 0 and #secondaries == 0 then
 		LocalPlayer():ChatPrint("[SND] No weapon list received yet — try again in a moment.")
 		return
 	end
 
 	-- ── Frame ─────────────────────────────────────────────────────────────
-	local W, H = 800, 600
+	local W, H = 800 * sc, 600 * sc
 	local f = vgui.Create("DFrame")
 	f:SetTitle("") -- Custom title drawing
 	f:SetSize(W, H)
@@ -311,15 +313,15 @@ function SND.GunPicker.Open()
 	f.Paint = function(self, w, h)
 		draw.RoundedBox(0, 0, 0, w, h, Color(15, 15, 15, 250)) -- Dark background
 		surface.SetDrawColor(255, 120, 0, 255) -- Orange accent line at top
-		surface.DrawRect(0, 0, w, 3)
-		draw.SimpleText("LOADOUT SELECTION", "SND_BO3_Title", 20, 28, Color(255, 255, 255), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+		surface.DrawRect(0, 0, w, 3 * sc)
+		draw.SimpleText("LOADOUT SELECTION", "SND_BO3_Title", 20 * sc, 28 * sc, Color(255, 255, 255), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
 	end
 
 	-- ── 10 Slots Sidebar ──────────────────────────────────────────────────
 	local sidebar = vgui.Create("DPanel", f)
-	sidebar:SetWide(180)
+	sidebar:SetWide(180 * sc)
 	sidebar:Dock(LEFT)
-	sidebar:DockMargin(10, 60, 5, 10) -- Adjusted margin for title and bottom buttons
+	sidebar:DockMargin(10 * sc, 60 * sc, 5 * sc, 10 * sc) -- Adjusted margin for title and bottom buttons
 	sidebar.Paint = nil
 
 	local scrollSidebar = vgui.Create("DScrollPanel", sidebar)
@@ -327,7 +329,7 @@ function SND.GunPicker.Open()
 
 	local content = vgui.Create("DScrollPanel", f)
 	content:Dock(FILL)
-	content:DockMargin(5, 60, 10, 70) -- Bottom margin increased to clear buttons
+	content:DockMargin(5 * sc, 60 * sc, 10 * sc, 70 * sc) -- Bottom margin increased to clear buttons
 	content.Paint = nil
 
 	local function rebuildContent()
@@ -335,9 +337,9 @@ function SND.GunPicker.Open()
 		
 		-- Create Loadout Name Editor
 		local nameEditorPanel = vgui.Create("DPanel", content)
-		nameEditorPanel:SetTall(60)
+		nameEditorPanel:SetTall(60 * sc)
 		nameEditorPanel:Dock(TOP)
-		nameEditorPanel:DockMargin(0, 0, 0, 10)
+		nameEditorPanel:DockMargin(0, 0, 0, 10 * sc)
 		nameEditorPanel.Paint = nil
 
 		local nameLabel = vgui.Create("DLabel", nameEditorPanel)
@@ -345,12 +347,12 @@ function SND.GunPicker.Open()
 		nameLabel:SetFont("SND_BO3_Header")
 		nameLabel:SetTextColor(Color(200, 200, 200))
 		nameLabel:SetPos(0, 0)
-		nameLabel:SetSize(120, 20)
+		nameLabel:SetSize(120 * sc, 20 * sc)
 
 		loadoutNameEntry = vgui.Create("DTextEntry", nameEditorPanel)
-		loadoutNameEntry:SetPos(0, 25)
-		loadoutNameEntry:SetWide(200)
-		loadoutNameEntry:SetTall(25)
+		loadoutNameEntry:SetPos(0, 25 * sc)
+		loadoutNameEntry:SetWide(200 * sc)
+		loadoutNameEntry:SetTall(25 * sc)
 		loadoutNameEntry:SetPlaceholderText("Enter loadout name...")
 		loadoutNameEntry:SetFont("DermaDefault")
 
@@ -358,8 +360,8 @@ function SND.GunPicker.Open()
 		saveNameButton:SetText("SAVE NAME")
 		saveNameButton:SetFont("SND_BO3_Header")
 		saveNameButton:SetTextColor(Color(255, 255, 255))
-		saveNameButton:SetPos(210, 25)
-		saveNameButton:SetSize(100, 25)
+		saveNameButton:SetPos(210 * sc, 25 * sc)
+		saveNameButton:SetSize(100 * sc, 25 * sc)
 		saveNameButton.Paint = function(self, w, h)
 			draw.RoundedBox(0, 0, 0, w, h, self:IsHovered() and Color(255, 120, 0, 150) or Color(255, 120, 0, 100))
 		end
@@ -383,8 +385,8 @@ function SND.GunPicker.Open()
 		clearSlotButton:SetText("CLEAR SLOT")
 		clearSlotButton:SetFont("SND_BO3_Header")
 		clearSlotButton:SetTextColor(Color(255, 255, 255))
-		clearSlotButton:SetPos(320, 25)
-		clearSlotButton:SetSize(100, 25)
+		clearSlotButton:SetPos(320 * sc, 25 * sc)
+		clearSlotButton:SetSize(100 * sc, 25 * sc)
 		clearSlotButton.Paint = function(self, w, h)
 			draw.RoundedBox(0, 0, 0, w, h, self:IsHovered() and Color(150, 50, 50, 150) or Color(120, 40, 40, 100))
 		end
@@ -406,16 +408,16 @@ function SND.GunPicker.Open()
 			lbl:SetFont(headerFont or "SND_BO3_Header")
 			if headerCol then lbl:SetTextColor(headerCol) end
 			lbl:Dock(TOP)
-			lbl:DockMargin(leftMargin or 0, 10, 0, 5)
+			lbl:DockMargin((leftMargin or 0) * sc, 10 * sc, 0, 5 * sc)
 
 			local grid = vgui.Create("DIconLayout", content)
 			grid:Dock(TOP)
-			grid:SetSpaceX(5)
-			grid:SetSpaceY(5)
+			grid:SetSpaceX(5 * sc)
+			grid:SetSpaceY(5 * sc)
 
 			for _, class in ipairs(pool) do
 				local wrapper = grid:Add("DPanel") -- Add a DPanel wrapper to the layout
-				wrapper:SetSize(64, 64) -- Match the size of the SpawnIcon
+				wrapper:SetSize(64 * sc, 64 * sc) -- Match the size of the SpawnIcon
 				wrapper.Paint = function(self, w, h)
 					if data[slotKey] == class then
 						draw.RoundedBox(0, 0, 0, w, h, Color(255, 120, 0, 150)) -- Draw background on the wrapper
@@ -425,7 +427,7 @@ function SND.GunPicker.Open()
 				local icon = vgui.Create("SpawnIcon", wrapper) -- Create SpawnIcon inside the wrapper
 				icon:SetModel(getWeaponModel(class))
 				icon:SetTooltip(friendlyName(class))
-				icon:SetSize(64, 64)
+				icon:SetSize(64 * sc, 64 * sc)
 				icon:Dock(FILL) -- Make SpawnIcon fill the wrapper
 
 				-- SpawnIcons handle their own mouse events, so we must use icon.DoClick
@@ -453,9 +455,9 @@ function SND.GunPicker.Open()
 				local gameName = g.name:match("^(.-):") or "MISCELLANEOUS"
 				if gameName ~= lastGame then
 					local gameHeader = vgui.Create("DPanel", content)
-					gameHeader:SetTall(32)
+					gameHeader:SetTall(32 * sc)
 					gameHeader:Dock(TOP)
-					gameHeader:DockMargin(0, 20, 0, 5)
+					gameHeader:DockMargin(0, 20 * sc, 0, 5 * sc)
 					gameHeader.Paint = function(self, w, h)
 						local iconName = gameName:upper()
 						local iconPath = "data/snd_mwclassic/game_icons/" .. iconName .. ".png"
@@ -474,7 +476,7 @@ function SND.GunPicker.Open()
 							surface.SetMaterial(iconMat)
 							surface.SetDrawColor(255, 255, 255, 255)
 							surface.DrawTexturedRect(0, 0, drawW, h)
-							textX = drawW + 15
+							textX = drawW + 15 * sc
 						end
 						
 						draw.SimpleText(gameName:upper(), "SND_BO3_Title", textX, h/2, Color(255, 120, 0), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
@@ -484,13 +486,13 @@ function SND.GunPicker.Open()
 				
 				local subHeader = g.name:match("^.-:%s*(.*)$") or g.name
 				local slotKey = g.isSecondary and "secondary" or "primary"
-				createGrid(subHeader, g.weapons, slotKey, "DermaDefaultBold", Color(180, 180, 180), 15)
+				createGrid(subHeader, g.weapons, slotKey, "DermaDefaultBold", Color(180, 180, 180), 15 * sc)
 
 				-- ── Separator Line ──
 				local sep = vgui.Create("DPanel", content)
-				sep:SetTall(20)
+				sep:SetTall(20 * sc)
 				sep:Dock(TOP)
-				sep:DockMargin(15, 5, 10, 10)
+				sep:DockMargin(15 * sc, 5 * sc, 10 * sc, 10 * sc)
 				sep.Paint = function(self, w, h)
 					surface.SetDrawColor(255, 255, 255, 15)
 					surface.DrawRect(0, h/2, w, 1)
@@ -507,9 +509,9 @@ function SND.GunPicker.Open()
 
 		local btn = scrollSidebar:Add("DButton")
 		btn:SetText("") -- Text will be drawn in Paint function
-		btn:SetTall(40)
+		btn:SetTall(40 * sc)
 		btn:Dock(TOP)
-		btn:DockMargin(0, 0, 0, 5)
+		btn:DockMargin(0, 0, 0, 5 * sc)
 
 		btn.Paint = function(self, w, h)
 			local active = LocalPlayer():GetNWInt("SND_ActiveLoadoutSlot", 1) == i
@@ -522,14 +524,14 @@ function SND.GunPicker.Open()
 			local mainText = customName
 			local subText = isLocked and ("LOCKED (LVL " .. req .. ")") or ""
 			
-			draw.SimpleText(mainText, "SND_BO3_Header", 10, isLocked and 12 or h/2, isLocked and Color(150, 150, 150) or Color(220, 220, 220), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+			draw.SimpleText(mainText, "SND_BO3_Header", 10 * sc, isLocked and 12 * sc or h/2, isLocked and Color(150, 150, 150) or Color(220, 220, 220), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
 			if isLocked then
-				draw.SimpleText(subText, "DermaDefault", 10, 26, Color(255, 80, 80), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+				draw.SimpleText(subText, "DermaDefault", 10 * sc, 26 * sc, Color(255, 80, 80), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
 			end
 
 			if active then 
 				surface.SetDrawColor(255, 120, 0) 
-				surface.DrawRect(0, 0, 4, h) 
+				surface.DrawRect(0, 0, 4 * sc, h) 
 			end
 		end
 
@@ -550,15 +552,15 @@ function SND.GunPicker.Open()
 
 	-- ── Identity Button ───────────────────────────────────────────────────
 	local identity = vgui.Create("DButton", f)
-	identity:SetSize(180, 40)
-	identity:SetPos(W - 400, H - 55)
+	identity:SetSize(180 * sc, 40 * sc)
+	identity:SetPos(W - 400 * sc, H - 55 * sc)
 	identity:SetText("PLAYER IDENTITY")
 	identity:SetFont("SND_BO3_Header")
 	identity:SetTextColor(Color(255, 255, 255))
 	identity.Paint = function(self, w, h)
 		draw.RoundedBox(0, 0, 0, w, h, self:IsHovered() and Color(60, 60, 60) or Color(40, 40, 40))
 		surface.SetDrawColor(255, 255, 255, 20)
-		surface.DrawOutlinedRect(0, 0, w, h)
+		surface.DrawOutlinedRect(0, 0, w, h, 1 * sc)
 	end
 	identity.DoClick = function()
 		SND.OpenPersonalizationMenu()
@@ -566,8 +568,8 @@ function SND.GunPicker.Open()
 
 	-- ── Ready Button ──────────────────────────────────────────────────────
 	local ready = vgui.Create("DButton", f)
-	ready:SetSize(200, 50)
-	ready:SetPos(W - 210, H - 60)
+	ready:SetSize(200 * sc, 50 * sc)
+	ready:SetPos(W - 210 * sc, H - 60 * sc)
 	ready:SetFont("SND_BO3_Title")
 	ready:SetTextColor(Color(255, 255, 255))
 	

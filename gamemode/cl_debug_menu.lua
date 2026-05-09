@@ -15,9 +15,11 @@ function SND.OpenDebugMenu()
 
     closeUI()
 
+    local sc = math.Clamp(GetConVar("snd_hud_scale"):GetFloat() or 1, 0.75, 1.5)
+
     local f = vgui.Create("DFrame")
     f:SetTitle("")
-    f:SetSize(600, 700)
+    f:SetSize(600 * sc, 700 * sc)
     f:Center()
     f:MakePopup()
     f.btnMaxim:SetVisible(false)
@@ -27,19 +29,19 @@ function SND.OpenDebugMenu()
     f.Paint = function(self, w, h)
         draw.RoundedBox(0, 0, 0, w, h, Color(15, 15, 15, 245))
         surface.SetDrawColor(180, 50, 255, 255) -- Purple accent
-        surface.DrawRect(0, 0, w, 3)
-        draw.SimpleText("DEBUG MENU", "SND_BO3_Title", 15, 20, Color(255, 255, 255), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+        surface.DrawRect(0, 0, w, 3 * sc)
+        draw.SimpleText("DEBUG MENU", "SND_BO3_Title", 15 * sc, 20 * sc, Color(255, 255, 255), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
     end
 
     local sheet = vgui.Create("DPropertySheet", f)
     sheet:Dock(FILL)
-    sheet:DockMargin(5, 30, 5, 5)
+    sheet:DockMargin(5 * sc, 30 * sc, 5 * sc, 5 * sc)
 
     -- ── Weapon Pools Tab ──────────────────────────────────────────────────
     local weaponPnl = vgui.Create("DPanelList")
     weaponPnl:EnableVerticalScrollbar(true)
-    weaponPnl:SetSpacing(5)
-    weaponPnl:SetPadding(10)
+    weaponPnl:SetSpacing(5 * sc)
+    weaponPnl:SetPadding(10 * sc)
 
     local checkboxes = {} -- Store references to checkboxes for Select All/None
 
@@ -71,9 +73,9 @@ function SND.OpenDebugMenu()
 
         if iconPath and iconPath ~= lastGameIcon then
             local header = vgui.Create("DPanel", weaponPnl)
-            header:SetTall(24)
+            header:SetTall(24 * sc)
             header:Dock(TOP)
-            header:DockMargin(0, 10, 0, 5)
+            header:DockMargin(0, 10 * sc, 0, 5 * sc)
             header.Paint = function(self, w, h)
                 local iconMat = SND.GetIMaterial(iconPath)
                 local textX = 0
@@ -85,7 +87,7 @@ function SND.OpenDebugMenu()
                     surface.SetMaterial(iconMat)
                     surface.SetDrawColor(255, 255, 255, 255)
                     surface.DrawTexturedRect(0, 0, drawW, h)
-                    textX = drawW + 5
+                    textX = drawW + 5 * sc
                 end
                 draw.SimpleText(gameName:upper(), "SND_BO3_Header", textX, h/2, Color(255, 120, 0), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
             end
@@ -97,14 +99,14 @@ function SND.OpenDebugMenu()
     end
 
     local btnPanel = vgui.Create("DPanel", weaponPnl)
-    btnPanel:SetTall(30)
+    btnPanel:SetTall(30 * sc)
     btnPanel:Dock(TOP)
-    btnPanel:DockMargin(0, 10, 0, 0)
+    btnPanel:DockMargin(0, 10 * sc, 0, 0)
     btnPanel.Paint = nil
 
     local selectAllBtn = vgui.Create("DButton", btnPanel)
     selectAllBtn:SetText("Select All")
-    selectAllBtn:SetSize(100, 25)
+    selectAllBtn:SetSize(100 * sc, 25 * sc)
     selectAllBtn:SetPos(0, 0)
     selectAllBtn.DoClick = function()
         for _, cb in ipairs(checkboxes) do cb:SetValue(true) end
@@ -113,8 +115,8 @@ function SND.OpenDebugMenu()
 
     local deselectAllBtn = vgui.Create("DButton", btnPanel)
     deselectAllBtn:SetText("Deselect All")
-    deselectAllBtn:SetSize(100, 25)
-    deselectAllBtn:SetPos(110, 0)
+    deselectAllBtn:SetSize(100 * sc, 25 * sc)
+    deselectAllBtn:SetPos(110 * sc, 0)
     deselectAllBtn.DoClick = function()
         for _, cb in ipairs(checkboxes) do cb:SetValue(false) end
         chat.AddText(Color(255, 120, 0), "[SND] ", Color(255, 255, 255), "All weapon categories disabled. Refresh gun picker to see changes.")
@@ -126,13 +128,13 @@ function SND.OpenDebugMenu()
     -- ── Map Spawns Tab ────────────────────────────────────────────────────
     local spawnPnl = vgui.Create("DPanelList")
     spawnPnl:EnableVerticalScrollbar(true)
-    spawnPnl:SetSpacing(5)
-    spawnPnl:SetPadding(10)
+    spawnPnl:SetSpacing(5 * sc)
+    spawnPnl:SetPadding(10 * sc)
 
     local function addButton(parent, text, command, args)
         local btn = vgui.Create("DButton", parent)
         btn:SetText(text)
-        btn:SetTall(30)
+        btn:SetTall(30 * sc)
         btn.DoClick = function()
             RunConsoleCommand(command, unpack(args or {}))
             surface.PlaySound("buttons/button14.wav")
@@ -149,28 +151,29 @@ function SND.OpenDebugMenu()
 
     local lblManageSpawns = vgui.Create("DLabel", spawnPnl)
     lblManageSpawns:SetText("Manage Spawns:")
+    lblManageSpawns:SetTall(20 * sc)
     spawnPnl:AddItem(lblManageSpawns)
 
     addButton(spawnPnl, "Clear All Spawns", "snd_spawn_clear")
     addButton(spawnPnl, "Remove Nearest Spawn", "snd_spawn_remove_nearest")
 
     local gotoSpawnPanel = vgui.Create("DPanel", spawnPnl)
-    gotoSpawnPanel:SetTall(60)
+    gotoSpawnPanel:SetTall(60 * sc)
     gotoSpawnPanel.Paint = nil
     local teamEntry = vgui.Create("DTextEntry", gotoSpawnPanel)
     teamEntry:SetPos(0, 0)
-    teamEntry:SetSize(100, 25)
+    teamEntry:SetSize(100 * sc, 25 * sc)
     teamEntry:SetText("attack")
     local indexSlider = vgui.Create("DNumSlider", gotoSpawnPanel)
-    indexSlider:SetPos(110, 0)
-    indexSlider:SetSize(150, 25)
+    indexSlider:SetPos(110 * sc, 0)
+    indexSlider:SetSize(150 * sc, 25 * sc)
     indexSlider:SetText("Index")
     indexSlider:SetMinMax(1, 50)
     indexSlider:SetDecimals(0)
     indexSlider:SetValue(1)
     local gotoBtn = vgui.Create("DButton", gotoSpawnPanel)
-    gotoBtn:SetPos(270, 0)
-    gotoBtn:SetSize(100, 25)
+    gotoBtn:SetPos(270 * sc, 0)
+    gotoBtn:SetSize(100 * sc, 25 * sc)
     gotoBtn:SetText("Go To Spawn")
     gotoBtn.DoClick = function()
         RunConsoleCommand("snd_spawn_goto", teamEntry:GetText(), indexSlider:GetValue())
@@ -183,11 +186,12 @@ function SND.OpenDebugMenu()
     -- ── Bomb Sites Tab ────────────────────────────────────────────────────
     local sitePnl = vgui.Create("DPanelList")
     sitePnl:EnableVerticalScrollbar(true)
-    sitePnl:SetSpacing(5)
-    sitePnl:SetPadding(10)
+    sitePnl:SetSpacing(5 * sc)
+    sitePnl:SetPadding(10 * sc)
 
     local lblSetSites = vgui.Create("DLabel", sitePnl)
     lblSetSites:SetText("Set Sites (at your position):")
+    lblSetSites:SetTall(20 * sc)
     sitePnl:AddItem(lblSetSites)
 
     addButton(sitePnl, "Set Site A (F5)", "snd_site_add", {"A"})
@@ -195,20 +199,21 @@ function SND.OpenDebugMenu()
 
     local lblManageSites = vgui.Create("DLabel", sitePnl)
     lblManageSites:SetText("Manage Sites:")
+    lblManageSites:SetTall(20 * sc)
     sitePnl:AddItem(lblManageSites)
 
     addButton(sitePnl, "Clear All Sites", "snd_site_clear")
 
     local gotoSitePanel = vgui.Create("DPanel", sitePnl)
-    gotoSitePanel:SetTall(30)
+    gotoSitePanel:SetTall(30 * sc)
     gotoSitePanel.Paint = nil
     local siteIDEntry = vgui.Create("DTextEntry", gotoSitePanel)
     siteIDEntry:SetPos(0, 0)
-    siteIDEntry:SetSize(50, 25)
+    siteIDEntry:SetSize(50 * sc, 25 * sc)
     siteIDEntry:SetText("A")
     local gotoSiteBtn = vgui.Create("DButton", gotoSitePanel)
-    gotoSiteBtn:SetPos(60, 0)
-    gotoSiteBtn:SetSize(100, 25)
+    gotoSiteBtn:SetPos(60 * sc, 0)
+    gotoSiteBtn:SetSize(100 * sc, 25 * sc)
     gotoSiteBtn:SetText("Go To Site")
     gotoSiteBtn.DoClick = function()
         RunConsoleCommand("snd_site_goto", siteIDEntry:GetText())
@@ -221,8 +226,8 @@ function SND.OpenDebugMenu()
     -- ── General Debug Tab ─────────────────────────────────────────────────
     local generalPnl = vgui.Create("DPanelList")
     generalPnl:EnableVerticalScrollbar(true)
-    generalPnl:SetSpacing(5)
-    generalPnl:SetPadding(10)
+    generalPnl:SetSpacing(5 * sc)
+    generalPnl:SetPadding(10 * sc)
 
     local debugModeCV = GetConVar("snd_debug_mode")
     local debugModeCB = vgui.Create("DCheckBoxLabel")
@@ -236,7 +241,7 @@ function SND.OpenDebugMenu()
 
     local noclipBtn = vgui.Create("DButton", generalPnl)
     noclipBtn:SetText("Toggle Noclip")
-    noclipBtn:SetTall(30)
+    noclipBtn:SetTall(30 * sc)
     noclipBtn.DoClick = function()
         RunConsoleCommand("snd_noclip")
         surface.PlaySound("buttons/button14.wav")
@@ -245,6 +250,7 @@ function SND.OpenDebugMenu()
 
     local lblBotDebug = vgui.Create("DLabel", generalPnl)
     lblBotDebug:SetText("Bot Debug:")
+    lblBotDebug:SetTall(20 * sc)
     generalPnl:AddItem(lblBotDebug)
 
     local botDebugPathsCV = GetConVar("snd_bot_debug_paths")
