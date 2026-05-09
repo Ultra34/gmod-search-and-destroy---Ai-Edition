@@ -767,13 +767,18 @@ hook.Add("HUDPaint", "SND_HUD", function()
 	local sx, sy = 32 * sc + mSize, 16 * sc
 
 	-- Update Score Buffers
-	lerpScores[SND.TEAM_ATTACK] = Lerp(FrameTime() * 5, lerpScores[SND.TEAM_ATTACK], SND.Client.AttackScore or 0)
-	lerpScores[SND.TEAM_DEFEND] = Lerp(FrameTime() * 5, lerpScores[SND.TEAM_DEFEND], SND.Client.DefendScore or 0)
+	local attKey, defKey = 1, 2
+
+	lerpScores[attKey] = lerpScores[attKey] or 0
+	lerpScores[defKey] = lerpScores[defKey] or 0
+
+	lerpScores[attKey] = Lerp(FrameTime() * 5, lerpScores[attKey], SND.Client.AttackScore or 0)
+	lerpScores[defKey] = Lerp(FrameTime() * 5, lerpScores[defKey], SND.Client.DefendScore or 0)
 
 	pill(sx, sy, scoreW, scoreH, C_PILL)
 
 	draw.SimpleText(
-		tostring(math.Round(lerpScores[SND.TEAM_ATTACK])),
+		tostring(math.Round(lerpScores[attKey])),
 		"DermaLarge", sx + 18 * sc, sy + scoreH * 0.5,
 		C_ATTACK, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER
 	)
@@ -783,7 +788,7 @@ hook.Add("HUDPaint", "SND_HUD", function()
 		C_DIM, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER
 	)
 	draw.SimpleText(
-		tostring(SND.Client.DefendScore or 0),
+		tostring(math.Round(lerpScores[defKey])),
 		"DermaLarge", sx + scoreW - 18 * sc, sy + scoreH * 0.5,
 		C_DEFEND, TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER
 	)
@@ -1207,8 +1212,10 @@ hook.Add("HUDPaint", "SND_BombProgressBar", function()
 	if not IsValid(BombProg.who) then BombProg.kind = 0 return end
 
 	local elapsed  = CurTime() - BombProg.started
-	local frac     = math.Clamp(elapsed / math.max(BombProg.total, 0.01), 0, 1)
-	if frac >= 1 then BombProg.kind = 0 return end
+	local targetFrac = math.Clamp(elapsed / math.max(BombProg.total, 0.01), 0, 1)
+	lerpBomb = Lerp(FrameTime() * 15, lerpBomb, targetFrac)
+	
+	if lerpBomb >= 0.999 and targetFrac >= 1 then BombProg.kind = 0 lerpBomb = 0 return end
 
 	local sw, sh = ScrW(), ScrH()
 	local bw, bh = 320, 24
@@ -1219,8 +1226,8 @@ hook.Add("HUDPaint", "SND_BombProgressBar", function()
 	local fillC  = BombProg.kind == 1 and col(220, 80, 40) or col(40, 160, 220)
 
 	draw.RoundedBox(5, bx, by, bw, bh, col(25, 27, 35, 220))
-	if bw * frac > 4 then
-		draw.RoundedBox(5, bx, by, bw * frac, bh, fillC)
+	if bw * lerpBomb > 4 then
+		draw.RoundedBox(5, bx, by, bw * lerpBomb, bh, fillC)
 	end
 
 	draw.SimpleText(lbl, "Trebuchet18", sw * 0.5, by + bh * 0.5,

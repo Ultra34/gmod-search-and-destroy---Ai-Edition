@@ -167,8 +167,9 @@ function SND.Bomb.ResetForRound()
 	net.Broadcast()
 
 	for _, ply in ipairs(player.GetAll()) do
-		timer.Remove("SND_Plant_"  .. ply:EntIndex())
-		timer.Remove("SND_Defuse_" .. ply:EntIndex())
+		local id = ply:EntIndex()
+		timer.Remove("SND_Plant_" .. id)
+		timer.Remove("SND_Defuse_" .. id)
 		ply.SND_Planting = false
 		ply.SND_Defusing = false
 	end

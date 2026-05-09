@@ -505,8 +505,8 @@ function SND.GunPicker.Open()
 	local playerLevel = LocalPlayer():GetNWInt("SND_Level", 1)
 
 	for i = 1, 10 do
-		local req = SND.Config.SlotLevels[i] or 1
-		local isLocked = playerLevel < req
+		local slotReq = SND.Config.SlotLevels[i] or 1
+		local isSlotLocked = playerLevel < slotReq
 
 		local btn = scrollSidebar:Add("DButton")
 		btn:SetText("") -- Text will be drawn in Paint function
@@ -517,17 +517,17 @@ function SND.GunPicker.Open()
 		btn.Paint = function(self, w, h)
 			local active = LocalPlayer():GetNWInt("SND_ActiveLoadoutSlot", 1) == i
 			local bg = active and Color(255, 120, 0, 100) or Color(255, 255, 255, 5)
-			if isLocked then bg = Color(50, 50, 50, 100) end
+			if isSlotLocked then bg = Color(50, 50, 50, 100) end
 
 			draw.RoundedBox(0, 0, 0, w, h, bg)
 			
 			local customName = SND.GunPicker.Slots[i].loadoutName or "LOADOUT " .. i
-			local mainText = customName
-			local subText = isLocked and ("LOCKED (LVL " .. req .. ")") or ""
+			local displayName = customName
+			local statusText = isSlotLocked and ("LOCKED (LVL " .. slotReq .. ")") or ""
 			
-			draw.SimpleText(mainText, "SND_BO3_Team", 10 * sc, isLocked and 12 * sc or h/2, isLocked and Color(150, 150, 150) or Color(220, 220, 220), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
-			if isLocked then
-				draw.SimpleText(subText, "DermaDefault", 10 * sc, 26 * sc, Color(255, 80, 80), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+			draw.SimpleText(displayName, "SND_BO3_Team", 10 * sc, isSlotLocked and 12 * sc or h/2, isSlotLocked and Color(150, 150, 150) or Color(220, 220, 220), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+			if isSlotLocked then
+				draw.SimpleText(statusText, "DermaDefault", 10 * sc, 26 * sc, Color(255, 80, 80), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
 			end
 
 			if active then 
@@ -537,7 +537,7 @@ function SND.GunPicker.Open()
 		end
 
 		btn.DoClick = function()
-			if isLocked then
+			if isSlotLocked then
 				surface.PlaySound("buttons/button11.wav")
 				return 
 			end
