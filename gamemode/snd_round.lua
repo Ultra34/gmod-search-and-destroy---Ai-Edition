@@ -255,7 +255,7 @@ end)
 
 concommand.Add("snd_noclip", function(ply)
 	if not IsValid(ply) or not ply:IsAdmin() then return end
-	local isDebug = (SND.Settings.GetInt("debug_mode", 0) == 1 or SND.Round.Phase == SND.PHASE_DEBUG)
+	local isDebug = (SND.Round.Phase == SND.PHASE_DEBUG)
 	if not isDebug then 
 		ply:ChatPrint("[SND] Noclip is restricted to Debug Mode.")
 		return 

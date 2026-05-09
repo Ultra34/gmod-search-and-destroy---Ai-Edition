@@ -130,13 +130,14 @@ function SND.OpenDebugMenu()
     spawnPnl:SetPadding(10)
 
     local function addButton(parent, text, command, args)
-        local btn = parent:Add("DButton")
+        local btn = vgui.Create("DButton", parent)
         btn:SetText(text)
         btn:SetTall(30)
         btn.DoClick = function()
             RunConsoleCommand(command, unpack(args or {}))
             surface.PlaySound("buttons/button14.wav")
         end
+        parent:AddItem(btn)
     end
 
     spawnPnl:AddItem(vgui.Create("DLabel", spawnPnl)):SetText("Add Spawns (at your position):")
@@ -221,7 +222,7 @@ function SND.OpenDebugMenu()
     end
     generalPnl:AddItem(debugModeCB)
 
-    local noclipBtn = generalPnl:Add("DButton")
+    local noclipBtn = vgui.Create("DButton", generalPnl)
     noclipBtn:SetText("Toggle Noclip")
     noclipBtn:SetTall(30)
     noclipBtn.DoClick = function()
