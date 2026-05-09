@@ -57,6 +57,22 @@ hook.Add("TranslateActivity", "SND_CSSAnimTranslate", function(ply, act)
 	return t[act]
 end)
 
+-- ── Damage Flinching (Gestures) ──────────────────────────────────────────
+if SERVER then
+	hook.Add("EntityTakeDamage", "SND_BotFlinchAnim", function(target, dmg)
+		if not IsValid(target) or not target:IsPlayer() or not target.SND_IsBot then return end
+		if not target:Alive() then return end
+
+		-- Don't flinch too often (every 0.7s max)
+		if target.SND_NextFlinch and CurTime() < target.SND_NextFlinch then return end
+		target.SND_NextFlinch = CurTime() + 0.7
+
+		-- Play flinch gesture based on physics impact
+		local act = ACT_FLINCH_PHYSICS
+		target:AnimRestartGesture(GESTURE_SLOT_FLINCH, act, true)
+	end)
+end
+
 -- ── SERVER: drive pose parameters for bots each tick ─────────────────────
 -- Human players have their pose params set by the engine; bots do not.
 if SERVER then
@@ -67,24 +83,35 @@ if SERVER then
 			local vel   = bot:GetVelocity()
 			local speed = vel:Length2D()
 
-			-- move_yaw: direction of movement relative to where the bot is facing
+			-- move_yaw: direction of movement relative to feet
 			local moveYaw = 0
+			local eyeAng = bot:EyeAngles()
+			local bodyAng = bot:GetAngles() -- Direction feet are facing
+
 			if speed > 10 then
 				local moveDir = vel:Angle()
-				local faceDir = bot:EyeAngles()
-				moveYaw = math.NormalizeAngle(moveDir.y - faceDir.y)
+				moveYaw = math.NormalizeAngle(moveDir.y - bodyAng.y)
 				-- Smooth out yaw changes to reduce jitter
 				local prevYaw = bot:GetPoseParameter("move_yaw") or 0
 				moveYaw = Lerp(0.15, prevYaw, moveYaw)
 			end
 			bot:SetPoseParameter("move_yaw",   moveYaw)
 
-			-- body_yaw: keep at 0 — bots turn their whole body
-			bot:SetPoseParameter("body_yaw",   0)
+			-- Procedural Leaning: Tilt torso based on horizontal velocity
+			local localVel = bot:WorldToLocal(bot:GetPos() + vel)
+			local targetLean = (localVel.y / 320) * 15
+			local curLean = bot:GetPoseParameter("body_yaw") or 0
+			bot:SetPoseParameter("body_yaw", Lerp(0.1, curLean, targetLean))
+
+			-- Torso rotation: Upper body looks at target while feet move independently
+			local aimYaw = math.NormalizeAngle(eyeAng.y - bodyAng.y)
+			bot:SetPoseParameter("aim_yaw", aimYaw)
 
 			-- body_pitch: match eye pitch (so they appear to aim up/down)
-			local pitch = math.NormalizeAngle(bot:EyeAngles().p)
+			local pitch = math.NormalizeAngle(eyeAng.p)
 			bot:SetPoseParameter("body_pitch", math.Clamp(pitch, -60, 60))
+			bot:SetPoseParameter("head_pitch", math.Clamp(pitch, -45, 45))
+			bot:SetPoseParameter("head_yaw",   0) -- Handled by turning body
 		end
 	end)
 end
@@ -116,22 +143,27 @@ if CLIENT then
 		-- Map hold type to a gesture layer sequence name that CSS models have.
 		-- CSS models have: "idle_all_aim", "walk_all", "run_all", "crouch_all_aim"
 		-- The standard GMod animation system handles hold-type overlays via
-		-- ACT_ activities, but we also reinforce move_yaw here.
+		-- ACT_ activities, but we also reinforce aim and movement here.
+
+		local eyeAng = ply:EyeAngles()
+		local bodyAng = ply:GetAngles()
+
+		-- Torso rotation and pitch for high-fidelity aiming
+		local aimYaw = math.NormalizeAngle(eyeAng.y - bodyAng.y)
+		ply:SetPoseParameter("aim_yaw", aimYaw)
+		local pitch = math.NormalizeAngle(eyeAng.p)
+		ply:SetPoseParameter("body_pitch", math.Clamp(pitch, -60, 60))
+		ply:SetPoseParameter("head_pitch", math.Clamp(pitch, -45, 45))
 
 		local moveYaw = 0
 		if speed > 10 then
 			local moveDir = velocity:Angle()
-			local faceDir = ply:EyeAngles()
-			moveYaw = math.NormalizeAngle(moveDir.y - faceDir.y)
+			moveYaw = math.NormalizeAngle(moveDir.y - bodyAng.y)
 			-- Smooth out yaw to prevent erratic animation snapping
 			local prevYaw = ply:GetPoseParameter("move_yaw") or 0
 			moveYaw = Lerp(0.15, prevYaw, moveYaw)
 		end
 		ply:SetPoseParameter("move_yaw",   moveYaw)
-
-		local pitch = math.NormalizeAngle(ply:EyeAngles().p)
-		ply:SetPoseParameter("body_pitch", math.Clamp(pitch, -60, 60))
-		ply:SetPoseParameter("body_yaw",   0)
 	end)
 
 	-- ── CalcMainActivity: tell the engine which activity to use ───────────

@@ -57,6 +57,7 @@ local function newAI()
 		currentSearchIdx = 1,
 		nextSearchSwitch = 0,
 		nextGrenade   = 0,
+		nextFireGesture = 0,
 		
 		shootGate     = 0,
 		nextJump      = 0,
@@ -267,11 +268,22 @@ local function weaponCheck(bot, cmd)
 	if max > 0 and hasReserve then
 		if clip <= 0 or (isSafe and clip < max) then
 			cmd:SetButtons(bit.bor(cmd:GetButtons(), IN_RELOAD))
+
+			-- Trigger Visual Reload Gesture
+			if not ai.needsReload then
+				ai.needsReload = true
+				local act = ACT_HL2MP_GESTURE_RELOAD_AR2
+				if wep:GetHoldType() == "pistol" then act = ACT_HL2MP_GESTURE_RELOAD_PISTOL end
+				bot:AnimRestartGesture(GESTURE_SLOT_ATTACK_AND_RELOAD, act, true)
+			end
+
 			-- Duck while reloading if in a fight
 			if ai.state == BS_ENGAGE then
 				cmd:SetButtons(bit.bor(cmd:GetButtons(), IN_DUCK))
 			end
 		end
+	else
+		ai.needsReload = false
 	end
 end
 
@@ -298,37 +310,40 @@ local function moveToward(bot, cmd, targetPos, speed)
 
 	local ai = bot.SND_AI
 	local myPos = bot:GetPos()
-	local moveDest = Vector(targetPos.x, targetPos.y, targetPos.z)
 
-	if navmesh.IsLoaded() then
-		if not ai.path then
-			ai.path = Path("Follow")
-			ai.path:SetMinLookAheadDistance(200)
-			ai.path:SetGoalTolerance(20)
-		end
-
-		-- Recompute path if goal moves significantly or path is stale
-		local goalShift = ai.lastPathGoal:DistToSqr(targetPos)
-		if not ai.path:IsValid() or CurTime() > ai.nextPathUpdate or goalShift > 4096 then
-			-- Add slight jitter to pathfinding goal for human-like variance
-			local jitter = Vector(math.Rand(-50, 50), math.Rand(-50, 50), 0)
-			ai.path:Compute(bot, targetPos + jitter)
-			ai.nextPathUpdate = CurTime() + math.Rand(1.5, 3.0)
-			ai.lastPathGoal = targetPos
-		end
-
-		if ai.path:IsValid() then
-			ai.path:Update(bot)
-
-			-- Get the point slightly ahead on the path for smoother movement
-			local segments = ai.path:GetAllSegments()
-			if segments and #segments > 1 then
-				moveDest = segments[2].pos
-			end
-		end
+	-- Strict NavMesh Enforcement: Bots will not move if no NavMesh is loaded.
+	if not navmesh.IsLoaded() then
+		cmd:ClearMovement()
+		return myPos:Distance(targetPos)
 	end
 
-	if not isvector(moveDest) then moveDest = targetPos end
+	if not ai.path then
+		ai.path = Path("Follow")
+		ai.path:SetMinLookAheadDistance(200)
+		ai.path:SetGoalTolerance(20)
+	end
+
+	-- Recompute path if goal moves significantly or path is stale
+	local goalShift = ai.lastPathGoal:DistToSqr(targetPos)
+	if not ai.path:IsValid() or CurTime() > ai.nextPathUpdate or goalShift > 4096 then
+		-- Add slight jitter to pathfinding goal for human-like variance
+		local jitter = Vector(math.Rand(-50, 50), math.Rand(-50, 50), 0)
+		ai.path:Compute(bot, targetPos + jitter)
+		ai.nextPathUpdate = CurTime() + math.Rand(1.0, 2.0) -- Increased frequency for strict pathing
+		ai.lastPathGoal = targetPos
+	end
+
+	-- If the path remains invalid (blocked or no route), halt movement entirely.
+	if not ai.path:IsValid() then
+		cmd:ClearMovement()
+		return myPos:Distance(targetPos)
+	end
+
+	ai.path:Update(bot)
+
+	-- Determine the next segment to follow on the NavMesh
+	local segments = ai.path:GetAllSegments()
+	local moveDest = (segments and #segments > 1) and segments[2].pos or targetPos
 
 	-- Proactive Wall Detection & Obstacle Avoidance
 	local eyePos = bot:EyePos()
@@ -533,6 +548,13 @@ hook.Add("StartCommand", "SND_BotAI", function(bot, cmd)
 		-- Aiming: High skill = faster snap
 		local aim = getAimVector(bot, enemy, aimNoise(skill), skill)
 		bot:SetEyeAngles(LerpAngle(0.12 + (skillT(skill) * 0.2), bot:EyeAngles(), aim))
+
+		-- Firing Gestures: Syncs weapon recoil to 3rd person model
+		if bot:KeyDown(IN_ATTACK) and now > (ai.nextFireGesture or 0) then
+			local act = ACT_HL2MP_GESTURE_RANGE_ATTACK_AR2
+			bot:AnimRestartGesture(GESTURE_SLOT_ATTACK_AND_RELOAD, act, true)
+			ai.nextFireGesture = now + 0.15
+		end
 
 		-- Shooting with burst logic
 		if now > ai.nextShot then
