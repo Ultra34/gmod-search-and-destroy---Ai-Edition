@@ -78,42 +78,95 @@ local IW5_SR = { "iw5_rsass", "iw5_msr", "iw5_mk12spr", "iw5_l96a1", "iw5_dragun
 local IW5_PISTOLS = { "iw5_anaconda", "iw5_deserteagle", "iw5_fiveseven", "iw5_mp412", "iw5_p99", "iw5_usp", "iw5_skorpion", "iw5_tmp", "iw5_glock", "iw5_fmg" }
 local IW5_LAUNCHERS = { "iw5_xm25", "iw5_stinger", "iw5_smaw", "iw5_rpg", "iw5_m320", "iw5_javelin" }
 
+-- ── World at War (Robotnik) ─────────────────────────────────────────────
+local WAW_AR = { "robotnik_waw_stg", "robotnik_waw_grd", "robotnik_waw_g43", "robotnik_waw_svt", "robotnik_waw_crb", "robotnik_waw_t99", "robotnik_waw_bar" }
+local WAW_SMG = { "robotnik_waw_mp40", "robotnik_waw_ppsh", "robotnik_waw_tom", "robotnik_waw_tomd", "robotnik_waw_t100" }
+local WAW_LMG = { "robotnik_waw_mg42", "robotnik_waw_fg", "robotnik_waw_30c", "robotnik_waw_dp", "robotnik_waw_mgm" }
+local WAW_SG = { "robotnik_waw_tg", "robotnik_waw_db" }
+local WAW_SR = { "robotnik_waw_kar_s", "robotnik_waw_moss", "robotnik_waw_spr_s", "robotnik_waw_ptrs", "robotnik_waw_ari_s", "robotnik_waw_kar_i", "robotnik_waw_mosi", "robotnik_waw_spr_i", "robotnik_waw_ari" }
+local WAW_PISTOLS = { "robotnik_waw_1911", "robotnik_waw_p38", "robotnik_waw_tok", "robotnik_waw_nbu" }
+
+-- ── Black Ops (BO1) ─────────────────────────────────────────────────────
+local BO1_AR = { "robotnik_bo1_ak47", "robotnik_bo1_aug", "robotnik_bo1_com", "robotnik_bo1_en", "robotnik_bo1_fms", "robotnik_bo1_fal", "robotnik_bo1_g11", "robotnik_bo1_gal", "robotnik_bo1_m14", "robotnik_bo1_16" }
+local BO1_SMG = { "robotnik_bo1_74u", "robotnik_bo1_74g", "robotnik_bo1_ki", "robotnik_bo1_m11", "robotnik_bo1_mp5", "robotnik_bo1_mpl", "robotnik_bo1_pm", "robotnik_bo1_skrp", "robotnik_bo1_uzi", "robotnik_bo1_spc" }
+local BO1_LMG = { "robotnik_bo1_hk", "robotnik_bo1_m60", "robotnik_bo1_rpk", "robotnik_bo1_stn" }
+local BO1_SG = { "robotnik_bo1_h10", "robotnik_bo1_ol", "robotnik_bo1_sps", "robotnik_bo1_so", "robotnik_bo1_sog" }
+local BO1_SR = { "robotnik_bo1_drg", "robotnik_bo1_l96", "robotnik_bo1_psg", "robotnik_bo1_wa" }
+local BO1_PISTOLS = { "robotnik_bo1_py", "robotnik_bo1_mak", "combine_pk_m1911", "robotnik_bo1_1911", "robotnik_bo1_cz", "robotnik_bo1_asp" }
+
+-- ── Black Ops II (BO2) ──────────────────────────────────────────────────
+local BO2_AR = { "mac_bo2_an94", "mac_bo2_falosw", "mac_bo2_hk416", "mac_bo2_m8a1", "mac_bo2_mtar", "mac_bo2_scar", "mac_bo2_smr", "mac_bo2_swat", "mac_bo2_type25" }
+local BO2_SMG = { "mac_bo2_chicom", "mac_bo2_mp7", "mac_bo2_msmc", "mac_bo2_pdw", "mac_bo2_peacekpr", "mac_bo2_scorp", "mac_bo2_vector" }
+local BO2_LMG = { "mac_bo2_hamr", "mac_bo2_lsat", "mac_bo2_mk48", "mac_bo2_qbblsw" }
+local BO2_SG = { "mac_bo2_ksg", "mac_bo2_m1216", "mac_bo2_870", "mac_bo2_s12" }
+local BO2_SR = { "mac_bo2_ballista", "mac_bo2_dsr50", "mac_bo2_svu", "mac_bo2_xpr50" }
+local BO2_PISTOLS = { "mac_bo2_tac45", "mac_bo2_kard", "mac_bo2_five7", "mac_bo2_exec", "mac_bo2_b23r" }
+
+-- ── Special Weapons ─────────────────────────────────────────────────────
+local SPECIAL = { "mac_bo2_deathmach", "mac_bo2_balknife", "mac_bo2_crssbw_f", "robotnik_bo1_dm", "robotnik_bo1_cb", "robotnik_bo1_bk", "robotnik_waw_rg", "robotnik_waw_m2" }
+
 -- ── Merged Secondaries ───────────────────────────────────────────────────
 local PISTOLS = {}
 table.Add(PISTOLS, IW3_PISTOLS)
 table.Add(PISTOLS, { "iw4_anaconda", "iw4_deserteagle", "iw4_beretta", "iw4_usp", "iw4_glock", "iw4_raffica" })
 table.Add(PISTOLS, IW5_PISTOLS)
+table.Add(PISTOLS, WAW_PISTOLS)
+table.Add(PISTOLS, BO1_PISTOLS)
+table.Add(PISTOLS, BO2_PISTOLS)
 
 -- ── Launchers — special slot, not given on spawn by default ───────────────
 local LAUNCHERS = {}
 table.Add(LAUNCHERS, IW3_LAUNCHERS)
 table.Add(LAUNCHERS, { "iw4_at4", "iw4_javelin", "iw4_rpg", "iw4_stinger", "iw4_m79" })
 table.Add(LAUNCHERS, IW5_LAUNCHERS)
+table.Add(LAUNCHERS, { "mac_bo2_usrpg", "mac_bo2_smaw", "mac_bo2_warmach", "robotnik_bo1_cl", "robotnik_bo1_202", "robotnik_bo1_law", "robotnik_bo1_rpg", "robotnik_waw_baz", "robotnik_waw_pzsk" })
 
 -- Categorized Primary weapons for UI display
 SND.Config.WeaponGroups = {
 	-- COD4
-	{ name = "CoD4: Assault Rifles", weapons = IW3_AR },
-	{ name = "CoD4: SMGs", weapons = IW3_SMG },
-	{ name = "CoD4: Sniper Rifles", weapons = IW3_SR },
-	{ name = "CoD4: LMGs & Shotguns", weapons = table.Add(table.Copy(IW3_LMG), IW3_SG) },
-	{ name = "CoD4: Pistols", weapons = IW3_PISTOLS, isSecondary = true },
+	{ name = "CoD4: Assault Rifles", weapons = IW3_AR, cid = "cod4_ar" },
+	{ name = "CoD4: SMGs", weapons = IW3_SMG, cid = "cod4_smg" },
+	{ name = "CoD4: Sniper Rifles", weapons = IW3_SR, cid = "cod4_sr" },
+	{ name = "CoD4: LMGs & Shotguns", weapons = table.Add(table.Copy(IW3_LMG), IW3_SG), cid = "cod4_lmg" },
+	{ name = "CoD4: Pistols", weapons = IW3_PISTOLS, isSecondary = true, cid = "cod4_pistol" },
 
 	-- MW2
-	{ name = "MW2: Assault Rifles", weapons = AR },
-	{ name = "MW2: SMGs", weapons = SMG },
-	{ name = "MW2: Sniper Rifles", weapons = SR },
-	{ name = "MW2: LMGs", weapons = LMG },
-	{ name = "MW2: Shotguns", weapons = SG },
-	{ name = "MW2: Pistols", weapons = { "iw4_anaconda", "iw4_deserteagle", "iw4_beretta", "iw4_usp", "iw4_glock", "iw4_raffica" }, isSecondary = true },
+	{ name = "MW2: Assault Rifles", weapons = AR, cid = "mw2_ar" },
+	{ name = "MW2: SMGs", weapons = SMG, cid = "mw2_smg" },
+	{ name = "MW2: Sniper Rifles", weapons = SR, cid = "mw2_sr" },
+	{ name = "MW2: LMGs", weapons = LMG, cid = "mw2_lmg" },
+	{ name = "MW2: Shotguns", weapons = SG, cid = "mw2_sg" },
+	{ name = "MW2: Pistols", weapons = { "iw4_anaconda", "iw4_deserteagle", "iw4_beretta", "iw4_usp", "iw4_glock", "iw4_raffica" }, isSecondary = true, cid = "mw2_pistol" },
 
 	-- MW3
-	{ name = "MW3: Assault Rifles", weapons = IW5_AR },
-	{ name = "MW3: SMGs", weapons = IW5_SMG },
-	{ name = "MW3: Sniper Rifles", weapons = IW5_SR },
-	{ name = "MW3: LMGs & Shotguns", weapons = table.Add(table.Copy(IW5_LMG), IW5_SG) },
+	{ name = "MW3: Assault Rifles", weapons = IW5_AR, cid = "mw3_ar" },
+	{ name = "MW3: SMGs", weapons = IW5_SMG, cid = "mw3_smg" },
+	{ name = "MW3: Sniper Rifles", weapons = IW5_SR, cid = "mw3_sr" },
+	{ name = "MW3: LMGs & Shotguns", weapons = table.Add(table.Copy(IW5_LMG), IW5_SG), cid = "mw3_lmg" },
+
+	-- World at War
+	{ name = "WaW: Rifles", weapons = WAW_AR, cid = "waw_ar" },
+	{ name = "WaW: SMGs", weapons = WAW_SMG, cid = "waw_smg" },
+	{ name = "WaW: Sniper Rifles", weapons = WAW_SR, cid = "waw_sr" },
+	{ name = "WaW: LMGs & Shotguns", weapons = table.Add(table.Copy(WAW_LMG), WAW_SG), cid = "waw_lmg" },
+	{ name = "WaW: Pistols", weapons = WAW_PISTOLS, isSecondary = true, cid = "waw_pistol" },
+
+	-- Black Ops
+	{ name = "BO1: Assault Rifles", weapons = BO1_AR, cid = "bo1_ar" },
+	{ name = "BO1: SMGs", weapons = BO1_SMG, cid = "bo1_smg" },
+	{ name = "BO1: Sniper Rifles", weapons = BO1_SR, cid = "bo1_sr" },
+	{ name = "BO1: LMGs & Shotguns", weapons = table.Add(table.Copy(BO1_LMG), BO1_SG), cid = "bo1_lmg" },
+	{ name = "BO1: Pistols", weapons = BO1_PISTOLS, isSecondary = true, cid = "bo1_pistol" },
+
+	-- Black Ops II
+	{ name = "BO2: Assault Rifles", weapons = BO2_AR, cid = "bo2_ar" },
+	{ name = "BO2: SMGs", weapons = BO2_SMG, cid = "bo2_smg" },
+	{ name = "BO2: Sniper Rifles", weapons = BO2_SR, cid = "bo2_sr" },
+	{ name = "BO2: LMGs & Shotguns", weapons = table.Add(table.Copy(BO2_LMG), BO2_SG), cid = "bo2_lmg" },
+	{ name = "BO2: Pistols", weapons = BO2_PISTOLS, isSecondary = true, cid = "bo2_pistol" },
 	
-	{ name = "Miscellaneous", weapons = MISC },
+	{ name = "Special: Weapons", weapons = SPECIAL, cid = "special" },
+	{ name = "Miscellaneous", weapons = MISC, cid = "misc" },
 }
 
 -- ── Merged primary pool (everything that isn't a pistol or launcher) ──────
@@ -271,6 +324,13 @@ function SND.Config.LoadMapOverrides(map)
 end
 
 if SERVER then
+	-- Create ConVars for weapon categories
+	for _, group in ipairs(SND.Config.WeaponGroups) do
+		if group.cid then
+			CreateConVar("snd_cat_" .. group.cid, "1", { FCVAR_ARCHIVE, FCVAR_REPLICATED, FCVAR_NOTIFY })
+		end
+	end
+
 	-- Automatically add a map name to the voting rotation file
 	function SND.Config.RegisterMapForVoting(map)
 		local path = "snd_mwclassic/maps.txt"

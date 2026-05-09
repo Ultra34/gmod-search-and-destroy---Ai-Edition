@@ -58,6 +58,27 @@ function SND.Loadout.SetReady(ply, isReady)
 	end
 end
 
+-- Check if a weapon class is currently enabled via categories
+local function isWeaponEnabled(class)
+	if not class or class == "" then return false end
+	local allGroups = SND.Config.WeaponGroups or {}
+	for _, group in ipairs(allGroups) do
+		local inGroup = false
+		for _, w in ipairs(group.weapons) do
+			if w == class then inGroup = true break end
+		end
+
+		if inGroup then
+			if group.cid then
+				local cv = GetConVar("snd_cat_" .. group.cid)
+				return cv and cv:GetBool() or true
+			end
+			return true
+		end
+	end
+	return false
+end
+
 -- ── ConVar helpers ────────────────────────────────────────────────────────
 local function cvarPrimary(teamId)
 	return GetConVar("snd_loadout_" .. (teamId == SND.TEAM_ATTACK and "attack_pri" or "defend_pri"))
@@ -94,7 +115,7 @@ function SND.Loadout.Apply(ply)
 
 	-- Priority: gun-picker choice > ConVar override > random pool > hardcoded default
 	-- PRIMARY
-	local pri = choices.primary or ""
+	local pri = isWeaponEnabled(choices.primary) and choices.primary or ""
 	if pri == "" then
 		local cv = cvarPrimary(t)
 		pri = cv and cv:GetString() or ""
@@ -143,8 +164,19 @@ function SND.Loadout.Apply(ply)
 end
 
 function SND.Loadout.SendLoadoutData(ply)
-	local groups      = SND.Config.WeaponGroups or {}
+	local allGroups   = SND.Config.WeaponGroups or {}
+	local groups      = {}
 	local secondaries = SND.Config.Mw2eSecondaries or {}
+
+	-- Filter enabled categories
+	for _, g in ipairs(allGroups) do
+		local enabled = true
+		if g.cid then
+			local cv = GetConVar("snd_cat_" .. g.cid)
+			enabled = cv and cv:GetBool() or true
+		end
+		if enabled then table.insert(groups, g) end
+	end
 
 	net.Start("SND_GunPickerOpen")
 		-- Send Categorized Primary Groups
@@ -185,9 +217,21 @@ net.Receive("SND_GunPickerChoose", function(_, ply)
 
 	-- Whitelist: only allow classes from the configured pools
 	local allowed = false
-	local pool = (slot == "primary") and SND.Config.Mw2ePrimaries or SND.Config.Mw2eSecondaries
-	for _, c in ipairs(pool or {}) do
-		if c == class then allowed = true break end
+	local allGroups = SND.Config.WeaponGroups or {}
+
+	for _, group in ipairs(allGroups) do
+		local enabled = true
+		if group.cid then
+			local cv = GetConVar("snd_cat_" .. group.cid)
+			enabled = cv and cv:GetBool() or true
+		end
+
+		if enabled then
+			for _, w in ipairs(group.weapons) do
+				if w == class then allowed = true break end
+			end
+		end
+		if allowed then break end
 	end
 
 	if not allowed then
