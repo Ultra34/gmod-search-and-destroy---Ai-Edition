@@ -316,7 +316,14 @@ hook.Add("PlayerButtonDown", "SND_QuickThrowInput", function(ply, btn)
 
 	if btn == KEY_F4 and not vgui.CursorVisible() and not gui.IsGameUIVisible() then
 		if ply == LocalPlayer() and ply:IsSuperAdmin() then
-			RunConsoleCommand("snd_debug_toggle")
+			local phase = SND.Client and SND.Client.Phase or SND.PHASE_WAIT
+			local debugAllowed = GetConVar("snd_debug_mode"):GetBool()
+
+			-- Only allow F4 to work if Debug Mode is enabled in settings, 
+			-- or if we are already in the debug phase (to allow exiting).
+			if debugAllowed or phase == SND.PHASE_DEBUG then
+				RunConsoleCommand("snd_debug_toggle")
+			end
 		end
 	end
 
@@ -324,7 +331,7 @@ hook.Add("PlayerButtonDown", "SND_QuickThrowInput", function(ply, btn)
     if ply == LocalPlayer() and not vgui.CursorVisible() and not gui.IsGameUIVisible() then
         local isDebugKey = (btn >= KEY_F5 and btn <= KEY_F8)
         local phase = SND.Client and SND.Client.Phase or SND.PHASE_WAIT
-        if isDebugKey and phase ~= SND.PHASE_DEBUG and ply:IsSuperAdmin() then
+        if isDebugKey and phase ~= SND.PHASE_DEBUG and ply:IsSuperAdmin() and GetConVar("snd_debug_mode"):GetBool() then
             chat.AddText(Color(255, 50, 50), "[SND] TIP: ", Color(255, 255, 255), "Press F4 to enter Debug Mode before using editor keys.")
         elseif phase == SND.PHASE_DEBUG then
             if btn == KEY_F5 then RunConsoleCommand("snd_site_add", "A") end
