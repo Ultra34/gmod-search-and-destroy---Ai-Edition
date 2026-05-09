@@ -329,7 +329,7 @@ if SERVER then
         
         -- Verify the write worked and print success to console
         if file.Exists(path, "DATA") then
-            print(string.format("[SND] SUCCESS: Saved %d Sites, %d Attack Spawns, %d Defend Spawns to %s", #sites, #attack, #defend, path))
+            print(string.format("[SND] SUCCESS: Saved %d Sites, %d Attack Spawns, %d Defend Spawns to %s", #saveObj.sites, #saveObj.spawns.attack, #saveObj.spawns.defend, path))
             
             -- Notify admins in-game
             for _, p in ipairs(player.GetAll()) do
