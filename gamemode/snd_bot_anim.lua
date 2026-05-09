@@ -23,34 +23,32 @@ hook.Add("TranslateActivity", "SND_CSSAnimTranslate", function(ply, act)
 	local wep = ply:GetActiveWeapon()
 	local hold = IsValid(wep) and wep:GetHoldType() or "normal"
 
-	local isRifle   = (hold == "ar2" or hold == "smg" or hold == "rpg")
-	local isPistol  = (hold == "pistol" or hold == "revolver")
-	local isShotgun = (hold == "shotgun")
-	local isMelee   = (hold == "melee" or hold == "knife" or hold == "melee2" or hold == "fist")
-
+	-- Map standard activities to HoldType specific ones to prevent T-posing
 	if act == ACT_MP_STAND_IDLE then
-		if isRifle then return ACT_IDLE_RIFLE
-		elseif isPistol then return ACT_IDLE_PISTOL
-		elseif isShotgun then return ACT_IDLE_SHOTGUN
-		elseif isMelee then return ACT_IDLE_ANGRY
-		else return ACT_IDLE end
+		if hold == "pistol" or hold == "revolver" then return ACT_HL2MP_IDLE_PISTOL
+		elseif hold == "smg" then return ACT_HL2MP_IDLE_SMG1
+		elseif hold == "shotgun" then return ACT_HL2MP_IDLE_SHOTGUN
+		elseif hold == "melee" or hold == "knife" or hold == "melee2" or hold == "fist" then return ACT_HL2MP_IDLE_MELEE
+		elseif hold == "rpg" then return ACT_HL2MP_IDLE_RPG
+		else return ACT_HL2MP_IDLE_AR2 end
 	elseif act == ACT_MP_WALK then
-		if isRifle then return ACT_WALK_RIFLE
-		elseif isPistol then return ACT_WALK_PISTOL
-		elseif isShotgun then return ACT_WALK_SHOTGUN
-		else return ACT_WALK end
+		if hold == "pistol" or hold == "revolver" then return ACT_HL2MP_WALK_PISTOL
+		elseif hold == "smg" then return ACT_HL2MP_WALK_SMG1
+		elseif hold == "shotgun" then return ACT_HL2MP_WALK_SHOTGUN
+		elseif hold == "melee" or hold == "knife" or hold == "melee2" or hold == "fist" then return ACT_HL2MP_WALK_MELEE
+		elseif hold == "rpg" then return ACT_HL2MP_WALK_RPG
+		else return ACT_HL2MP_WALK_AR2 end
 	elseif act == ACT_MP_RUN then
-		if isRifle then return ACT_RUN_RIFLE
-		elseif isPistol then return ACT_RUN_PISTOL
-		elseif isShotgun then return ACT_RUN_SHOTGUN
-		else return ACT_RUN end
+		if hold == "pistol" or hold == "revolver" then return ACT_HL2MP_RUN_PISTOL
+		elseif hold == "smg" then return ACT_HL2MP_RUN_SMG1
+		elseif hold == "shotgun" then return ACT_HL2MP_RUN_SHOTGUN
+		elseif hold == "melee" or hold == "knife" or hold == "melee2" or hold == "fist" then return ACT_HL2MP_RUN_MELEE
+		elseif hold == "rpg" then return ACT_HL2MP_RUN_RPG
+		else return ACT_HL2MP_RUN_AR2 end
 	elseif act == ACT_MP_CROUCH_IDLE then
-		return ACT_CROUCHIDLE
+		return ACT_HL2MP_IDLE_CROUCH_AR2
 	elseif act == ACT_MP_CROUCHWALK then
-		-- CSS models often use standard walk animations modified by pose params for crouch-walk
-		if isRifle then return ACT_WALK_RIFLE
-		elseif isPistol then return ACT_WALK_PISTOL
-		else return ACT_WALK end
+		return ACT_HL2MP_WALK_CROUCH_AR2
 	elseif act == ACT_MP_JUMP or act == ACT_MP_JUMP_START or act == ACT_MP_JUMP_FLOAT then
 		return ACT_HOP
 	elseif act == ACT_MP_JUMP_LAND then
