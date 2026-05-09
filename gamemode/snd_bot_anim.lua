@@ -23,32 +23,44 @@ hook.Add("TranslateActivity", "SND_CSSAnimTranslate", function(ply, act)
 	local wep = ply:GetActiveWeapon()
 	local hold = IsValid(wep) and wep:GetHoldType() or "normal"
 
-	-- Map standard activities to HoldType specific ones to prevent T-posing
+	-- Map standard activities to HoldType specific ones to prevent T-posing/floating guns.
+	-- This mapping ensures that rifles, pistols, and other types use correct arm poses on CSS models.
+	local map = {
+		["pistol"]   = "PISTOL",
+		["revolver"] = "REVOLVER",
+		["smg"]      = "SMG1",
+		["ar2"]      = "AR2",
+		["shotgun"]  = "SHOTGUN",
+		["rpg"]      = "RPG",
+		["melee"]    = "MELEE",
+		["knife"]    = "KNIFE",
+		["melee2"]   = "MELEE2",
+		["fist"]     = "FIST",
+		["grenade"]  = "GRENADE",
+		["slam"]     = "SLAM",
+		["passive"]  = "PASSIVE",
+		["duel"]     = "DUAL",
+		["camera"]   = "CAMERA",
+		["crossbow"] = "CROSSBOW",
+		["rifle"]    = "AR2", -- TFA/ARC9 fallback
+	}
+
+	local suffix = map[hold] or "AR2"
+
 	if act == ACT_MP_STAND_IDLE then
-		if hold == "pistol" or hold == "revolver" then return ACT_HL2MP_IDLE_PISTOL
-		elseif hold == "smg" then return ACT_HL2MP_IDLE_SMG1
-		elseif hold == "shotgun" then return ACT_HL2MP_IDLE_SHOTGUN
-		elseif hold == "melee" or hold == "knife" or hold == "melee2" or hold == "fist" then return ACT_HL2MP_IDLE_MELEE
-		elseif hold == "rpg" then return ACT_HL2MP_IDLE_RPG
-		else return ACT_HL2MP_IDLE_AR2 end
+		return _G["ACT_HL2MP_IDLE_" .. suffix] or ACT_HL2MP_IDLE_AR2
 	elseif act == ACT_MP_WALK then
-		if hold == "pistol" or hold == "revolver" then return ACT_HL2MP_WALK_PISTOL
-		elseif hold == "smg" then return ACT_HL2MP_WALK_SMG1
-		elseif hold == "shotgun" then return ACT_HL2MP_WALK_SHOTGUN
-		elseif hold == "melee" or hold == "knife" or hold == "melee2" or hold == "fist" then return ACT_HL2MP_WALK_MELEE
-		elseif hold == "rpg" then return ACT_HL2MP_WALK_RPG
-		else return ACT_HL2MP_WALK_AR2 end
+		return _G["ACT_HL2MP_WALK_" .. suffix] or ACT_HL2MP_WALK_AR2
 	elseif act == ACT_MP_RUN then
-		if hold == "pistol" or hold == "revolver" then return ACT_HL2MP_RUN_PISTOL
-		elseif hold == "smg" then return ACT_HL2MP_RUN_SMG1
-		elseif hold == "shotgun" then return ACT_HL2MP_RUN_SHOTGUN
-		elseif hold == "melee" or hold == "knife" or hold == "melee2" or hold == "fist" then return ACT_HL2MP_RUN_MELEE
-		elseif hold == "rpg" then return ACT_HL2MP_RUN_RPG
-		else return ACT_HL2MP_RUN_AR2 end
+		return _G["ACT_HL2MP_RUN_" .. suffix] or ACT_HL2MP_RUN_AR2
 	elseif act == ACT_MP_CROUCH_IDLE then
-		return ACT_HL2MP_IDLE_CROUCH_AR2
+		return _G["ACT_HL2MP_IDLE_CROUCH_" .. suffix] or ACT_HL2MP_IDLE_CROUCH_AR2
 	elseif act == ACT_MP_CROUCHWALK then
-		return ACT_HL2MP_WALK_CROUCH_AR2
+		return _G["ACT_HL2MP_WALK_CROUCH_" .. suffix] or ACT_HL2MP_WALK_CROUCH_AR2
+	elseif act == ACT_MP_ATTACK_STAND_PRIMARYFIRE or act == ACT_MP_ATTACK_CROUCH_PRIMARYFIRE then
+		return _G["ACT_HL2MP_GESTURE_RANGE_ATTACK_" .. suffix] or ACT_HL2MP_GESTURE_RANGE_ATTACK_AR2
+	elseif act == ACT_MP_RELOAD_STAND or act == ACT_MP_RELOAD_CROUCH then
+		return _G["ACT_HL2MP_GESTURE_RELOAD_" .. suffix] or ACT_HL2MP_GESTURE_RELOAD_AR2
 	elseif act == ACT_MP_JUMP or act == ACT_MP_JUMP_START or act == ACT_MP_JUMP_FLOAT then
 		return ACT_HOP
 	elseif act == ACT_MP_JUMP_LAND then

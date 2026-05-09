@@ -272,12 +272,23 @@ local function weaponCheck(bot, cmd)
 			-- Trigger Visual Reload Gesture
 			if not ai.needsReload then
 				ai.needsReload = true
-				local h = wep:GetHoldType()
-				local act = ACT_HL2MP_GESTURE_RELOAD_AR2
-				if h == "pistol" or h == "revolver" then act = ACT_HL2MP_GESTURE_RELOAD_PISTOL
-				elseif h == "smg" then act = ACT_HL2MP_GESTURE_RELOAD_SMG1
-				elseif h == "shotgun" then act = ACT_HL2MP_GESTURE_RELOAD_SHOTGUN
-				end
+				local h = IsValid(wep) and wep:GetHoldType() or "ar2"
+				
+				local map = {
+					["pistol"]   = ACT_HL2MP_GESTURE_RELOAD_PISTOL,
+					["revolver"] = ACT_HL2MP_GESTURE_RELOAD_REVOLVER,
+					["smg"]      = ACT_HL2MP_GESTURE_RELOAD_SMG1,
+					["ar2"]      = ACT_HL2MP_GESTURE_RELOAD_AR2,
+					["shotgun"]  = ACT_HL2MP_GESTURE_RELOAD_SHOTGUN,
+					["rpg"]      = ACT_HL2MP_GESTURE_RELOAD_RPG,
+					["melee"]    = ACT_HL2MP_GESTURE_RELOAD_MELEE,
+					["fist"]     = ACT_HL2MP_GESTURE_RELOAD_FIST,
+					["knife"]    = ACT_HL2MP_GESTURE_RELOAD_KNIFE,
+					["grenade"]  = ACT_HL2MP_GESTURE_RELOAD_GRENADE,
+					["slam"]     = ACT_HL2MP_GESTURE_RELOAD_SLAM,
+				}
+
+				local act = map[h] or ACT_HL2MP_GESTURE_RELOAD_AR2
 				bot:AnimRestartGesture(GESTURE_SLOT_ATTACK_AND_RELOAD, act, true)
 			end
 
@@ -557,11 +568,23 @@ hook.Add("StartCommand", "SND_BotAI", function(bot, cmd)
 		if bot:KeyDown(IN_ATTACK) and now > (ai.nextFireGesture or 0) then
 			local wep = bot:GetActiveWeapon()
 			local h = IsValid(wep) and wep:GetHoldType() or "ar2"
-			local act = ACT_HL2MP_GESTURE_RANGE_ATTACK_AR2
-			if h == "pistol" or h == "revolver" then act = ACT_HL2MP_GESTURE_RANGE_ATTACK_PISTOL
-			elseif h == "smg" then act = ACT_HL2MP_GESTURE_RANGE_ATTACK_SMG1
-			elseif h == "shotgun" then act = ACT_HL2MP_GESTURE_RANGE_ATTACK_SHOTGUN
-			end
+
+			local map = {
+				["pistol"]   = ACT_HL2MP_GESTURE_RANGE_ATTACK_PISTOL,
+				["revolver"] = ACT_HL2MP_GESTURE_RANGE_ATTACK_REVOLVER,
+				["smg"]      = ACT_HL2MP_GESTURE_RANGE_ATTACK_SMG1,
+				["ar2"]      = ACT_HL2MP_GESTURE_RANGE_ATTACK_AR2,
+				["shotgun"]  = ACT_HL2MP_GESTURE_RANGE_ATTACK_SHOTGUN,
+				["rpg"]      = ACT_HL2MP_GESTURE_RANGE_ATTACK_RPG,
+				["melee"]    = ACT_HL2MP_GESTURE_RANGE_ATTACK_MELEE,
+				["fist"]     = ACT_HL2MP_GESTURE_RANGE_ATTACK_FIST,
+				["knife"]    = ACT_HL2MP_GESTURE_RANGE_ATTACK_KNIFE,
+				["grenade"]  = ACT_HL2MP_GESTURE_RANGE_ATTACK_GRENADE,
+				["slam"]     = ACT_HL2MP_GESTURE_RANGE_ATTACK_SLAM,
+				["passive"]  = ACT_HL2MP_GESTURE_RANGE_ATTACK_PASSIVE,
+			}
+
+			local act = map[h] or ACT_HL2MP_GESTURE_RANGE_ATTACK_AR2
 			bot:AnimRestartGesture(GESTURE_SLOT_ATTACK_AND_RELOAD, act, true)
 			ai.nextFireGesture = now + 0.15
 		end
