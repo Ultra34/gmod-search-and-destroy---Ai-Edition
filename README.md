@@ -3,7 +3,7 @@
 # GMod Search & Destroy
 
 A Garry's Mod **gamemode** built around Call of Duty-style Search & Destroy rules.  
-One life per round, bomb plant and defuse, team scoring, optional map voting, Lua-driven bots with a full AI state machine, first-person legs, 3D bomb-site markers, and loadouts powered by the **[TFA][AT] Call of Duty: Modern Warfare 2 Weapons Pack** (`iw4_*`).
+One life per round, bomb plant and defuse, team scoring, visual map voting, Lua-driven bots with a full AI state machine, first-person legs, 3D bomb-site markers, and loadouts powered by **TFA Call of Duty weapon packs** (WaW, BO1, BO2, MW2, etc.).
 
 **Repository:** Ultra34/gmod-search-and-destroy---Ai-Edition
 
@@ -260,6 +260,7 @@ Bots cannot see through walls — they use a last-known-position system and only
 | `snd_mapvote_enabled` | 1 | Enable end-of-match map vote |
 | `snd_mapvote_time` | 20 | Seconds before server picks a map |
 | `snd_rust_swap_spawns` | 0 | Flip attacker/defender spawns on Rust maps |
+| `snd_cat_[id]` | 1 | Enable/Disable specific weapon categories |
 
 ### Debugging Commands
 
