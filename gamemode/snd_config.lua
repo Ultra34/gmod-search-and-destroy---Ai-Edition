@@ -124,49 +124,49 @@ table.Add(LAUNCHERS, { "mac_bo2_usrpg", "mac_bo2_smaw", "mac_bo2_warmach", "robo
 -- Categorized Primary weapons for UI display
 SND.Config.WeaponGroups = {
 	-- COD4
-	{ name = "CoD4: Assault Rifles", weapons = IW3_AR, cid = "cod4_ar" },
-	{ name = "CoD4: SMGs", weapons = IW3_SMG, cid = "cod4_smg" },
-	{ name = "CoD4: Sniper Rifles", weapons = IW3_SR, cid = "cod4_sr" },
-	{ name = "CoD4: LMGs & Shotguns", weapons = table.Add(table.Copy(IW3_LMG), IW3_SG), cid = "cod4_lmg" },
-	{ name = "CoD4: Pistols", weapons = IW3_PISTOLS, isSecondary = true, cid = "cod4_pistol" },
+	{ name = "CoD4: Assault Rifles", weapons = IW3_AR, cid = "cod4_ar", icon = "game_icons/cod4.png" },
+	{ name = "CoD4: SMGs", weapons = IW3_SMG, cid = "cod4_smg", icon = "game_icons/cod4.png" },
+	{ name = "CoD4: Sniper Rifles", weapons = IW3_SR, cid = "cod4_sr", icon = "game_icons/cod4.png" },
+	{ name = "CoD4: LMGs & Shotguns", weapons = table.Add(table.Copy(IW3_LMG), IW3_SG), cid = "cod4_lmg", icon = "game_icons/cod4.png" },
+	{ name = "CoD4: Pistols", weapons = IW3_PISTOLS, isSecondary = true, cid = "cod4_pistol", icon = "game_icons/cod4.png" },
 
 	-- MW2
-	{ name = "MW2: Assault Rifles", weapons = AR, cid = "mw2_ar" },
-	{ name = "MW2: SMGs", weapons = SMG, cid = "mw2_smg" },
-	{ name = "MW2: Sniper Rifles", weapons = SR, cid = "mw2_sr" },
-	{ name = "MW2: LMGs", weapons = LMG, cid = "mw2_lmg" },
-	{ name = "MW2: Shotguns", weapons = SG, cid = "mw2_sg" },
-	{ name = "MW2: Pistols", weapons = { "iw4_anaconda", "iw4_deserteagle", "iw4_beretta", "iw4_usp", "iw4_glock", "iw4_raffica" }, isSecondary = true, cid = "mw2_pistol" },
+	{ name = "MW2: Assault Rifles", weapons = AR, cid = "mw2_ar", icon = "game_icons/mw2.png" },
+	{ name = "MW2: SMGs", weapons = SMG, cid = "mw2_smg", icon = "game_icons/mw2.png" },
+	{ name = "MW2: Sniper Rifles", weapons = SR, cid = "mw2_sr", icon = "game_icons/mw2.png" },
+	{ name = "MW2: LMGs", weapons = LMG, cid = "mw2_lmg", icon = "game_icons/mw2.png" },
+	{ name = "MW2: Shotguns", weapons = SG, cid = "mw2_sg", icon = "game_icons/mw2.png" },
+	{ name = "MW2: Pistols", weapons = { "iw4_anaconda", "iw4_deserteagle", "iw4_beretta", "iw4_usp", "iw4_glock", "iw4_raffica" }, isSecondary = true, cid = "mw2_pistol", icon = "game_icons/mw2.png" },
 
 	-- MW3
-	{ name = "MW3: Assault Rifles", weapons = IW5_AR, cid = "mw3_ar" },
-	{ name = "MW3: SMGs", weapons = IW5_SMG, cid = "mw3_smg" },
-	{ name = "MW3: Sniper Rifles", weapons = IW5_SR, cid = "mw3_sr" },
-	{ name = "MW3: LMGs & Shotguns", weapons = table.Add(table.Copy(IW5_LMG), IW5_SG), cid = "mw3_lmg" },
+	{ name = "MW3: Assault Rifles", weapons = IW5_AR, cid = "mw3_ar", icon = "game_icons/mw3.png" },
+	{ name = "MW3: SMGs", weapons = IW5_SMG, cid = "mw3_smg", icon = "game_icons/mw3.png" },
+	{ name = "MW3: Sniper Rifles", weapons = IW5_SR, cid = "mw3_sr", icon = "game_icons/mw3.png" },
+	{ name = "MW3: LMGs & Shotguns", weapons = table.Add(table.Copy(IW5_LMG), IW5_SG), cid = "mw3_lmg", icon = "game_icons/mw3.png" },
 
 	-- World at War
-	{ name = "WaW: Rifles", weapons = WAW_AR, cid = "waw_ar" },
-	{ name = "WaW: SMGs", weapons = WAW_SMG, cid = "waw_smg" },
-	{ name = "WaW: Sniper Rifles", weapons = WAW_SR, cid = "waw_sr" },
-	{ name = "WaW: LMGs & Shotguns", weapons = table.Add(table.Copy(WAW_LMG), WAW_SG), cid = "waw_lmg" },
-	{ name = "WaW: Pistols", weapons = WAW_PISTOLS, isSecondary = true, cid = "waw_pistol" },
+	{ name = "WaW: Rifles", weapons = WAW_AR, cid = "waw_ar", icon = "game_icons/waw.png" },
+	{ name = "WaW: SMGs", weapons = WAW_SMG, cid = "waw_smg", icon = "game_icons/waw.png" },
+	{ name = "WaW: Sniper Rifles", weapons = WAW_SR, cid = "waw_sr", icon = "game_icons/waw.png" },
+	{ name = "WaW: LMGs & Shotguns", weapons = table.Add(table.Copy(WAW_LMG), WAW_SG), cid = "waw_lmg", icon = "game_icons/waw.png" },
+	{ name = "WaW: Pistols", weapons = WAW_PISTOLS, isSecondary = true, cid = "waw_pistol", icon = "game_icons/waw.png" },
 
 	-- Black Ops
-	{ name = "BO1: Assault Rifles", weapons = BO1_AR, cid = "bo1_ar" },
-	{ name = "BO1: SMGs", weapons = BO1_SMG, cid = "bo1_smg" },
-	{ name = "BO1: Sniper Rifles", weapons = BO1_SR, cid = "bo1_sr" },
-	{ name = "BO1: LMGs & Shotguns", weapons = table.Add(table.Copy(BO1_LMG), BO1_SG), cid = "bo1_lmg" },
-	{ name = "BO1: Pistols", weapons = BO1_PISTOLS, isSecondary = true, cid = "bo1_pistol" },
+	{ name = "BO1: Assault Rifles", weapons = BO1_AR, cid = "bo1_ar", icon = "game_icons/bo1.png" },
+	{ name = "BO1: SMGs", weapons = BO1_SMG, cid = "bo1_smg", icon = "game_icons/bo1.png" },
+	{ name = "BO1: Sniper Rifles", weapons = BO1_SR, cid = "bo1_sr", icon = "game_icons/bo1.png" },
+	{ name = "BO1: LMGs & Shotguns", weapons = table.Add(table.Copy(BO1_LMG), BO1_SG), cid = "bo1_lmg", icon = "game_icons/bo1.png" },
+	{ name = "BO1: Pistols", weapons = BO1_PISTOLS, isSecondary = true, cid = "bo1_pistol", icon = "game_icons/bo1.png" },
 
 	-- Black Ops II
-	{ name = "BO2: Assault Rifles", weapons = BO2_AR, cid = "bo2_ar" },
-	{ name = "BO2: SMGs", weapons = BO2_SMG, cid = "bo2_smg" },
-	{ name = "BO2: Sniper Rifles", weapons = BO2_SR, cid = "bo2_sr" },
-	{ name = "BO2: LMGs & Shotguns", weapons = table.Add(table.Copy(BO2_LMG), BO2_SG), cid = "bo2_lmg" },
-	{ name = "BO2: Pistols", weapons = BO2_PISTOLS, isSecondary = true, cid = "bo2_pistol" },
+	{ name = "BO2: Assault Rifles", weapons = BO2_AR, cid = "bo2_ar", icon = "game_icons/bo2.png" },
+	{ name = "BO2: SMGs", weapons = BO2_SMG, cid = "bo2_smg", icon = "game_icons/bo2.png" },
+	{ name = "BO2: Sniper Rifles", weapons = BO2_SR, cid = "bo2_sr", icon = "game_icons/bo2.png" },
+	{ name = "BO2: LMGs & Shotguns", weapons = table.Add(table.Copy(BO2_LMG), BO2_SG), cid = "bo2_lmg", icon = "game_icons/bo2.png" },
+	{ name = "BO2: Pistols", weapons = BO2_PISTOLS, isSecondary = true, cid = "bo2_pistol", icon = "game_icons/bo2.png" },
 	
-	{ name = "Special: Weapons", weapons = SPECIAL, cid = "special" },
-	{ name = "Miscellaneous", weapons = MISC, cid = "misc" },
+	{ name = "Special: Weapons", weapons = SPECIAL, cid = "special", icon = "game_icons/special.png" },
+	{ name = "Miscellaneous", weapons = MISC, cid = "misc", icon = "game_icons/misc.png" },
 }
 
 -- ── Merged primary pool (everything that isn't a pistol or launcher) ──────

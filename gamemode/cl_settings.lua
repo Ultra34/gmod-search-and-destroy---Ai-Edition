@@ -83,32 +83,6 @@ function SND.OpenSettingsMenu()
 		end
 		sheet:AddSheet(catName, pnl)
 	end
-
-	-- Weapon Categories tab
-	local catPnl = vgui.Create("DPanelList")
-	catPnl:EnableVerticalScrollbar(true)
-	catPnl:SetSpacing(5)
-	catPnl:SetPadding(10)
-
-	for _, group in ipairs(SND.Config.WeaponGroups or {}) do
-		if not group.cid then continue end
-		local cv = GetConVar("snd_cat_" .. group.cid)
-		local cb = vgui.Create("DCheckBoxLabel")
-		cb:SetText(group.name)
-		cb:SetValue(cv and cv:GetBool() or true)
-		cb.OnChange = function(_, val)
-			net.Start("SND_SetCvar")
-				net.WriteString("snd_cat_" .. group.cid)
-				net.WriteString(val and "1" or "0")
-			net.SendToServer()
-
-			if SND.Client.Phase == SND.PHASE_WAIT then
-				chat.AddText(Color(255, 120, 0), "[SND] ", Color(255, 255, 255), "Weapon list updated. Refresh gun picker to see changes.")
-			end
-		end
-		catPnl:AddItem(cb)
-	end
-	sheet:AddSheet("Weapon Pools", catPnl, "icon16/gun.png")
 end
 
 function SND.OpenPersonalizationMenu()

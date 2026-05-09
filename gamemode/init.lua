@@ -6,6 +6,7 @@ AddCSLuaFile("cl_settings.lua")       -- SuperAdmin UI
 AddCSLuaFile("cl_levels.lua")         -- XP/Rank Client
 AddCSLuaFile("cl_gunpicker.lua")      -- Loadout UI
 AddCSLuaFile("cl_crosshair_menu.lua") -- Crosshair UI
+AddCSLuaFile("cl_debug_menu.lua")     -- Debug UI
 AddCSLuaFile("cl_sites.lua")          -- 3D Objective Markers
 AddCSLuaFile("cl_mapvote.lua")        -- Map Vote UI
 AddCSLuaFile("snd_settings.lua")      -- Replicated ConVars
@@ -394,6 +395,12 @@ net.Receive("SND_SetCvar", function(_, ply)
 		cv:SetFloat(num)
 	else
 		cv:SetString(val)
+	end
+end)
+
+concommand.Add("snd_open_debug_menu", function(ply)
+	if IsValid(ply) and ply:IsSuperAdmin() then
+		ply:SendLua([[SND.OpenDebugMenu()]])
 	end
 end)
 

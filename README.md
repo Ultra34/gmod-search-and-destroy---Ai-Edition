@@ -26,6 +26,7 @@ One life per round, bomb plant and defuse, team scoring, visual map voting, Lua-
 - **Gun picker UI** — Persistent 10-slot loadout manager. Restricted to the pre-game phase to ensure competitive integrity once the match begins.
 - **Lua bots** — state-machine AI (Patrol → Engage → Chase → Plant → Defuse → Reload) with a **1–10 skill slider** that scales aim noise, reaction time, engage range, and reload thresholds. Bots switch weapons when empty and reload proactively when ammo is low.
 - **CSS player models** — Terrorist and Counter-Terrorist skins on both factions; bots and players share the same model system.
+- **Debug Menu UI** — SuperAdmin-only menu to toggle weapon categories, manage map spawns/sites, and access general debug settings.
 - **Team-only spectating** — dead players follow living teammates only (**M1** next / **M2** previous); free-roam when all teammates are dead.
 - **Map voting** — end-of-match vote driven by `data/snd_mwclassic/maps.txt`.
 - **SuperAdmin settings panel** — live ConVar sliders accessible via `!snd_settings` or `snd_open_settings`.
@@ -210,6 +211,7 @@ SND.Config.DefaultLoadouts = {
 | Identity menu | Chat `!card`, `!emblem`, or `!identity` |
 | Start map vote manually | Console `snd_start_mapvote` |
 | Reopen gun picker | Console `snd_gunpicker` |
+| Open Debug Menu | Console `snd_open_debug_menu` |
 
 ---
 

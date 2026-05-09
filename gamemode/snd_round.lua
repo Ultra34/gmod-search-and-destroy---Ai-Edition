@@ -234,6 +234,7 @@ concommand.Add("snd_debug_toggle", function(ply)
 		game.ConsoleCommand("sv_cheats 1\n")
 		ply:SetMoveType(MOVETYPE_NOCLIP)
 		timer.Remove("SND_RoundTick") -- Stop the round tick timer
+		ply:SendLua([[SND.OpenDebugMenu()]]) -- Open the debug menu
 		ply:ChatPrint("[SND] DEBUG PHASE ENABLED. Match logic paused. Noclip ENABLED.")
 	else
 		SND.Round.Phase = SND.PHASE_FREEZE

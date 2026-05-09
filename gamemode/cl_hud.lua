@@ -1152,7 +1152,7 @@ hook.Add("HUDPaint", "SND_HUD", function()
 	-- ── Debug Mode Control Legend ────────────────────────────────────────
 	if phase == SND.PHASE_DEBUG then
 		local dy = sh * 0.15
-		draw.SimpleText("DEBUG MODE - CONTROLS", "Trebuchet24", sw * 0.5, dy, Color(180, 50, 255), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+		draw.SimpleText("DEBUG MODE - OPEN MENU: snd_open_debug_menu", "Trebuchet24", sw * 0.5, dy, Color(180, 50, 255), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
 		draw.SimpleText("F5: Set Site A | F6: Set Site B", "Trebuchet18", sw * 0.5, dy + 25 * sc, Color(255, 255, 255), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
 		draw.SimpleText("F7: Add Attack Spawn | F8: Add Defend Spawn", "Trebuchet18", sw * 0.5, dy + 45 * sc, Color(255, 255, 255), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
 	end
