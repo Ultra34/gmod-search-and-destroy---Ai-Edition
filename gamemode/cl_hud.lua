@@ -406,8 +406,10 @@ local function drawWeaponInventory(sw, sh, sc, lp)
 
 	local function cleanName(class)
 		if class == "" then return "---" end
-		local name = class:gsub("iw[345]_", ""):upper()
-		return name
+		if SND.GunPicker and SND.GunPicker.GetFriendlyName then
+			return SND.GunPicker.GetFriendlyName(class):upper()
+		end
+		return class:gsub("iw[345]_", ""):upper()
 	end
 
 	-- Helper to draw weapon icon

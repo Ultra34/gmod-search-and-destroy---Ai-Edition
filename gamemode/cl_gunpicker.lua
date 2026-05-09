@@ -269,7 +269,7 @@ local function getWeaponModel(class)
 	return swep and swep.WorldModel or "models/weapons/w_pist_usp.mdl"
 end
 
-local function friendlyName(class)
+function SND.GunPicker.GetFriendlyName(class)
 	return DISPLAY_NAMES[class] or class
 end
 
@@ -427,7 +427,7 @@ function SND.GunPicker.Open()
 
 				local icon = vgui.Create("SpawnIcon", wrapper) -- Create SpawnIcon inside the wrapper
 				icon:SetModel(getWeaponModel(class))
-				icon:SetTooltip(friendlyName(class))
+				icon:SetTooltip(SND.GunPicker.GetFriendlyName(class))
 				icon:SetSize(64 * sc, 64 * sc)
 				icon:Dock(FILL) -- Make SpawnIcon fill the wrapper
 
