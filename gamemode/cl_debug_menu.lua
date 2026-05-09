@@ -67,7 +67,7 @@ function SND.OpenDebugMenu()
         if not group.cid then continue end
 
         local gameName = group.name:match("^(.-):") or "MISCELLANEOUS"
-        local iconPath = group.icon and ("game_icons/" .. group.icon) or nil
+        local iconPath = group.icon or nil
 
         if iconPath and iconPath ~= lastGameIcon then
             local header = vgui.Create("DPanel", weaponPnl)
@@ -140,11 +140,17 @@ function SND.OpenDebugMenu()
         parent:AddItem(btn)
     end
 
-    spawnPnl:AddItem(vgui.Create("DLabel", spawnPnl)):SetText("Add Spawns (at your position):")
+    local lblAddSpawns = vgui.Create("DLabel", spawnPnl)
+    lblAddSpawns:SetText("Add Spawns (at your position):")
+    spawnPnl:AddItem(lblAddSpawns)
+
     addButton(spawnPnl, "Add Attacker Spawn (F7)", "snd_spawn_add_attack")
     addButton(spawnPnl, "Add Defender Spawn (F8)", "snd_spawn_add_defend")
 
-    spawnPnl:AddItem(vgui.Create("DLabel", spawnPnl)):SetText("Manage Spawns:")
+    local lblManageSpawns = vgui.Create("DLabel", spawnPnl)
+    lblManageSpawns:SetText("Manage Spawns:")
+    spawnPnl:AddItem(lblManageSpawns)
+
     addButton(spawnPnl, "Clear All Spawns", "snd_spawn_clear")
     addButton(spawnPnl, "Remove Nearest Spawn", "snd_spawn_remove_nearest")
 
@@ -180,11 +186,17 @@ function SND.OpenDebugMenu()
     sitePnl:SetSpacing(5)
     sitePnl:SetPadding(10)
 
-    sitePnl:AddItem(vgui.Create("DLabel", sitePnl)):SetText("Set Sites (at your position):")
+    local lblSetSites = vgui.Create("DLabel", sitePnl)
+    lblSetSites:SetText("Set Sites (at your position):")
+    sitePnl:AddItem(lblSetSites)
+
     addButton(sitePnl, "Set Site A (F5)", "snd_site_add", {"A"})
     addButton(sitePnl, "Set Site B (F6)", "snd_site_add", {"B"})
 
-    sitePnl:AddItem(vgui.Create("DLabel", sitePnl)):SetText("Manage Sites:")
+    local lblManageSites = vgui.Create("DLabel", sitePnl)
+    lblManageSites:SetText("Manage Sites:")
+    sitePnl:AddItem(lblManageSites)
+
     addButton(sitePnl, "Clear All Sites", "snd_site_clear")
 
     local gotoSitePanel = vgui.Create("DPanel", sitePnl)
@@ -231,7 +243,10 @@ function SND.OpenDebugMenu()
     end
     generalPnl:AddItem(noclipBtn)
 
-    generalPnl:AddItem(vgui.Create("DLabel", generalPnl)):SetText("Bot Debug:")
+    local lblBotDebug = vgui.Create("DLabel", generalPnl)
+    lblBotDebug:SetText("Bot Debug:")
+    generalPnl:AddItem(lblBotDebug)
+
     local botDebugPathsCV = GetConVar("snd_bot_debug_paths")
     local botDebugPathsCB = vgui.Create("DCheckBoxLabel")
     botDebugPathsCB:SetText("Visualize Bot Paths")
