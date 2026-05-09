@@ -165,8 +165,8 @@ SND.Config.WeaponGroups = {
 	{ name = "BO2: LMGs & Shotguns", weapons = table.Add(table.Copy(BO2_LMG), BO2_SG), cid = "bo2_lmg", icon = "game_icons/bo2.png" },
 	{ name = "BO2: Pistols", weapons = BO2_PISTOLS, isSecondary = true, cid = "bo2_pistol", icon = "game_icons/bo2.png" },
 	
-	{ name = "Special: Weapons", weapons = SPECIAL, cid = "special", icon = "game_icons/special.png" },
-	{ name = "Miscellaneous", weapons = MISC, cid = "misc", icon = "game_icons/misc.png" },
+	{ name = "Special: Weapons", weapons = SPECIAL, cid = "special", icon = "game_icons/special.png", default = "0" },
+	{ name = "Miscellaneous", weapons = MISC, cid = "misc", icon = "game_icons/misc.png", default = "0" },
 }
 
 -- ── Merged primary pool (everything that isn't a pistol or launcher) ──────
@@ -327,7 +327,8 @@ if SERVER then
 	-- Create ConVars for weapon categories
 	for _, group in ipairs(SND.Config.WeaponGroups) do
 		if group.cid then
-			CreateConVar("snd_cat_" .. group.cid, "1", { FCVAR_ARCHIVE, FCVAR_REPLICATED, FCVAR_NOTIFY })
+			local default = group.default or "1"
+			CreateConVar("snd_cat_" .. group.cid, default, { FCVAR_ARCHIVE, FCVAR_REPLICATED, FCVAR_NOTIFY })
 		end
 	end
 

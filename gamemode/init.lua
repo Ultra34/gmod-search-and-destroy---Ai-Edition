@@ -533,4 +533,29 @@ net.Receive("SND_QuickSwitch", function(_, ply)
 		local sec = ply:GetNWString("SND_Secondary", "")
 		if sec ~= "" then ply:SelectWeapon(sec) end
 	end
+
+-- ── Admin Notification for Disabled Weapon Categories ───────────────────
+hook.Add("PlayerInitialSpawn", "SND_AdminWeaponNotify", function(ply)
+	timer.Simple(5, function()
+		if not IsValid(ply) or not ply:IsSuperAdmin() then return end
+		
+		local disabled = {}
+		for _, group in ipairs(SND.Config.WeaponGroups or {}) do
+			if group.cid then
+				local cv = GetConVar("snd_cat_" .. group.cid)
+				if cv and not cv:GetBool() then
+					table.insert(disabled, group.name)
+				end
+			end
+		end
+		
+		if #disabled > 0 then
+			ply:ChatPrint("[SND] ADMIN NOTICE: The following weapon pools are currently DISABLED:")
+			for _, name in ipairs(disabled) do
+				ply:ChatPrint(" - " .. name)
+			end
+			ply:ChatPrint("[SND] Use the Debug Menu (F4 -> Weapon Pools) to re-enable them.")
+		end
+	end)
+end)
 end)
