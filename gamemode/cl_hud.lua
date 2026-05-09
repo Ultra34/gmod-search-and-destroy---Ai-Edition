@@ -352,8 +352,9 @@ end
 
 -- ── Stamina Bar ──────────────────────────────────────────────────────────
 local function drawStaminaBar(sw, sh, sc, lp)
-	local actualStamina = lp:GetNWFloat("SND_Stamina", 1.0)
-	lerpStamina = Lerp(FrameTime() * 10, lerpStamina, actualStamina)
+	local targetStam = lp:GetNWFloat("SND_Stamina", 1.0)
+	lerpStamina = Lerp(FrameTime() * 8, lerpStamina, targetStam)
+	
 	if lerpStamina >= 0.99 and not lp.SND_Sprinting then return end
 
 	local w, h = 180 * sc, 4 * sc
@@ -385,9 +386,10 @@ end
 
 -- ── Red Damage Vignette ──────────────────────────────────────────────────
 local function drawDamageVignette(sw, sh, sc, hp)
-	lerpHP = Lerp(FrameTime() * 5, lerpHP, hp)
-	if lerpHP >= 99 then return end
-	local alpha = math.Clamp((100 - lerpHP) / 75, 0, 1) * 200
+	lerpHP = Lerp(FrameTime() * 6, lerpHP, hp)
+	if lerpHP >= 98 then return end
+	
+	local alpha = math.Clamp((100 - lerpHP) / 80, 0, 1) * 210
 	local size = 180 * sc
 	
 	surface.SetDrawColor(180, 0, 0, alpha)
@@ -764,10 +766,14 @@ hook.Add("HUDPaint", "SND_HUD", function()
 	local scoreW, scoreH = 220 * sc, 44 * sc
 	local sx, sy = 32 * sc + mSize, 16 * sc
 
+	-- Update Score Buffers
+	lerpScores[SND.TEAM_ATTACK] = Lerp(FrameTime() * 5, lerpScores[SND.TEAM_ATTACK], SND.Client.AttackScore or 0)
+	lerpScores[SND.TEAM_DEFEND] = Lerp(FrameTime() * 5, lerpScores[SND.TEAM_DEFEND], SND.Client.DefendScore or 0)
+
 	pill(sx, sy, scoreW, scoreH, C_PILL)
 
 	draw.SimpleText(
-		tostring(SND.Client.AttackScore or 0),
+		tostring(math.Round(lerpScores[SND.TEAM_ATTACK])),
 		"DermaLarge", sx + 18 * sc, sy + scoreH * 0.5,
 		C_ATTACK, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER
 	)

@@ -1,5 +1,6 @@
 --[[ Round state, win conditions, spectate rules, team balance hooks ]]
---[[ SND Match Engine: Authoritative Round State Machine ]]
+--[[ SND Core Engine: Authoritative Match Orchestrator ]]
+--[[ Handles logic flow, win conditions, and halftime transitions. ]]
 
 AddCSLuaFile()
 
@@ -58,29 +59,28 @@ function SND.Round.CheckTime()
 end
 
 function SND.Round.EndRound(reason)
-	if SND.Round.Phase == SND.PHASE_POST then return end -- Prevent double-end
-	
-	SND.Round.Phase = SND.PHASE_POST
-	SND.Round.Winner = reason
+    if SND.Round.Phase == SND.PHASE_POST then return end
+    
+    SND.Round.Phase = SND.PHASE_POST
+    SND.Round.Winner = reason
 
-	-- Score increment logic
-	local scoreKey = (reason == SND.WIN_ATTACK_ELIM or reason == SND.WIN_ATTACK_PLANT) and "AttackScore" or "DefendScore"
-	if reason ~= SND.WIN_DRAW then
-		SND.Round[scoreKey] = SND.Round[scoreKey] + 1
-	end
+    -- Dynamic Score Tracking
+    if reason ~= SND.WIN_DRAW and reason ~= SND.WIN_NONE then
+        local scoreKey = (reason == SND.WIN_ATTACK_ELIM or reason == SND.WIN_ATTACK_PLANT) and "AttackScore" or "DefendScore"
+        SND.Round[scoreKey] = SND.Round[scoreKey] + 1
+    end
 
-	SND.Announcer.OnRoundEnd(reason)
-	hook.Run("SND_RoundEnd", reason)
-	SND.Bomb.ResetForRound()
+    SND.Announcer.OnRoundEnd(reason)
+    hook.Run("SND_RoundEnd", reason)
+    SND.Bomb.ResetForRound()
+    SND.Round.Sync()
 
-	SND.Round.Sync() -- Global update
+    local lim = SND.Settings.GetInt("win_limit", 4)
+    local totalRounds = SND.Round.AttackScore + SND.Round.DefendScore
+    local isHalftime = not SND.Round.HalftimeReached and totalRounds > 0 and totalRounds == (lim - 1)
+    local matchWon = (SND.Round.AttackScore >= lim or SND.Round.DefendScore >= lim)
 
-	local lim = SND.Settings.GetInt("win_limit", 4)
-	local totalRounds = SND.Round.AttackScore + SND.Round.DefendScore
-	local isHalftime = not SND.Round.HalftimeReached and totalRounds > 0 and totalRounds == (lim - 1)
-	local matchWon = (SND.Round.AttackScore >= lim or SND.Round.DefendScore >= lim)
-
-	if matchWon then
+    if matchWon then
 		timer.Simple(8, function()
 			SND.MapVote.StartMatchEnd()
 		end)

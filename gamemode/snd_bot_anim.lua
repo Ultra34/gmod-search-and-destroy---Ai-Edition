@@ -71,6 +71,7 @@ end)
 local function updatePoseParams(ply, velocity)
     local speed = velocity:Length()
     local eye   = ply:EyeAngles()
+    local speed2d = velocity:Length2D()
     local body  = ply:GetAngles()
 
     -- 8-Way Movement
@@ -79,7 +80,7 @@ local function updatePoseParams(ply, velocity)
         ply:SetPoseParameter("move_y", (velocity:Dot(ply:GetRight()) / speed) * -1)
         
         -- Foot alignment: Direction of movement relative to where we look
-        local moveYaw = math.NormalizeAngle(velocity:Angle().y - eye.y)
+        local moveYaw = math.NormalizeAngle(velocity:Angle().y - body.y)
         ply:SetPoseParameter("move_yaw", moveYaw)
     end
 
@@ -96,7 +97,7 @@ local function updatePoseParams(ply, velocity)
     
     -- Procedural Leaning (Torso)
     local sideSpeed = velocity:Dot(ply:GetRight())
-    ply:SetPoseParameter("body_yaw", (sideSpeed / 320) * 20)
+    ply:SetPoseParameter("body_yaw", Lerp(FrameTime() * 5, ply:GetPoseParameter("body_yaw"), (sideSpeed / 350) * 25))
 end
 
 if SERVER then
