@@ -20,58 +20,52 @@ hook.Add("TranslateActivity", "SND_CSSAnimTranslate", function(ply, act)
 	local isCSS = string.find(model, "models/player/ct_") ~= nil or string.find(model, "models/player/t_") ~= nil
 	if not isCSS then return end
 
-    local wep   = ply:GetActiveWeapon()
-    local hold  = IsValid(wep) and wep:GetHoldType() or "normal"
-    local isBot = ply:IsBot() or ply:GetNWBool("SND_IsBot", false)
+	local wep = ply:GetActiveWeapon()
+	local hold = IsValid(wep) and wep:GetHoldType() or "normal"
 
-    -- 1. Favor Weapon-Specific Translation (Required for TFA Arm Alignment)
-    if IsValid(wep) and wep.TranslateActivity then
-        local translated = wep:TranslateActivity(act)
-        if translated and translated != -1 then
-            -- For NextBots, resolve the activity to a sequence index immediately
-            if isBot then
-                local seq = ply:SelectWeightedSequence(translated)
-                if seq != -1 then return seq end
-            end
-            return translated
-        end
-    end
+	-- 1. Prioritize Weapon-Specific Translation (Fixes floating guns/TFA alignment)
+	if IsValid(wep) and wep.TranslateActivity then
+		local translated = wep:TranslateActivity(act)
+		if translated and translated ~= -1 then return translated end
+	end
 
-    -- 2. Fallback CSS Sequence Mapping
-    -- Explicitly maps holdtypes to ACT_HL2MP set which CSS skeletons support
-    local map = {
-        ["pistol"]   = "PISTOL", ["revolver"] = "REVOLVER",
-        ["smg"]      = "SMG1",   ["ar2"]      = "AR2",
-        ["shotgun"]  = "SHOTGUN",["rpg"]      = "RPG",
-        ["melee"]    = "MELEE",  ["knife"]    = "KNIFE",
-        ["melee2"]   = "MELEE2", ["fist"]     = "FIST"
-    }
-    local suffix = map[hold] or "AR2"
+	-- 2. "Original Style" mapping (Activity based)
+	-- Maps weapon hold types to standard HL2MP activities which CSS models support.
+	local map = {
+		["pistol"]   = "PISTOL",
+		["revolver"] = "REVOLVER",
+		["smg"]      = "SMG1",
+		["ar2"]      = "AR2",
+		["shotgun"]  = "SHOTGUN",
+		["rpg"]      = "RPG",
+		["melee"]    = "MELEE",
+		["knife"]    = "KNIFE",
+		["melee2"]   = "MELEE2",
+		["fist"]     = "FIST",
+		["grenade"]  = "GRENADE",
+		["slam"]     = "SLAM",
+		["passive"]  = "PASSIVE",
+	}
 
-    local target = -1
-    if act == ACT_MP_STAND_IDLE then
-        target = _G["ACT_HL2MP_IDLE_" .. suffix] or ACT_HL2MP_IDLE_AR2
-    elseif act == ACT_MP_WALK then
-        target = _G["ACT_HL2MP_WALK_" .. suffix] or ACT_HL2MP_WALK_AR2
-    elseif act == ACT_MP_RUN then
-        target = _G["ACT_HL2MP_RUN_" .. suffix] or ACT_HL2MP_RUN_AR2
-    elseif act == ACT_MP_CROUCH_IDLE then
-        target = _G["ACT_HL2MP_IDLE_CROUCH_" .. suffix] or ACT_HL2MP_IDLE_CROUCH_AR2
-    elseif act == ACT_MP_CROUCHWALK then
-        target = _G["ACT_HL2MP_WALK_CROUCH_" .. suffix] or ACT_HL2MP_WALK_CROUCH_AR2
-    elseif act == ACT_MP_JUMP or act == ACT_MP_JUMP_START or act == ACT_MP_JUMP_FLOAT then
-        target = ACT_MP_JUMP
-    elseif act == ACT_MP_JUMP_LAND then
-        target = ACT_MP_STAND_IDLE
-    end
+	local suffix = map[hold] or "AR2"
 
-    -- For bots, we return the sequence index. For humans, the activity ID.
-    if isBot and target != -1 then
-        local seq = ply:SelectWeightedSequence(target)
-        if seq != -1 then return seq end
-    end
+	if act == ACT_MP_STAND_IDLE then
+		return _G["ACT_HL2MP_IDLE_" .. suffix] or ACT_HL2MP_IDLE_AR2
+	elseif act == ACT_MP_WALK then
+		return _G["ACT_HL2MP_WALK_" .. suffix] or ACT_HL2MP_WALK_AR2
+	elseif act == ACT_MP_RUN then
+		return _G["ACT_HL2MP_RUN_" .. suffix] or ACT_HL2MP_RUN_AR2
+	elseif act == ACT_MP_CROUCH_IDLE then
+		return _G["ACT_HL2MP_IDLE_CROUCH_" .. suffix] or ACT_HL2MP_IDLE_CROUCH_AR2
+	elseif act == ACT_MP_CROUCHWALK then
+		return _G["ACT_HL2MP_WALK_CROUCH_" .. suffix] or ACT_HL2MP_WALK_CROUCH_AR2
+	elseif act == ACT_MP_JUMP or act == ACT_MP_JUMP_START or act == ACT_MP_JUMP_FLOAT then
+		return ACT_HL2MP_JUMP_AR2 -- Generic jump activity
+	elseif act == ACT_MP_JUMP_LAND then
+		return ACT_HL2MP_IDLE_AR2 -- Landing reset
+	end
 
-    return target
+	return act
 end)
 
 -- ── Damage Flinching (Gestures) ──────────────────────────────────────────

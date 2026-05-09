@@ -156,7 +156,7 @@ function SND.Bots.EnsureCount()
 			break
 		end
 		bot.SND_IsBot = true
-		bot:SetNWBool("SND_IsBot", true)
+		bot:SetNWBool("SND_IsBot", true) -- Critical for client-side anim logic
 		bot.SND_AI    = newAI()
 		bot:SetTeam(pickTeam())
 		bot.SND_IsReady = true -- Bots are always ready
