@@ -29,6 +29,7 @@ include("snd_rust.lua")
 include("snd_spectate.lua")
 include("snd_bot_anim.lua")
 include("snd_sites_sv.lua")
+include("snd_rules.lua")
 include("snd_levels.lua")
 
 -- Ensure the directory structure exists in garrysmod/data/
