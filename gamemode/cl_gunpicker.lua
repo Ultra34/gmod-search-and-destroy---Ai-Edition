@@ -406,9 +406,10 @@ function SND.GunPicker.Open()
 			local lbl = vgui.Create("DLabel", content)
 			lbl:SetText(title:upper())
 			lbl:SetFont(headerFont or "SND_BO3_Header")
+			lbl:SetTall(24 * sc) -- Explicit height for scaled fonts
 			if headerCol then lbl:SetTextColor(headerCol) end
 			lbl:Dock(TOP)
-			lbl:DockMargin((leftMargin or 0) * sc, 10 * sc, 0, 5 * sc)
+			lbl:DockMargin((leftMargin or 0) * sc + 5 * sc, 10 * sc, 0, 5 * sc)
 
 			local grid = vgui.Create("DIconLayout", content)
 			grid:Dock(TOP)
@@ -459,7 +460,7 @@ function SND.GunPicker.Open()
 					gameHeader:Dock(TOP)
 					gameHeader:DockMargin(0, 20 * sc, 0, 5 * sc)
 					gameHeader.Paint = function(self, w, h)
-						local iconName = gameName:upper()
+						local iconName = gameName:lower() -- Configs use lowercase
 						local iconPath = "data/snd_mwclassic/game_icons/" .. iconName .. ".png"
 						local iconMat = SND.GetIMaterial(iconPath)
 						local textX = 0

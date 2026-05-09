@@ -38,19 +38,19 @@ function SND.OpenDebugMenu()
     sheet:DockMargin(5 * sc, 30 * sc, 5 * sc, 5 * sc)
 
     -- ── Weapon Pools Tab ──────────────────────────────────────────────────
-    local weaponPnl = vgui.Create("DPanelList")
-    weaponPnl:EnableVerticalScrollbar(true)
-    weaponPnl:SetSpacing(5 * sc)
-    weaponPnl:SetPadding(10 * sc)
+    local weaponPnl = vgui.Create("DScrollPanel", sheet)
+    weaponPnl:Dock(FILL)
 
     local checkboxes = {} -- Store references to checkboxes for Select All/None
 
     local function createWeaponCategoryCheckbox(group)
         local cv = GetConVar("snd_cat_" .. group.cid)
-        local cb = vgui.Create("DCheckBoxLabel")
+        local cb = vgui.Create("DCheckBoxLabel", weaponPnl)
         cb:SetText(group.name)
         cb:SetFont("SND_BO3_Team")
         cb:SetTall(30 * sc)
+        cb:Dock(TOP)
+        cb:DockMargin(20 * sc, 2 * sc, 10 * sc, 2 * sc)
         cb:SetValue(cv and cv:GetBool() or true)
         cb.OnChange = function(_, val)
             net.Start("SND_SetCvar")
@@ -62,7 +62,6 @@ function SND.OpenDebugMenu()
                 chat.AddText(Color(255, 120, 0), "[SND] ", Color(255, 255, 255), "Weapon list updated. Refresh gun picker to see changes.")
             end
         end
-        weaponPnl:AddItem(cb)
         table.insert(checkboxes, cb)
     end
 
@@ -71,13 +70,13 @@ function SND.OpenDebugMenu()
         if not group.cid then continue end
 
         local gameName = group.name:match("^(.-):") or "MISCELLANEOUS"
-        local iconPath = group.icon or nil
+        local iconPath = group.icon and ("data/snd_mwclassic/" .. group.icon) or nil
 
         if iconPath and iconPath ~= lastGameIcon then
             local header = vgui.Create("DPanel", weaponPnl)
             header:SetTall(36 * sc)
             header:Dock(TOP)
-            header:DockMargin(0, 10 * sc, 0, 5 * sc)
+            header:DockMargin(5 * sc, 15 * sc, 5 * sc, 5 * sc)
             header.Paint = function(self, w, h)
                 local iconMat = SND.GetIMaterial(iconPath)
                 local textX = 0
@@ -93,7 +92,6 @@ function SND.OpenDebugMenu()
                 end
                 draw.SimpleText(gameName:upper(), "SND_BO3_Title", textX, h/2, Color(255, 120, 0), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
             end
-            weaponPnl:AddItem(header)
             lastGameIcon = iconPath
         end
 
@@ -102,8 +100,8 @@ function SND.OpenDebugMenu()
 
     local btnPanel = vgui.Create("DPanel", weaponPnl)
     btnPanel:SetTall(30 * sc)
-    btnPanel:Dock(TOP)
-    btnPanel:DockMargin(0, 10 * sc, 0, 0)
+    btnPanel:Dock(BOTTOM) -- Keep utilities at the bottom
+    btnPanel:DockMargin(10 * sc, 20 * sc, 10 * sc, 10 * sc)
     btnPanel.Paint = nil
 
     local selectAllBtn = vgui.Create("DButton", btnPanel)
