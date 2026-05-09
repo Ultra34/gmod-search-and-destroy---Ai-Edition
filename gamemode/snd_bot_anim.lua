@@ -20,52 +20,67 @@ hook.Add("TranslateActivity", "SND_CSSAnimTranslate", function(ply, act)
 	local isCSS = string.find(model, "models/player/ct_") ~= nil or string.find(model, "models/player/t_") ~= nil
 	if not isCSS then return end
 
-	local wep = ply:GetActiveWeapon()
-	local hold = IsValid(wep) and wep:GetHoldType() or "normal"
+    local wep = ply:GetActiveWeapon()
+    
+    -- 1. Try Weapon-Specific Translation (Critical for TFA/ARC9)
+    if IsValid(wep) and wep.TranslateActivity then
+        local translated = wep:TranslateActivity(act)
+        if translated != -1 then 
+            -- If it's a bot, we must check if the translated activity is safe
+            -- because NextBots don't handle ACT_HL2MP_* well on CSS models.
+            if not ply.SND_IsBot then return translated end
+        end
+    end
 
-	-- Map standard activities to HoldType specific ones to prevent T-posing/floating guns.
-	-- This mapping ensures that rifles, pistols, and other types use correct arm poses on CSS models.
-	local map = {
-		["pistol"]   = "PISTOL",
-		["revolver"] = "REVOLVER",
-		["smg"]      = "SMG1",
-		["ar2"]      = "AR2",
-		["shotgun"]  = "SHOTGUN",
-		["rpg"]      = "RPG",
-		["melee"]    = "MELEE",
-		["knife"]    = "KNIFE",
-		["melee2"]   = "MELEE2",
-		["fist"]     = "FIST",
-		["grenade"]  = "GRENADE",
-		["slam"]     = "SLAM",
-		["passive"]  = "PASSIVE",
-		["duel"]     = "DUAL",
-		["camera"]   = "CAMERA",
-		["crossbow"] = "CROSSBOW",
-		["rifle"]    = "AR2", -- TFA/ARC9 fallback
-	}
+    -- 2. Force CSS Model Native Activities for Bots
+    -- This prevents T-posing by using sequences the CSS skeleton actually possesses.
+    if ply.SND_IsBot then
+        local hold = IsValid(wep) and wep:GetHoldType() or "normal"
+        local isRifle = (hold == "ar2" or hold == "smg" or hold == "rpg" or hold == "shotgun")
+        local isPistol = (hold == "pistol" or hold == "revolver")
 
-	local suffix = map[hold] or "AR2"
+        if act == ACT_MP_STAND_IDLE then
+            if isRifle then return ACT_IDLE_RIFLE
+            elseif isPistol then return ACT_IDLE_PISTOL
+            else return ACT_IDLE end
+        elseif act == ACT_MP_WALK then
+            if isRifle then return ACT_WALK_RIFLE
+            elseif isPistol then return ACT_WALK_PISTOL
+            else return ACT_WALK end
+        elseif act == ACT_MP_RUN then
+            if isRifle then return ACT_RUN_RIFLE
+            elseif isPistol then return ACT_RUN_PISTOL
+            else return ACT_RUN end
+        elseif act == ACT_MP_CROUCH_IDLE then
+            return ACT_CROUCHIDLE
+        elseif act == ACT_MP_CROUCHWALK then
+            return ACT_WALK -- CSS models use standard walk for crouch-walk
+        end
+    end
 
-	if act == ACT_MP_STAND_IDLE then
-		return _G["ACT_HL2MP_IDLE_" .. suffix] or ACT_HL2MP_IDLE_AR2
-	elseif act == ACT_MP_WALK then
-		return _G["ACT_HL2MP_WALK_" .. suffix] or ACT_HL2MP_WALK_AR2
-	elseif act == ACT_MP_RUN then
-		return _G["ACT_HL2MP_RUN_" .. suffix] or ACT_HL2MP_RUN_AR2
-	elseif act == ACT_MP_CROUCH_IDLE then
-		return _G["ACT_HL2MP_IDLE_CROUCH_" .. suffix] or ACT_HL2MP_IDLE_CROUCH_AR2
-	elseif act == ACT_MP_CROUCHWALK then
-		return _G["ACT_HL2MP_WALK_CROUCH_" .. suffix] or ACT_HL2MP_WALK_CROUCH_AR2
-	elseif act == ACT_MP_ATTACK_STAND_PRIMARYFIRE or act == ACT_MP_ATTACK_CROUCH_PRIMARYFIRE then
-		return _G["ACT_HL2MP_GESTURE_RANGE_ATTACK_" .. suffix] or ACT_HL2MP_GESTURE_RANGE_ATTACK_AR2
-	elseif act == ACT_MP_RELOAD_STAND or act == ACT_MP_RELOAD_CROUCH then
-		return _G["ACT_HL2MP_GESTURE_RELOAD_" .. suffix] or ACT_HL2MP_GESTURE_RELOAD_AR2
-	elseif act == ACT_MP_JUMP or act == ACT_MP_JUMP_START or act == ACT_MP_JUMP_FLOAT then
-		return ACT_HOP
-	elseif act == ACT_MP_JUMP_LAND then
-		return ACT_IDLE
-	end
+    -- 3. Fallback for players/unknown types
+    local hold = IsValid(wep) and wep:GetHoldType() or "normal"
+    local map = {
+        ["pistol"] = "PISTOL", ["revolver"] = "REVOLVER", ["smg"] = "SMG1",
+        ["ar2"] = "AR2", ["shotgun"] = "SHOTGUN", ["rpg"] = "RPG"
+    }
+    local suffix = map[hold] or "AR2"
+
+    if act == ACT_MP_STAND_IDLE then
+        return _G["ACT_HL2MP_IDLE_" .. suffix] or ACT_HL2MP_IDLE_AR2
+    elseif act == ACT_MP_WALK then
+        return _G["ACT_HL2MP_WALK_" .. suffix] or ACT_HL2MP_WALK_AR2
+    elseif act == ACT_MP_RUN then
+        return _G["ACT_HL2MP_RUN_" .. suffix] or ACT_HL2MP_RUN_AR2
+    elseif act == ACT_MP_CROUCH_IDLE then
+        return _G["ACT_HL2MP_IDLE_CROUCH_" .. suffix] or ACT_HL2MP_IDLE_CROUCH_AR2
+    elseif act == ACT_MP_CROUCHWALK then
+        return _G["ACT_HL2MP_WALK_CROUCH_" .. suffix] or ACT_HL2MP_WALK_CROUCH_AR2
+    elseif act == ACT_MP_JUMP or act == ACT_MP_JUMP_START or act == ACT_MP_JUMP_FLOAT then
+        return ACT_HOP
+    elseif act == ACT_MP_JUMP_LAND then
+        return ACT_IDLE
+    end
 end)
 
 -- ── Damage Flinching (Gestures) ──────────────────────────────────────────
