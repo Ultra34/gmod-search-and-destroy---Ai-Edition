@@ -67,7 +67,7 @@ local function nearestSite(ply)
 		-- Fallback to config if entities haven't spawned yet
 		local mapSites = SND.Config.MapSites[game.GetMap()] or {}
 		for i, s in ipairs(mapSites) do
-			local d = ply:GetPos():Distance2D(s.plantPos)
+			local d = ply:GetPos():Distance(s.plantPos)
 			if not best or d < best then 
 				best, bi = d, { id = s.id, pos = s.plantPos, radius = s.defuseRadius } 
 			end
@@ -76,7 +76,7 @@ local function nearestSite(ply)
 	end
 	
 	for _, s in ipairs(sites) do
-		local d = ply:GetPos():Distance2D(s:GetPos())
+		local d = ply:GetPos():Distance(s:GetPos())
 		if not best or d < best then
 			best = d
 			bi = { id = s:GetNWString("SND_SiteID"), pos = s:GetPos(), radius = s:GetNWFloat("SND_SiteRadius") }
@@ -387,7 +387,7 @@ function SND.Bomb.TryDefuse(ply)
 	if not IsValid(ply)                         then return end
 	if ply:Team() ~= SND.TEAM_DEFEND           then return end
 	if not SND.Bomb.PlantPos                   then return end
-	if ply:GetPos():Distance2D(SND.Bomb.PlantPos) > 128 then return end
+	if ply:GetPos():Distance(SND.Bomb.PlantPos) > 128 then return end
 	if ply.SND_Defusing                        then return end
 
 	ply.SND_Defusing = true
@@ -414,7 +414,7 @@ function SND.Bomb.TryDefuse(ply)
 			ply:ChatPrint("[SND] Defuse cancelled — you moved.")
 			return
 		end
-		if ply:GetPos():Distance2D(SND.Bomb.PlantPos) > 160 then
+		if ply:GetPos():Distance(SND.Bomb.PlantPos) > 160 then
 			SND.Bomb.CancelAction(ply, "defuse")
 			ply:ChatPrint("[SND] Defuse cancelled — too far from the bomb.")
 			return
