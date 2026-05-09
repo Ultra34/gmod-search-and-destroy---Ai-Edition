@@ -402,4 +402,18 @@ if SERVER then
         -- Ensure this map is eligible for the end-of-match vote
         SND.Config.RegisterMapForVoting(map)
     end
+
+	concommand.Add("snd_map_save", function(ply)
+		if IsValid(ply) and not (ply:IsSuperAdmin() or ply:IsListenServerHost()) then return end
+		SND.Config.SaveMapData(game.GetMap())
+		if IsValid(ply) then ply:ChatPrint("[SND] Map configuration saved to disk.") end
+	end)
+
+	concommand.Add("snd_map_reload", function(ply)
+		if IsValid(ply) and not (ply:IsSuperAdmin() or ply:IsListenServerHost()) then return end
+		local map = game.GetMap()
+		SND.Config.LoadMapOverrides(map)
+		if SND.Sites and SND.Sites.Sync then SND.Sites.Sync() end
+		if SND.Sites and SND.Sites.RefreshEntities then SND.Sites.RefreshEntities() end
+	end)
 end

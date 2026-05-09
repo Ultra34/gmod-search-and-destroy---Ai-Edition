@@ -109,11 +109,11 @@ hook.Add("PopulateToolMenu", "SND_SettingsMenu", function()
 end)
 
 -- ── MW2 Scoreboard Implementation ────────────────────────────────────────
-surface.CreateFont("SND_BO3_Title", { font = "Verdana", size = 26, weight = 1000, italic = true, antialias = true })
-surface.CreateFont("SND_BO3_Team", { font = "Verdana", size = 18, weight = 900, antialias = true })
-surface.CreateFont("SND_BO3_Score", { font = "Verdana", size = 32, weight = 900, antialias = true })
-surface.CreateFont("SND_BO3_Header", { font = "Verdana", size = 13, weight = 700, uppercase = true, antialias = true })
-surface.CreateFont("SND_BO3_Player", { font = "Verdana", size = 17, weight = 400, antialias = true })
+surface.CreateFont("SND_BO3_Title", { font = "Verdana", size = 28, weight = 1000, italic = true, antialias = true })
+surface.CreateFont("SND_BO3_Team", { font = "Verdana", size = 20, weight = 900, antialias = true })
+surface.CreateFont("SND_BO3_Score", { font = "Verdana", size = 36, weight = 900, antialias = true })
+surface.CreateFont("SND_BO3_Header", { font = "Verdana", size = 16, weight = 700, uppercase = true, antialias = true })
+surface.CreateFont("SND_BO3_Player", { font = "Verdana", size = 19, weight = 400, antialias = true })
 surface.CreateFont("SND_MW2_3D2D", { font = "Verdana", size = 120, weight = 900, antialias = true })
 
 local scoreboard = nil

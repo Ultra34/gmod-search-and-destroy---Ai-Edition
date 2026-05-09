@@ -486,7 +486,7 @@ function SND.GunPicker.Open()
 				
 				local subHeader = g.name:match("^.-:%s*(.*)$") or g.name
 				local slotKey = g.isSecondary and "secondary" or "primary"
-				createGrid(subHeader, g.weapons, slotKey, "DermaDefaultBold", Color(180, 180, 180), 15 * sc)
+				createGrid(subHeader, g.weapons, slotKey, "SND_BO3_Team", Color(180, 180, 180), 15 * sc)
 
 				-- ── Separator Line ──
 				local sep = vgui.Create("DPanel", content)
@@ -524,7 +524,7 @@ function SND.GunPicker.Open()
 			local mainText = customName
 			local subText = isLocked and ("LOCKED (LVL " .. req .. ")") or ""
 			
-			draw.SimpleText(mainText, "SND_BO3_Header", 10 * sc, isLocked and 12 * sc or h/2, isLocked and Color(150, 150, 150) or Color(220, 220, 220), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+			draw.SimpleText(mainText, "SND_BO3_Team", 10 * sc, isLocked and 12 * sc or h/2, isLocked and Color(150, 150, 150) or Color(220, 220, 220), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
 			if isLocked then
 				draw.SimpleText(subText, "DermaDefault", 10 * sc, 26 * sc, Color(255, 80, 80), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
 			end

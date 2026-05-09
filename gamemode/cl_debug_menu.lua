@@ -49,6 +49,8 @@ function SND.OpenDebugMenu()
         local cv = GetConVar("snd_cat_" .. group.cid)
         local cb = vgui.Create("DCheckBoxLabel")
         cb:SetText(group.name)
+        cb:SetFont("SND_BO3_Team")
+        cb:SetTall(30 * sc)
         cb:SetValue(cv and cv:GetBool() or true)
         cb.OnChange = function(_, val)
             net.Start("SND_SetCvar")
@@ -73,7 +75,7 @@ function SND.OpenDebugMenu()
 
         if iconPath and iconPath ~= lastGameIcon then
             local header = vgui.Create("DPanel", weaponPnl)
-            header:SetTall(24 * sc)
+            header:SetTall(36 * sc)
             header:Dock(TOP)
             header:DockMargin(0, 10 * sc, 0, 5 * sc)
             header.Paint = function(self, w, h)
@@ -89,7 +91,7 @@ function SND.OpenDebugMenu()
                     surface.DrawTexturedRect(0, 0, drawW, h)
                     textX = drawW + 5 * sc
                 end
-                draw.SimpleText(gameName:upper(), "SND_BO3_Header", textX, h/2, Color(255, 120, 0), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+                draw.SimpleText(gameName:upper(), "SND_BO3_Title", textX, h/2, Color(255, 120, 0), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
             end
             weaponPnl:AddItem(header)
             lastGameIcon = iconPath
@@ -144,6 +146,8 @@ function SND.OpenDebugMenu()
 
     local lblAddSpawns = vgui.Create("DLabel", spawnPnl)
     lblAddSpawns:SetText("Add Spawns (at your position):")
+    lblAddSpawns:SetFont("SND_BO3_Team")
+    lblAddSpawns:SetTall(25 * sc)
     spawnPnl:AddItem(lblAddSpawns)
 
     addButton(spawnPnl, "Add Attacker Spawn (F7)", "snd_spawn_add_attack")
@@ -151,7 +155,8 @@ function SND.OpenDebugMenu()
 
     local lblManageSpawns = vgui.Create("DLabel", spawnPnl)
     lblManageSpawns:SetText("Manage Spawns:")
-    lblManageSpawns:SetTall(20 * sc)
+    lblManageSpawns:SetFont("SND_BO3_Team")
+    lblManageSpawns:SetTall(25 * sc)
     spawnPnl:AddItem(lblManageSpawns)
 
     addButton(spawnPnl, "Clear All Spawns", "snd_spawn_clear")
@@ -191,7 +196,8 @@ function SND.OpenDebugMenu()
 
     local lblSetSites = vgui.Create("DLabel", sitePnl)
     lblSetSites:SetText("Set Sites (at your position):")
-    lblSetSites:SetTall(20 * sc)
+    lblSetSites:SetFont("SND_BO3_Team")
+    lblSetSites:SetTall(25 * sc)
     sitePnl:AddItem(lblSetSites)
 
     addButton(sitePnl, "Set Site A (F5)", "snd_site_add", {"A"})
@@ -199,7 +205,8 @@ function SND.OpenDebugMenu()
 
     local lblManageSites = vgui.Create("DLabel", sitePnl)
     lblManageSites:SetText("Manage Sites:")
-    lblManageSites:SetTall(20 * sc)
+    lblManageSites:SetFont("SND_BO3_Team")
+    lblManageSites:SetTall(25 * sc)
     sitePnl:AddItem(lblManageSites)
 
     addButton(sitePnl, "Clear All Sites", "snd_site_clear")
@@ -232,6 +239,8 @@ function SND.OpenDebugMenu()
     local debugModeCV = GetConVar("snd_debug_mode")
     local debugModeCB = vgui.Create("DCheckBoxLabel")
     debugModeCB:SetText("Enable Debug Mode (F4)")
+    debugModeCB:SetFont("SND_BO3_Team")
+    debugModeCB:SetTall(30 * sc)
     debugModeCB:SetValue(debugModeCV and debugModeCV:GetBool() or false)
     debugModeCB.OnChange = function(_, val)
         RunConsoleCommand("snd_debug_toggle") -- This concommand handles sv_cheats and phase changes
@@ -250,12 +259,15 @@ function SND.OpenDebugMenu()
 
     local lblBotDebug = vgui.Create("DLabel", generalPnl)
     lblBotDebug:SetText("Bot Debug:")
-    lblBotDebug:SetTall(20 * sc)
+    lblBotDebug:SetFont("SND_BO3_Team")
+    lblBotDebug:SetTall(25 * sc)
     generalPnl:AddItem(lblBotDebug)
 
     local botDebugPathsCV = GetConVar("snd_bot_debug_paths")
     local botDebugPathsCB = vgui.Create("DCheckBoxLabel")
     botDebugPathsCB:SetText("Visualize Bot Paths")
+    botDebugPathsCB:SetFont("SND_BO3_Team")
+    botDebugPathsCB:SetTall(30 * sc)
     botDebugPathsCB:SetValue(botDebugPathsCV and botDebugPathsCV:GetBool() or false)
     botDebugPathsCB.OnChange = function(_, val)
         net.Start("SND_SetCvar")
@@ -267,6 +279,48 @@ function SND.OpenDebugMenu()
     generalPnl:AddItem(botDebugPathsCB)
 
     sheet:AddSheet("General Debug", generalPnl, "icon16/bug.png")
+
+    -- ── Map File Tab ──────────────────────────────────────────────────────
+    local filePnl = vgui.Create("DPanelList")
+    filePnl:EnableVerticalScrollbar(true)
+    filePnl:SetSpacing(10 * sc)
+    filePnl:SetPadding(10 * sc)
+
+    local lblFile = vgui.Create("DLabel", filePnl)
+    lblFile:SetText("MANAGE CONFIGURATION FILE")
+    lblFile:SetFont("SND_BO3_Title")
+    lblFile:SetTextColor(Color(255, 120, 0))
+    lblFile:SetTall(30 * sc)
+    filePnl:AddItem(lblFile)
+
+    local lblDesc = vgui.Create("DLabel", filePnl)
+    lblDesc:SetText("Spawn and site changes are now kept in memory until manually saved.\nUse the buttons below to commit your changes to JSON or discard them.")
+    lblDesc:SetFont("SND_BO3_Team")
+    lblDesc:SetAutoStretchVertical(true)
+    lblDesc:SetTextColor(Color(200, 200, 200))
+    filePnl:AddItem(lblDesc)
+
+    local saveBtn = vgui.Create("DButton", filePnl)
+    saveBtn:SetText("SAVE TO DISK (Overwrites JSON)")
+    saveBtn:SetTall(40 * sc)
+    saveBtn.DoClick = function()
+        RunConsoleCommand("snd_map_save")
+        surface.PlaySound("buttons/button14.wav")
+    end
+    filePnl:AddItem(saveBtn)
+
+    local reloadBtn = vgui.Create("DButton", filePnl)
+    reloadBtn:SetText("RELOAD FROM DISK (Discards unsaved)")
+    reloadBtn:SetTall(40 * sc)
+    reloadBtn.DoClick = function()
+        Derma_Query("Discard all unsaved changes and reload from the JSON file?", "Reload Map Data", "Yes, Reload", function()
+            RunConsoleCommand("snd_map_reload")
+        end, "Cancel")
+        surface.PlaySound("buttons/button14.wav")
+    end
+    filePnl:AddItem(reloadBtn)
+
+    sheet:AddSheet("Map File", filePnl, "icon16/disk.png")
 end
 
 concommand.Add("snd_open_debug_menu", function()

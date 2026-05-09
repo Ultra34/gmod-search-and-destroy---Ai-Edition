@@ -145,10 +145,7 @@ local function addSpawnCommand(ply, teamKey)
 	
 	print("[SND] " .. teamKey .. " spawn added to memory table. Total: " .. #SND.Config.MapSpawns[map][teamKey])
 
-	-- We include existing site data in the save to avoid wiping it
-	SND.Config.SaveMapData(map)
-	
-	ply:ChatPrint("[SND] Added " .. teamKey .. " spawn at your position and saved to data.")
+	ply:ChatPrint("[SND] Added " .. teamKey .. " spawn at your position. (UNSAVED)")
 	if SND.Round.Phase == SND.PHASE_DEBUG then
 		spawnDebugGhosts() -- Refresh models instantly
 	end
@@ -160,9 +157,8 @@ concommand.Add("snd_spawn_clear", function(ply)
 	if IsValid(ply) and not (ply:IsSuperAdmin() or ply:IsListenServerHost()) then return end
 	local map = string.lower(game.GetMap())
 	SND.Config.MapSpawns[map] = { attack = {}, defend = {} }
-	SND.Config.SaveMapData(map)
 	clearDebugGhosts()
-	ply:ChatPrint("[SND] Cleared all custom spawns for " .. map)
+	ply:ChatPrint("[SND] Cleared all spawns from memory. (UNSAVED)")
 end)
 
 concommand.Add("snd_spawn_remove_nearest", function(ply)
@@ -185,8 +181,7 @@ concommand.Add("snd_spawn_remove_nearest", function(ply)
 
 	if bestIdx and math.sqrt(bestDist) < 200 then
 		table.remove(SND.Config.MapSpawns[map][bestTeam], bestIdx)
-		SND.Config.SaveMapData(map)
-		ply:ChatPrint("[SND] Removed nearest " .. bestTeam .. " spawn.")
+		ply:ChatPrint("[SND] Removed nearest " .. bestTeam .. " spawn from memory. (UNSAVED)")
 	else
 		ply:ChatPrint("[SND] No spawn point close enough to remove.")
 	end

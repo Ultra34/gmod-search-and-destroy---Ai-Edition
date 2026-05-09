@@ -72,6 +72,10 @@ local function broadcastSites(ply)
 	end
 end
 
+function SND.Sites.Sync(ply)
+	broadcastSites(ply)
+end
+
 function SND.Sites.RefreshEntities()
 	for _, e in ipairs(ents.FindByClass("snd_site")) do e:Remove() end
 
@@ -144,12 +148,10 @@ concommand.Add("snd_site_add", function(ply, cmd, args)
 	end
 
 	print("[SND] Site " .. id .. " added to memory table. Total sites: " .. #sites)
-
-	SND.Config.SaveMapData(map)
 	
 	broadcastSites()
 	SND.Sites.RefreshEntities()
-	ply:ChatPrint("[SND] Added site " .. id .. " at your position and saved to data.")
+	ply:ChatPrint("[SND] Added site " .. id .. " at your position. (UNSAVED)")
 end)
 
 concommand.Add("snd_site_clear", function(ply)
@@ -157,11 +159,9 @@ concommand.Add("snd_site_clear", function(ply)
 	local map = string.lower(game.GetMap())
 	SND.Config.MapSites[map] = {}
 	
-	SND.Config.SaveMapData(map)
-	
 	broadcastSites()
 	SND.Sites.RefreshEntities()
-	ply:ChatPrint("[SND] Cleared all custom sites for " .. map)
+	ply:ChatPrint("[SND] Cleared all sites from memory. (UNSAVED)")
 end)
 
 concommand.Add("snd_site_goto", function(ply, cmd, args)
