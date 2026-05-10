@@ -11,7 +11,7 @@ local function isCSSModel(ply)
 end
 
 local function isSNDBot(ply)
-    return ply.SND_IsBot == true or ply:IsBot()
+    return IsValid(ply) and ply:IsPlayer() and (ply.SND_IsBot == true or ply:IsBot())
 end
 
 -- ── Core: Unified CSS Activity Resolver ───────────────────────────────────

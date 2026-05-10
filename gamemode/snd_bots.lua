@@ -26,18 +26,13 @@ if SERVER then
 end
 
 -- ── Bot states ────────────────────────────────────────────────────────────
-local BS_IDLE        = 0
-local BS_PATROL      = 1
-local BS_ENGAGE      = 2
-local BS_CHASE       = 3
-local BS_PLANT       = 4
-local BS_DEFUSE      = 5
-local BS_RELOAD      = 6
-local BS_INVESTIGATE = 7
-local BS_SEARCH      = 8
-local BS_RECOVER     = 9
-local BS_FOLLOW      = 10
-local BS_GRENADE     = 11
+local BS_IDLE   = 0
+local BS_PATROL = 1
+local BS_ENGAGE = 2
+local BS_CHASE  = 3
+local BS_PLANT  = 4
+local BS_DEFUSE = 5
+local BS_RELOAD = 6
 
 -- ── Skill 1-10 → internal float helpers ──────────────────────────────────
 local function skillT(s)       return (math.Clamp(s, 1, 10) - 1) / 9 end
@@ -562,34 +557,34 @@ hook.Add("StartCommand", "SND_BotAI", function(bot, cmd)
 		ai.lastKnownPos = enemy:GetPos()
 		ai.lastKnownTime = now
 
-		-- Aiming: High skill = faster snap
-		local aim = getAimVector(bot, enemy, aimNoise(skill), skill)
-		bot:SetEyeAngles(LerpAngle(0.12 + (skillT(skill) * 0.2), bot:EyeAngles(), aim))
-		local newAng = LerpAngle(0.12 + (skillT(skill) * 0.2), bot:EyeAngles(), aim)
+		-- ── FIXED: Aiming (single lerp, single apply) ─────────────────────────────
+		local lerpAlpha = 0.12 + skillT(skill) * 0.2
+		local aim    = getAimVector(bot, enemy, aimNoise(skill), skill)
+		local newAng = LerpAngle(lerpAlpha, bot:EyeAngles(), aim)
 		bot:SetEyeAngles(newAng)
 		cmd:SetViewAngles(newAng)
 
-		-- Firing Gestures: Syncs weapon recoil to 3rd person model
-		if bot:KeyDown(IN_ATTACK) and now > (ai.nextFireGesture or 0) then
+		-- ── FIXED: Fire gesture uses wantShoot flag instead of KeyDown ────────────
+		local wantShoot = (now > ai.shootGate) and (now > ai.nextShot)
+
+		if wantShoot and now > (ai.nextFireGesture or 0) then
 			local wep = bot:GetActiveWeapon()
-			local h = IsValid(wep) and wep:GetHoldType() or "ar2"
-
-			local map = {
-				["pistol"]   = ACT_HL2MP_GESTURE_RANGE_ATTACK_PISTOL,
-				["revolver"] = ACT_HL2MP_GESTURE_RANGE_ATTACK_REVOLVER,
-				["smg"]      = ACT_HL2MP_GESTURE_RANGE_ATTACK_SMG1,
-				["ar2"]      = ACT_HL2MP_GESTURE_RANGE_ATTACK_AR2,
-				["shotgun"]  = ACT_HL2MP_GESTURE_RANGE_ATTACK_SHOTGUN,
-				["rpg"]      = ACT_HL2MP_GESTURE_RANGE_ATTACK_RPG,
-				["melee"]    = ACT_HL2MP_GESTURE_RANGE_ATTACK_MELEE,
-				["fist"]     = ACT_HL2MP_GESTURE_RANGE_ATTACK_FIST,
-				["knife"]    = ACT_HL2MP_GESTURE_RANGE_ATTACK_KNIFE,
-				["grenade"]  = ACT_HL2MP_GESTURE_RANGE_ATTACK_GRENADE,
-				["slam"]     = ACT_HL2MP_GESTURE_RANGE_ATTACK_SLAM,
-				["passive"]  = ACT_HL2MP_GESTURE_RANGE_ATTACK_PASSIVE,
+			local h   = IsValid(wep) and wep:GetHoldType() or "ar2"
+			local gestureMap = {
+				pistol   = ACT_HL2MP_GESTURE_RANGE_ATTACK_PISTOL,
+				revolver = ACT_HL2MP_GESTURE_RANGE_ATTACK_REVOLVER,
+				smg      = ACT_HL2MP_GESTURE_RANGE_ATTACK_SMG1,
+				ar2      = ACT_HL2MP_GESTURE_RANGE_ATTACK_AR2,
+				shotgun  = ACT_HL2MP_GESTURE_RANGE_ATTACK_SHOTGUN,
+				rpg      = ACT_HL2MP_GESTURE_RANGE_ATTACK_RPG,
+				melee    = ACT_HL2MP_GESTURE_RANGE_ATTACK_MELEE,
+				fist     = ACT_HL2MP_GESTURE_RANGE_ATTACK_FIST,
+				knife    = ACT_HL2MP_GESTURE_RANGE_ATTACK_KNIFE,
+				grenade  = ACT_HL2MP_GESTURE_RANGE_ATTACK_GRENADE,
+				slam     = ACT_HL2MP_GESTURE_RANGE_ATTACK_SLAM,
+				passive  = ACT_HL2MP_GESTURE_RANGE_ATTACK_PASSIVE,
 			}
-
-			local act = map[h] or ACT_HL2MP_GESTURE_RANGE_ATTACK_AR2
+			local act = gestureMap[h] or ACT_HL2MP_GESTURE_RANGE_ATTACK_AR2
 			bot:AnimRestartGesture(GESTURE_SLOT_ATTACK_AND_RELOAD, act, true)
 			ai.nextFireGesture = now + 0.15
 		end
@@ -597,12 +592,10 @@ hook.Add("StartCommand", "SND_BotAI", function(bot, cmd)
 		-- Shooting with burst logic
 		if now > ai.nextShot then
 			if now > ai.shootGate then
-				cmd:SetButtons(bit.bor(cmd:GetButtons(), IN_ATTACK)) -- Use IN_ATTACK directly on cmd
-
+				cmd:SetButtons(bit.bor(cmd:SetButtons(), IN_ATTACK))
 				local burst = (dist > 1200) and math.Rand(0.08, 0.25) or 0.05
 				ai.nextShot = now + burst
 			else
-				-- Reaction time simulation
 				if ai.shootGate == 0 or ai.enemy ~= enemy then
 					ai.shootGate = now + reactionSec(skill)
 					ai.enemy = enemy
@@ -610,7 +603,7 @@ hook.Add("StartCommand", "SND_BotAI", function(bot, cmd)
 			end
 		end
 
-		-- Tactical Dodging: ADAD Strafing + Random Jumps
+		-- Tactical Dodging (unchanged)
 		if now > ai.strafeFlip then
 			ai.strafeDir = -ai.strafeDir
 			ai.strafeFlip = now + math.Rand(0.5, 1.5)
