@@ -3,7 +3,7 @@
 # GMod Search & Destroy
 
 A Garry's Mod **gamemode** built around Call of Duty-style Search & Destroy rules.  
-One life per round, bomb plant and defuse, team scoring, visual map voting, Lua-driven bots with a full AI state machine, first-person legs, 3D bomb-site markers, and loadouts powered by **TFA Call of Duty weapon packs** (WaW, BO1, BO2, MW2, etc.).
+One life per round, bomb plant and defuse, team scoring, visual map voting, Lua-driven bots with a full AI state machine, first-person legs, 3D bomb-site markers, and loadouts powered by **ARC9 Call of Duty weapon packs** (Modern Warfare & Black Ops Classics).
 
 **Repository:** Ultra34/gmod-search-and-destroy---Ai-Edition
 
@@ -159,15 +159,15 @@ SND.Config.DefaultLoadouts = {
     attack = {
         random_primary   = false,
         random_secondary = false,
-        primary          = "iw4_ak47",
-        secondary        = "iw4_deserteagle",
+        primary          = "arc9_mw3_m4a1",
+        secondary        = "arc9_mw3_usp",
         lethal           = "weapon_frag",
     },
     defend = {
         random_primary   = false,
         random_secondary = false,
-        primary          = "iw4_m4a1",
-        secondary        = "iw4_usp",
+        primary          = "arc9_bo1_ak47",
+        secondary        = "arc9_bo1_m1911",
         lethal           = "weapon_frag",
     },
 }
