@@ -4,36 +4,28 @@ function SND.Bots.Think(bot, cmd)
 	local now = CurTime()
 	local speed = Lerp(SND.Bots.SkillT(skill), 120, 310) * (ai.personality.roamSpeedMult or 1)
 
-	-- Target Selection
-	local enemy, dist = nil, math.huge
-	for _, p in ipairs(player.GetAll()) do
-		if p:Alive() and SND.Bots.AreEnemies(bot, p) and SND.Bots.CanSee(bot, p) then
-			local d = bot:GetPos():Distance(p:GetPos())
-			if d < dist then enemy, dist = p, d end
-		end
-	end
+	-- Combat Logic (Internalizes Firing, Aiming, Recoil, and FSMs)
+	SND.Bots.CombatThink(bot, cmd)
 
-	local engageRange = Lerp(SND.Bots.SkillT(skill), 600, 3800)
-	local shouldEngage = IsValid(enemy) and dist < engageRange
+	local target = ai.target
+	local canSee = SND.Bots.CanSee(bot, target)
+	local shouldEngage = IsValid(target) and canSee
 
 	if shouldEngage then
+		local dist = bot:GetPos():Distance(target:GetPos())
 		ai.state = 2 -- BS_ENGAGE
-		ai.lastKnownPos = enemy:GetPos()
-		
-		-- Aiming
-		local aim = SND.Bots.GetAimVector(bot, enemy, skill)
-		local newAng = LerpAngle(0.12 + SND.Bots.SkillT(skill) * 0.2, bot:EyeAngles(), aim)
-		bot:SetEyeAngles(newAng)
-		cmd:SetViewAngles(newAng)
-
-		-- Firing
-		SND.Bots.HandleFiring(bot, cmd, enemy, dist, skill)
 
 		-- Tactical Movement (ADAD)
 		if now > ai.strafeFlip then
 			ai.strafeDir = -ai.strafeDir
 			ai.strafeFlip = now + math.Rand(0.5, 1.5)
 		end
+		
+		-- Force attack bits from CombatThink
+		if ai.wantAttack or (ai.tapUntil and now < ai.tapUntil) then
+			cmd:SetButtons(bit.bor(cmd:GetButtons(), IN_ATTACK))
+		end
+
 		cmd:SetSideMove(ai.strafeDir * speed)
 		
 		if dist > (ai.personality.holdRange or 600) then

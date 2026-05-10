@@ -3,198 +3,73 @@
 
 SND.Config = SND.Config or {}
 
--- ── CoD4: Modern Warfare (IW3) ──────────────────────────────────────────
-local IW3_AR = { "iw3_ak47", "iw3_g3", "iw3_g36c", "iw3_m14", "iw3_m16a4", "iw3_m4a1", "iw3_mp44" }
-local IW3_SMG = { "iw3_skorpion", "iw3_p90", "iw3_mp5", "iw3_miniuzi", "iw3_ak74u" }
-local IW3_LMG = { "iw3_m249", "iw3_m60e4", "iw3_rpd" }
-local IW3_SG = { "iw3_m1014", "iw3_w1200" }
-local IW3_SR = { "iw3_barrett", "iw3_dragunov", "iw3_m21", "iw3_m40a3", "iw3_r700" }
-local IW3_PISTOLS = { "iw3_usp", "iw3_beretta", "iw3_colt45", "iw3_deserteagle" }
-local IW3_LAUNCHERS = { "iw3_at4", "iw3_rpg" }
+-- ── ARC9: Black Ops Classic (arc9_bo1_*) ──────────────────────────────
+SND.Config.BO1_AR = { "arc9_bo1_ak47", "arc9_bo1_m16", "arc9_bo1_famas", "arc9_bo1_galil", "arc9_bo1_aug", "arc9_bo1_commando", "arc9_bo1_g11", "arc9_bo1_enfield", "arc9_bo1_fal" }
+SND.Config.BO1_SMG = { "arc9_bo1_mp5k", "arc9_bo1_uzi", "arc9_bo1_ak74u", "arc9_bo1_mpl", "arc9_bo1_pm63", "arc9_bo1_skorpion", "arc9_bo1_spectre" }
+SND.Config.BO1_LMG = { "arc9_bo1_m60", "arc9_bo1_rpk", "arc9_bo1_hk21", "arc9_bo1_stoner63" }
+SND.Config.BO1_SG = { "arc9_bo1_spas12", "arc9_bo1_ithaca", "arc9_bo1_olympia", "arc9_bo1_hs10" }
+SND.Config.BO1_SR = { "arc9_bo1_l96a1", "arc9_bo1_dragunov", "arc9_bo1_psg1", "arc9_bo1_wa2000" }
+SND.Config.BO1_PISTOLS = { "arc9_bo1_m1911", "arc9_bo1_python", "arc9_bo1_makarov", "arc9_bo1_cz75", "arc9_bo1_asp" }
 
--- ── MW2: Modern Warfare 2 (IW4) ──────────────────────────────────────────
-local AR = {
-	"iw4_acr",
-	"iw4_ak47",
-	"iw4_f2000",
-	"iw4_fal",
-	"iw4_famas",
-	"iw4_m16a4",
-	"iw4_m4a1",
-	"iw4_scar",
-	"iw4_tavor",
-}
-
--- ── Light Machine Guns ────────────────────────────────────────────────────
-local LMG = {
-	"iw4_rpd",
-	"iw4_mg4",
-	"iw4_m240",
-	"iw4_sa80",
-}
-
--- ── Sub-Machine Guns ──────────────────────────────────────────────────────
-local SMG = {
-	"iw4_miniuzi",
-	"iw4_mp5",
-	"iw4_p90",
-	"iw4_ump45",
-	"iw4_vector",
-	"iw4_pp2000",
-	"iw4_tmp",
-}
-
--- ── Shotguns ──────────────────────────────────────────────────────────────
-local SG = {
-	"iw4_aa12",
-	"iw4_m1014",
-	"iw4_1887",
-	"iw4_ranger",
-	"iw4_spas12",
-	"iw4_striker",
-}
-
--- ── Sniper Rifles ─────────────────────────────────────────────────────────
-local SR = {
-	"iw4_barrett",
-	"iw4_dragunov",
-	"iw4_cheytac",
-	"iw4_m14ebr",
-	"iw4_wa2000",
-}
-
--- ── Other / Misc primaries ────────────────────────────────────────────────
-local MISC = {
-	"iw4_aug",        -- assault / scoped
-	"iw4_riotshield",
-}
-
--- ── MW3: Modern Warfare 3 (IW5) ──────────────────────────────────────────
-local IW5_AR = { "iw5_acr", "iw5_ak47", "iw5_cm901", "iw5_fad", "iw5_g36c", "iw5_m16a4", "iw5_m4a1", "iw5_mk14", "iw5_type95", "iw5_scar" }
-local IW5_SMG = { "iw5_ak74u", "iw5_mp5", "iw5_mp7", "iw5_p90", "iw5_pm9", "iw5_ump45", "iw5_pp90m1" }
-local IW5_LMG = { "iw5_sa80", "iw5_m60e4", "iw5_mg36", "iw5_mk46", "iw5_pecheneg" }
-local IW5_SG = { "iw5_aa12", "iw5_ksg", "iw5_1887", "iw5_spas12", "iw5_striker", "iw5_usas12" }
-local IW5_SR = { "iw5_rsass", "iw5_msr", "iw5_mk12spr", "iw5_l96a1", "iw5_dragunov", "iw5_barrett", "iw5_as50" }
-local IW5_PISTOLS = { "iw5_anaconda", "iw5_deserteagle", "iw5_fiveseven", "iw5_mp412", "iw5_p99", "iw5_usp", "iw5_skorpion", "iw5_tmp", "iw5_glock", "iw5_fmg" }
-local IW5_LAUNCHERS = { "iw5_xm25", "iw5_stinger", "iw5_smaw", "iw5_rpg", "iw5_m320", "iw5_javelin" }
-
--- ── World at War (Robotnik) ─────────────────────────────────────────────
-local WAW_AR = { "robotnik_waw_stg", "robotnik_waw_grd", "robotnik_waw_g43", "robotnik_waw_svt", "robotnik_waw_crb", "robotnik_waw_t99", "robotnik_waw_bar" }
-local WAW_SMG = { "robotnik_waw_mp40", "robotnik_waw_ppsh", "robotnik_waw_tom", "robotnik_waw_tomd", "robotnik_waw_t100" }
-local WAW_LMG = { "robotnik_waw_mg42", "robotnik_waw_fg", "robotnik_waw_30c", "robotnik_waw_dp", "robotnik_waw_mgm" }
-local WAW_SG = { "robotnik_waw_tg", "robotnik_waw_db" }
-local WAW_SR = { "robotnik_waw_kar_s", "robotnik_waw_moss", "robotnik_waw_spr_s", "robotnik_waw_ptrs", "robotnik_waw_ari_s", "robotnik_waw_kar_i", "robotnik_waw_mosi", "robotnik_waw_spr_i", "robotnik_waw_ari" }
-local WAW_PISTOLS = { "robotnik_waw_1911", "robotnik_waw_p38", "robotnik_waw_tok", "robotnik_waw_nbu" }
-
--- ── Black Ops (BO1) ─────────────────────────────────────────────────────
-local BO1_AR = { "robotnik_bo1_ak47", "robotnik_bo1_aug", "robotnik_bo1_com", "robotnik_bo1_en", "robotnik_bo1_fms", "robotnik_bo1_fal", "robotnik_bo1_g11", "robotnik_bo1_gal", "robotnik_bo1_m14", "robotnik_bo1_16" }
-local BO1_SMG = { "robotnik_bo1_74u", "robotnik_bo1_74g", "robotnik_bo1_ki", "robotnik_bo1_m11", "robotnik_bo1_mp5", "robotnik_bo1_mpl", "robotnik_bo1_pm", "robotnik_bo1_skrp", "robotnik_bo1_uzi", "robotnik_bo1_spc" }
-local BO1_LMG = { "robotnik_bo1_hk", "robotnik_bo1_m60", "robotnik_bo1_rpk", "robotnik_bo1_stn" }
-local BO1_SG = { "robotnik_bo1_h10", "robotnik_bo1_ol", "robotnik_bo1_sps", "robotnik_bo1_so", "robotnik_bo1_sog" }
-local BO1_SR = { "robotnik_bo1_drg", "robotnik_bo1_l96", "robotnik_bo1_psg", "robotnik_bo1_wa" }
-local BO1_PISTOLS = { "robotnik_bo1_py", "robotnik_bo1_mak", "combine_pk_m1911", "robotnik_bo1_1911", "robotnik_bo1_cz", "robotnik_bo1_asp" }
-
--- ── Black Ops II (BO2) ──────────────────────────────────────────────────
-local BO2_AR = { "mac_bo2_an94", "mac_bo2_falosw", "mac_bo2_hk416", "mac_bo2_m8a1", "mac_bo2_mtar", "mac_bo2_scar", "mac_bo2_smr", "mac_bo2_swat", "mac_bo2_type25" }
-local BO2_SMG = { "mac_bo2_chicom", "mac_bo2_mp7", "mac_bo2_msmc", "mac_bo2_pdw", "mac_bo2_peacekpr", "mac_bo2_scorp", "mac_bo2_vector" }
-local BO2_LMG = { "mac_bo2_hamr", "mac_bo2_lsat", "mac_bo2_mk48", "mac_bo2_qbblsw" }
-local BO2_SG = { "mac_bo2_ksg", "mac_bo2_m1216", "mac_bo2_870", "mac_bo2_s12" }
-local BO2_SR = { "mac_bo2_ballista", "mac_bo2_dsr50", "mac_bo2_svu", "mac_bo2_xpr50" }
-local BO2_PISTOLS = { "mac_bo2_tac45", "mac_bo2_kard", "mac_bo2_five7", "mac_bo2_exec", "mac_bo2_b23r" }
-
--- ── Special Weapons ─────────────────────────────────────────────────────
-local SPECIAL = { "mac_bo2_deathmach", "mac_bo2_balknife", "mac_bo2_crssbw_f", "robotnik_bo1_dm", "robotnik_bo1_cb", "robotnik_bo1_bk", "robotnik_waw_rg", "robotnik_waw_m2" }
-
--- ── Merged Secondaries ───────────────────────────────────────────────────
-local PISTOLS = {}
-table.Add(PISTOLS, IW3_PISTOLS)
-table.Add(PISTOLS, { "iw4_anaconda", "iw4_deserteagle", "iw4_beretta", "iw4_usp", "iw4_glock", "iw4_raffica" })
-table.Add(PISTOLS, IW5_PISTOLS)
-table.Add(PISTOLS, WAW_PISTOLS)
-table.Add(PISTOLS, BO1_PISTOLS)
-table.Add(PISTOLS, BO2_PISTOLS)
-
--- ── Launchers — special slot, not given on spawn by default ───────────────
-local LAUNCHERS = {}
-table.Add(LAUNCHERS, IW3_LAUNCHERS)
-table.Add(LAUNCHERS, { "iw4_at4", "iw4_javelin", "iw4_rpg", "iw4_stinger", "iw4_m79" })
-table.Add(LAUNCHERS, IW5_LAUNCHERS)
-table.Add(LAUNCHERS, { "mac_bo2_usrpg", "mac_bo2_smaw", "mac_bo2_warmach", "robotnik_bo1_cl", "robotnik_bo1_202", "robotnik_bo1_law", "robotnik_bo1_rpg", "robotnik_waw_baz", "robotnik_waw_pzsk" })
+-- ── ARC9: Modern Warfare Classic (arc9_mw3_*) ──────────────────────────
+SND.Config.MW3_AR = { "arc9_mw3_acr", "arc9_mw3_m4a1", "arc9_mw3_ak47", "arc9_mw3_m16", "arc9_mw3_scar", "arc9_mw3_g36c", "arc9_mw3_cm901", "arc9_mw3_fad", "arc9_mw3_mk14", "arc9_mw3_type95" }
+SND.Config.MW3_SMG = { "arc9_mw3_mp5", "arc9_mw3_ump45", "arc9_mw3_p90", "arc9_mw3_mp7", "arc9_mw3_pp90m1", "arc9_mw3_pm9" }
+SND.Config.MW3_LMG = { "arc9_mw3_m60", "arc9_mw3_mg36", "arc9_mw3_pkp", "arc9_mw3_mk46", "arc9_mw3_l86" }
+SND.Config.MW3_SG = { "arc9_mw3_spas12", "arc9_mw3_striker", "arc9_mw3_model1887", "arc9_mw3_aa12", "arc9_mw3_usas12", "arc9_mw3_ksg" }
+SND.Config.MW3_SR = { "arc9_mw3_msr", "arc9_mw3_barrett", "arc9_mw3_l118a", "arc9_mw3_rsass", "arc9_mw3_as50" }
+SND.Config.MW3_PISTOLS = { "arc9_mw3_usp", "arc9_mw3_p99", "arc9_mw3_magnum", "arc9_mw3_deserteagle", "arc9_mw3_fiveseven", "arc9_mw3_mp412", "arc9_mw3_glock", "arc9_mw3_fmg9" }
 
 -- Categorized Primary weapons for UI display
 SND.Config.WeaponGroups = {
-	-- COD4
-	{ name = "CoD4: Assault Rifles", weapons = IW3_AR, cid = "cod4_ar", icon = "game_icons/cod4.png" },
-	{ name = "CoD4: SMGs", weapons = IW3_SMG, cid = "cod4_smg", icon = "game_icons/cod4.png" },
-	{ name = "CoD4: Sniper Rifles", weapons = IW3_SR, cid = "cod4_sr", icon = "game_icons/cod4.png" },
-	{ name = "CoD4: LMGs & Shotguns", weapons = table.Add(table.Copy(IW3_LMG), IW3_SG), cid = "cod4_lmg", icon = "game_icons/cod4.png" },
-	{ name = "CoD4: Pistols", weapons = IW3_PISTOLS, isSecondary = true, cid = "cod4_pistol", icon = "game_icons/cod4.png" },
+	-- MW3 (Modern Warfare Classic)
+	{ name = "MW Classic: Assault Rifles", weapons = SND.Config.MW3_AR, cid = "mw3_ar", icon = "game_icons/mw3.png" },
+	{ name = "MW Classic: SMGs", weapons = SND.Config.MW3_SMG, cid = "mw3_smg", icon = "game_icons/mw3.png" },
+	{ name = "MW Classic: Sniper Rifles", weapons = SND.Config.MW3_SR, cid = "mw3_sr", icon = "game_icons/mw3.png" },
+	{ name = "MW Classic: LMGs", weapons = SND.Config.MW3_LMG, cid = "mw3_lmg", icon = "game_icons/mw3.png" },
+	{ name = "MW Classic: Shotguns", weapons = SND.Config.MW3_SG, cid = "mw3_sg", icon = "game_icons/mw3.png" },
+	{ name = "MW Classic: Pistols", weapons = SND.Config.MW3_PISTOLS, isSecondary = true, cid = "mw3_pistol", icon = "game_icons/mw3.png" },
 
-	-- MW2
-	{ name = "MW2: Assault Rifles", weapons = AR, cid = "mw2_ar", icon = "game_icons/mw2.png" },
-	{ name = "MW2: SMGs", weapons = SMG, cid = "mw2_smg", icon = "game_icons/mw2.png" },
-	{ name = "MW2: Sniper Rifles", weapons = SR, cid = "mw2_sr", icon = "game_icons/mw2.png" },
-	{ name = "MW2: LMGs", weapons = LMG, cid = "mw2_lmg", icon = "game_icons/mw2.png" },
-	{ name = "MW2: Shotguns", weapons = SG, cid = "mw2_sg", icon = "game_icons/mw2.png" },
-	{ name = "MW2: Pistols", weapons = { "iw4_anaconda", "iw4_deserteagle", "iw4_beretta", "iw4_usp", "iw4_glock", "iw4_raffica" }, isSecondary = true, cid = "mw2_pistol", icon = "game_icons/mw2.png" },
+	-- BO1 (Black Ops Classic)
+	{ name = "BO Classic: Assault Rifles", weapons = SND.Config.BO1_AR, cid = "bo1_ar", icon = "game_icons/bo1.png" },
+	{ name = "BO Classic: SMGs", weapons = SND.Config.BO1_SMG, cid = "bo1_smg", icon = "game_icons/bo1.png" },
+	{ name = "BO Classic: Sniper Rifles", weapons = SND.Config.BO1_SR, cid = "bo1_sr", icon = "game_icons/bo1.png" },
+	{ name = "BO Classic: LMGs", weapons = SND.Config.BO1_LMG, cid = "bo1_lmg", icon = "game_icons/bo1.png" },
+	{ name = "BO Classic: Shotguns", weapons = SND.Config.BO1_SG, cid = "bo1_sg", icon = "game_icons/bo1.png" },
+	{ name = "BO Classic: Pistols", weapons = SND.Config.BO1_PISTOLS, isSecondary = true, cid = "bo1_pistol", icon = "game_icons/bo1.png" },
 
-	-- MW3
-	{ name = "MW3: Assault Rifles", weapons = IW5_AR, cid = "mw3_ar", icon = "game_icons/mw3.png" },
-	{ name = "MW3: SMGs", weapons = IW5_SMG, cid = "mw3_smg", icon = "game_icons/mw3.png" },
-	{ name = "MW3: Sniper Rifles", weapons = IW5_SR, cid = "mw3_sr", icon = "game_icons/mw3.png" },
-	{ name = "MW3: LMGs & Shotguns", weapons = table.Add(table.Copy(IW5_LMG), IW5_SG), cid = "mw3_lmg", icon = "game_icons/mw3.png" },
-
-	-- World at War
-	{ name = "WaW: Rifles", weapons = WAW_AR, cid = "waw_ar", icon = "game_icons/waw.png" },
-	{ name = "WaW: SMGs", weapons = WAW_SMG, cid = "waw_smg", icon = "game_icons/waw.png" },
-	{ name = "WaW: Sniper Rifles", weapons = WAW_SR, cid = "waw_sr", icon = "game_icons/waw.png" },
-	{ name = "WaW: LMGs & Shotguns", weapons = table.Add(table.Copy(WAW_LMG), WAW_SG), cid = "waw_lmg", icon = "game_icons/waw.png" },
-	{ name = "WaW: Pistols", weapons = WAW_PISTOLS, isSecondary = true, cid = "waw_pistol", icon = "game_icons/waw.png" },
-
-	-- Black Ops
-	{ name = "BO1: Assault Rifles", weapons = BO1_AR, cid = "bo1_ar", icon = "game_icons/bo1.png" },
-	{ name = "BO1: SMGs", weapons = BO1_SMG, cid = "bo1_smg", icon = "game_icons/bo1.png" },
-	{ name = "BO1: Sniper Rifles", weapons = BO1_SR, cid = "bo1_sr", icon = "game_icons/bo1.png" },
-	{ name = "BO1: LMGs & Shotguns", weapons = table.Add(table.Copy(BO1_LMG), BO1_SG), cid = "bo1_lmg", icon = "game_icons/bo1.png" },
-	{ name = "BO1: Pistols", weapons = BO1_PISTOLS, isSecondary = true, cid = "bo1_pistol", icon = "game_icons/bo1.png" },
-
-	-- Black Ops II
-	{ name = "BO2: Assault Rifles", weapons = BO2_AR, cid = "bo2_ar", icon = "game_icons/bo2.png" },
-	{ name = "BO2: SMGs", weapons = BO2_SMG, cid = "bo2_smg", icon = "game_icons/bo2.png" },
-	{ name = "BO2: Sniper Rifles", weapons = BO2_SR, cid = "bo2_sr", icon = "game_icons/bo2.png" },
-	{ name = "BO2: LMGs & Shotguns", weapons = table.Add(table.Copy(BO2_LMG), BO2_SG), cid = "bo2_lmg", icon = "game_icons/bo2.png" },
-	{ name = "BO2: Pistols", weapons = BO2_PISTOLS, isSecondary = true, cid = "bo2_pistol", icon = "game_icons/bo2.png" },
-	
-	{ name = "Special: Weapons", weapons = SPECIAL, cid = "special", icon = "game_icons/special.png", default = "0" },
-	{ name = "Miscellaneous", weapons = MISC, cid = "misc", icon = "game_icons/misc.png", default = "0" },
+	{ name = "Miscellaneous", weapons = { "arc9_mw3_riotshield" }, cid = "misc", icon = "game_icons/misc.png", default = "0" },
 }
 
 -- ── Merged primary pool (everything that isn't a pistol or launcher) ──────
 SND.Config.Mw2ePrimaries = {}
 for _, group in ipairs(SND.Config.WeaponGroups) do
+	if group.isSecondary then continue end
 	for _, v in ipairs(group.weapons) do
 		table.insert(SND.Config.Mw2ePrimaries, v)
 	end
 end
 
-SND.Config.Mw2eSecondaries = PISTOLS
-SND.Config.Mw2eSpecial     = LAUNCHERS   -- wire to pickups / data loadout if wanted
+SND.Config.Mw2eSecondaries = {}
+table.Add(SND.Config.Mw2eSecondaries, SND.Config.MW3_PISTOLS)
+table.Add(SND.Config.Mw2eSecondaries, SND.Config.BO1_PISTOLS)
+
+SND.Config.Mw2eSpecial     = {} -- Launchers not included in requested packs or handled separately
 
 -- ── Default loadouts ──────────────────────────────────────────────────────
 SND.Config.DefaultLoadouts = {
 	attack = {
 		random_primary   = true, -- Only applies to bots
 		random_secondary = true, -- Only applies to bots
-		primary          = "iw4_m4a1",
-		secondary        = "iw4_deserteagle",
+		primary          = "arc9_mw3_m4a1",
+		secondary        = "arc9_mw3_usp",
 		lethal           = "weapon_frag",
 		tactical         = "",
 	},
 	defend = {
 		random_primary   = true, -- Only applies to bots
 		random_secondary = true, -- Only applies to bots
-		primary          = "iw4_ak47",
-		secondary        = "iw4_usp",
+		primary          = "arc9_bo1_ak47",
+		secondary        = "arc9_bo1_m1911",
 		lethal           = "weapon_frag",
 		tactical         = "",
 	},
@@ -208,7 +83,7 @@ SND.Config.SlotLevels = {
 -- ── Bot loadout pools (no snipers / riot shield — keeps AI sane) ──────────
 SND.Config.BotPrimaries = table.Copy(SND.Config.Mw2ePrimaries)
 -- Remove riot shield from bots to prevent AI navigation issues
-table.RemoveByValue(SND.Config.BotPrimaries, "iw4_riotshield")
+table.RemoveByValue(SND.Config.BotPrimaries, "arc9_mw3_riotshield")
 
 SND.Config.BotSecondaries = table.Copy(SND.Config.Mw2eSecondaries)
 
