@@ -217,8 +217,9 @@ function SND.Bots.CombatThink(bot, cmd)
 	local dt = now - (ai.recoilLastAt or now)
 	ai.recoilLastAt = now
 	local decay = 3.0 * dt
-	ai.recoilPitch = math.max(0, (ai.recoilPitch or 0) - decay)
-	ai.recoilYaw   = (ai.recoilYaw or 0) > 0 and math.max(0, ai.recoilYaw - decay) or math.min(0, ai.recoilYaw + decay)
+	local rPitch, rYaw = ai.recoilPitch or 0, ai.recoilYaw or 0
+	ai.recoilPitch = math.max(0, rPitch - decay)
+	ai.recoilYaw   = rYaw > 0 and math.max(0, rYaw - decay) or math.min(0, rYaw + decay)
 
 	-- 2. Target & Visibility
 	local target = SND.Bots.FindTarget(bot)
