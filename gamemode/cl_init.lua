@@ -1,5 +1,4 @@
 include("shared.lua")
-include("snd_bot_anim.lua")
 include("cl_hud.lua")
 include("snd_movement.lua")
 include("cl_crosshair_menu.lua")
@@ -370,4 +369,36 @@ end)
 
 concommand.Add("snd_open_settings", function()
 	SND.OpenSettingsMenu()
+end)
+
+-- ── Client-Side Animation & Pose Updates ──────────────────────────────────
+function SND.UpdatePoseParameters(ply, velocity)
+	local speed = velocity:Length()
+	local eye = ply:EyeAngles()
+	local body = ply:GetAngles()
+
+	if speed > 10 then
+		ply:SetPoseParameter("move_x", velocity:Dot(ply:GetForward()) / speed)
+		ply:SetPoseParameter("move_y", (velocity:Dot(ply:GetRight()) / speed) * -1)
+		ply:SetPoseParameter("move_yaw", math.NormalizeAngle(velocity:Angle().y - body.y))
+	else
+		ply:SetPoseParameter("move_x", 0); ply:SetPoseParameter("move_y", 0); ply:SetPoseParameter("move_yaw", 0)
+	end
+
+	local pitch = math.NormalizeAngle(eye.p)
+	local yaw = math.NormalizeAngle(eye.y - body.y)
+	ply:SetPoseParameter("aim_pitch", pitch); ply:SetPoseParameter("aim_yaw", yaw)
+	ply:SetPoseParameter("head_pitch", math.Clamp(pitch, -45, 45)); ply:SetPoseParameter("head_yaw", math.Clamp(yaw, -60, 60))
+	local leanTarget = (velocity:Dot(ply:GetRight()) / 350) * 25
+	ply:SetPoseParameter("body_yaw", Lerp(FrameTime() * 5, ply:GetPoseParameter("body_yaw") or 0, leanTarget))
+end
+
+hook.Add("UpdateAnimation", "SND_ClientAnims", function(ply, velocity, maxSeqGroundSpeed)
+	if not IsValid(ply) or not ply:Alive() then return end
+	if ply:IsBot() or ply:GetNWBool("SND_IsBot", false) then
+		local speed = velocity:Length2D()
+		local rate = math.Clamp(speed / math.max(maxSeqGroundSpeed, 1), 0.8, 1.4)
+		if speed < 10 then rate = 1 end; ply:SetPlaybackRate(rate)
+	end
+	SND.UpdatePoseParameters(ply, velocity)
 end)

@@ -10,7 +10,6 @@ AddCSLuaFile("cl_debug_menu.lua")     -- Debug UI
 AddCSLuaFile("cl_sites.lua")          -- 3D Objective Markers
 AddCSLuaFile("cl_mapvote.lua")        -- Map Vote UI
 AddCSLuaFile("snd_settings.lua")      -- Replicated ConVars
-AddCSLuaFile("snd_bot_anim.lua")      -- Animation Fixes
 AddCSLuaFile("snd_movement.lua")      -- Movement & Stamina logic
 AddCSLuaFile("snd_teams.lua")         -- Faction logic
 AddCSLuaFile("snd_bomb.lua")          -- Bomb logic
@@ -18,7 +17,6 @@ AddCSLuaFile("snd_round.lua")         -- Round manager
 
 include("shared.lua")
 include("snd_settings.lua")
-include("snd_bot_anim.lua") -- Load animation fixes early
 include("snd_teams.lua")
 include("snd_bomb.lua")
 include("snd_round.lua")

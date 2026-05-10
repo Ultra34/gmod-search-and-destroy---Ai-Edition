@@ -76,6 +76,17 @@ function SND.Bots.OnPlayerSpawn(ply)
 	SND.Teams.ApplyFactionModel(ply)
 	ply:SetNWBool("SND_IsBot", true)
 	ply.SND_AI = newAI()
+
+	-- Weapon Refresh for ARC9/CSS alignment
+	timer.Simple(0.25, function()
+		if not IsValid(ply) or not ply:Alive() then return end
+		local weps = ply:GetWeapons()
+		if #weps >= 2 then
+			local oldWep = ply:GetActiveWeapon()
+			ply:SelectWeapon(weps[2]:GetClass())
+			timer.Simple(0.1, function() if IsValid(ply) and IsValid(oldWep) then ply:SelectWeapon(oldWep:GetClass()) end end)
+		end
+	end)
 end
 
 function SND.Bots.EnsureCount()
@@ -133,6 +144,27 @@ end)
 
 hook.Add("Think", "SND_BotManager", function()
 	if CurTime() % 2 < 0.1 then SND.Bots.EnsureCount() end
+end)
+
+-- ── Server-Side Bot Rotation & Flinching ───────────────────────────────────
+hook.Add("Think", "SND_ServerBotAnims", function()
+	for _, bot in ipairs(player.GetAll()) do
+		if not bot.SND_IsBot or not bot:Alive() then continue end
+		local vel = bot:GetVelocity()
+		if vel:Length2D() > 5 then
+			local ang = bot:GetAngles()
+			ang.y = LerpAngle(FrameTime() * 5, ang, Angle(0, bot:EyeAngles().y, 0)).y
+			bot:SetAngles(Angle(0, ang.y, 0))
+		end
+	end
+end)
+
+hook.Add("EntityTakeDamage", "SND_BotDamageAnims", function(target)
+	if not IsValid(target) or not target.SND_IsBot or not target:Alive() then return end
+	if not target.SND_NextFlinch or CurTime() > target.SND_NextFlinch then
+		target:AnimRestartGesture(GESTURE_SLOT_FLINCH, ACT_FLINCH_PHYSICS, true)
+		target.SND_NextFlinch = CurTime() + 0.8
+	end
 end)
 
 print("[SND] Modular Bot System Loaded.")
