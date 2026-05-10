@@ -1,4 +1,3 @@
-```lua
 --[[
     SND Bot Animation Overhaul (v4 - CSS + ARC9 Integration)
     Fixes:
@@ -383,4 +382,3 @@ if CLIENT then
     end)
 
 end
-```
