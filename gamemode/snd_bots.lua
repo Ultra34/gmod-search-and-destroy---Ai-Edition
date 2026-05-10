@@ -62,6 +62,12 @@ local function newAI()
 		nextFireGesture = 0,
 
 		stuckPos      = Vector(0,0,0),
+		nextScan      = 0,
+		isScanning    = false,
+		scanOffset    = 0,
+		searchPoints  = {},
+		currentSearchIdx = 1,
+
 		stuckCheck    = 0,
 		stuckStartTime = 0,
 		nextShot      = 0,
