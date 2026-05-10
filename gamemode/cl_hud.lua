@@ -673,6 +673,16 @@ hook.Add("HUDPaint", "SND_HUD", function()
 	local lp = LocalPlayer()
 	if not IsValid(lp) then return end
 
+	-- Professional Defensive Check: Ensure animation buffers are always ready
+	SND.HUD = SND.HUD or {}
+	SND.HUD.LerpStamina = SND.HUD.LerpStamina or 1
+	SND.HUD.LerpHP      = SND.HUD.LerpHP or 100
+	SND.HUD.LerpScores  = SND.HUD.LerpScores or { [1] = 0, [2] = 0 }
+	SND.HUD.LerpBomb    = SND.HUD.LerpBomb or 0
+	SND.HUD.LerpXP      = SND.HUD.LerpXP or 0
+	SND.HUD.LerpFreeze  = SND.HUD.LerpFreeze or 0
+	SND.HUD.WepAlphas   = SND.HUD.WepAlphas or { pri = 80, sec = 80 }
+
 	local cv = GetConVar("snd_hud_scale")
 	local sc = math.Clamp(cv and cv:GetFloat() or 1, 0.75, 1.5)
 	local sw, sh = ScrW(), ScrH()
@@ -1216,6 +1226,10 @@ end)
 hook.Add("HUDPaint", "SND_BombProgressBar", function()
 	if BombProg.kind == 0 then return end
 	if not IsValid(BombProg.who) then BombProg.kind = 0 return end
+
+	-- Defensive Check for Bomb Bar
+	SND.HUD = SND.HUD or {}
+	SND.HUD.LerpBomb = SND.HUD.LerpBomb or 0
 
 	local elapsed  = CurTime() - BombProg.started
 	local targetFrac = math.Clamp(elapsed / math.max(BombProg.total, 0.01), 0, 1)
