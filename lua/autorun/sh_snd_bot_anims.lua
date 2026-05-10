@@ -3,7 +3,18 @@
 
 local function isLegacyRig(ply)
 	local mdl = string.lower(ply:GetModel() or "")
-	return mdl:find("/ct_", 1, true) or mdl:find("/t_", 1, true) or mdl:find("player/ct_", 1, true) or mdl:find("player/t_", 1, true)
+	local result = mdl:find("/ct_", 1, true) or mdl:find("/t_", 1, true) or mdl:find("player/ct_", 1, true) or mdl:find("player/t_", 1, true)
+
+	-- Debug check: Enable via 'snd_debug_mode 1' in console
+	local cv = GetConVar("snd_debug_mode")
+	if cv and cv:GetBool() and IsValid(ply) then
+		if ply._snd_anim_lastmdl ~= mdl then
+			ply._snd_anim_lastmdl = mdl
+			print(string.format("[SND_ANIM] Model Check: %s | Legacy: %s", mdl, result and "YES" or "NO"))
+		end
+	end
+
+	return result
 end
 
 local HOLD_SUFFIXES = {
@@ -93,7 +104,19 @@ end)
 -- ── Shared Playback & Pose Hook ────────────────────────────────────────────
 hook.Add("UpdateAnimation", "SND_SharedAnimLogic", function(ply, vel, maxSeqGroundSpeed)
 	if not IsValid(ply) or not ply:Alive() then return end
-	if not ply.SND_IsBot and not ply:IsBot() then return end
+
+	-- Use networked check to ensure client-side aiming logic runs for bots
+	local isBot = ply:IsBot() or ply:GetNWBool("SND_IsBot")
+	if not isBot then return end
+
+	-- Debug: Verify that the animation loop is actually running for this entity
+	if not ply._snd_anim_active then
+		local cv = GetConVar("snd_debug_mode")
+		if cv and cv:GetBool() then
+			print(string.format("[SND_ANIM] Animation Logic Active for Bot: %s", ply:Nick()))
+			ply._snd_anim_active = true
+		end
+	end
 
 	local speed = vel:Length2D()
 	if speed > 10 and maxSeqGroundSpeed > 0 then
