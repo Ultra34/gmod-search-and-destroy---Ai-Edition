@@ -151,3 +151,59 @@ hook.Add("TranslateActivity", "SND_BotAnimTranslate", function(ply, act)
 	-- Fallback chain to ensure the bot NEVER T-poses
 	return _G["ACT_HL2MP_" .. base .. "_AR2"] or _G["ACT_HL2MP_" .. base] or ACT_HL2MP_IDLE_AR2
 end)
+
+-- ── Shared Pose Parameter & Animation Scaling ──────────────────────────────
+-- Running this in a shared hook ensures Server hitboxes match Client visuals.
+function SND.UpdatePoseParameters(ply)
+	local velocity = ply:GetVelocity()
+	local speed = velocity:Length2D()
+	local eye = ply:EyeAngles()
+	local body = ply:GetAngles()
+	local maxSpd = math.max(ply:GetMaxSpeed(), 1)
+
+	-- 1. Movement Direction (Legs)
+	if speed > 1 then
+		local moveYaw = math.NormalizeAngle(velocity:Angle().y - body.y)
+		ply:SetPoseParameter("move_yaw", moveYaw)
+
+		-- Standard Move X/Y for non-CSS models
+		local fwd = ply:GetForward()
+		local rt = ply:GetRight()
+		ply:SetPoseParameter("move_x", velocity:Dot(fwd) / maxSpd)
+		ply:SetPoseParameter("move_y", -velocity:Dot(rt) / maxSpd)
+	else
+		ply:SetPoseParameter("move_yaw", 0)
+		ply:SetPoseParameter("move_x", 0)
+		ply:SetPoseParameter("move_y", 0)
+	end
+
+	-- 2. Aiming Logic (Head/Arms)
+	local pitch = math.NormalizeAngle(eye.p)
+	local yaw = math.NormalizeAngle(eye.y - body.y)
+
+	ply:SetPoseParameter("aim_pitch", math.Clamp(pitch, -90, 90))
+	ply:SetPoseParameter("aim_yaw", math.Clamp(yaw, -60, 60))
+	ply:SetPoseParameter("head_pitch", math.Clamp(pitch, -45, 45))
+	ply:SetPoseParameter("head_yaw", math.Clamp(yaw, -60, 60))
+
+	-- 3. Dynamic Leaning
+	local lean = (velocity:Dot(ply:GetRight()) / maxSpd) * 15
+	ply:SetPoseParameter("body_yaw", lean)
+
+	if CLIENT then ply:InvalidateBoneCache() end
+end
+
+hook.Add("UpdateAnimation", "SND_SharedAnimation", function(ply, velocity, maxSeqGroundSpeed)
+	if not IsValid(ply) or not ply:Alive() then return end
+
+	-- Prevent foot sliding by scaling playback rate to velocity
+	local speed = velocity:Length2D()
+	if speed > 10 and maxSeqGroundSpeed > 0 then
+		local playback = math.Clamp(speed / maxSeqGroundSpeed, 0.2, 2.0)
+		ply:SetPlaybackRate(playback)
+	else
+		ply:SetPlaybackRate(1.0)
+	end
+
+	SND.UpdatePoseParameters(ply)
+end)
