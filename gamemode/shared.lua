@@ -81,6 +81,8 @@ function SND.ResolveCSSActivity(ply, velocity)
 
 	if speed < 10 then
 		return ACT_MP_STAND_IDLE
+	elseif ply:IsSprinting() then
+		return ACT_MP_RUN
 	elseif speed < 150 then
 		return ACT_MP_WALK
 	else
@@ -103,7 +105,9 @@ hook.Add("TranslateActivity", "SND_BotAnimTranslate", function(ply, act)
 		[ACT_MP_RUN]         = "RUN",
 		[ACT_MP_CROUCH_IDLE] = "IDLE_CROUCH",
 		[ACT_MP_CROUCHWALK]  = "WALK_CROUCH",
-		[ACT_MP_JUMP]        = "JUMP"
+		[ACT_MP_JUMP]        = "JUMP",
+		[ACT_MP_SWIM]        = "SWIM",
+		[ACT_MP_ATTACK_STAND_PRIMARYFIRE] = "GESTURE_RANGE_ATTACK"
 	}
 	
 	local base = moveMap[act]
@@ -132,11 +136,17 @@ hook.Add("TranslateActivity", "SND_BotAnimTranslate", function(ply, act)
 	local suffix = holdToSuffix[hold] or "AR2"
 	local actName = "ACT_HL2MP_" .. base
 	
-	-- Constructed lookup: e.g., ACT_HL2MP_RUN_PISTOL
-	if suffix ~= "" then
+	-- Specific handling for gestures vs movement
+	if string.find(base, "GESTURE") then
+		actName = "ACT_HL2MP_" .. base .. "_" .. suffix
+	elseif suffix ~= "" then
 		actName = actName .. "_" .. suffix
 	end
 
 	-- Resolve from global table, with strict fallbacks to avoid T-posing
-	return _G[actName] or _G["ACT_HL2MP_" .. base .. "_AR2"] or _G["ACT_HL2MP_" .. base] or ACT_HL2MP_IDLE_AR2
+	local resolved = _G[actName]
+	if resolved then return resolved end
+
+	-- Fallback chain to ensure the bot NEVER T-poses
+	return _G["ACT_HL2MP_" .. base .. "_AR2"] or _G["ACT_HL2MP_" .. base] or ACT_HL2MP_IDLE_AR2
 end)
