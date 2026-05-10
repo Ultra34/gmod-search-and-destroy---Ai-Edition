@@ -372,18 +372,33 @@ concommand.Add("snd_open_settings", function()
 end)
 
 -- ── Client-Side Animation & Pose Updates ──────────────────────────────────
-function SND.UpdatePoseParameters(ply, velocity)
-	local speed = velocity:Length()
+function SND.UpdatePoseParameters(ply)
+	local velocity = ply:GetVelocity()
+	local speed = velocity:Length2D()
 	local eye = ply:EyeAngles()
-	local body = ply:GetRenderAngles() -- Sync parameters to the visible mesh, not the physics hull
+	local body = ply:GetAngles()
 
+	-- Movement Parameters (Legs)
+	if speed > 1 then
+		local fwd = ply:GetForward()
+		local rt = ply:GetRight()
+		local moveX = velocity:Dot(fwd) / ply:GetMaxSpeed()
+		local moveY = velocity:Dot(rt) / ply:GetMaxSpeed()
+		
+		ply:SetPoseParameter("move_x", moveX)
+		ply:SetPoseParameter("move_y", -moveY) -- Inverted for Source standard
+	else
+		ply:SetPoseParameter("move_x", 0)
+		ply:SetPoseParameter("move_y", 0)
+	end
+
+	-- Aim Parameters (Torso/Arms)
 	local pitch = math.NormalizeAngle(eye.p)
 	local yaw = math.NormalizeAngle(eye.y - body.y)
 
-	-- Clamping aim_yaw to 90 prevents the spine from snapping backward.
-	-- Using RenderAngles ensures the arms track precisely with the weapon model.
-	ply:SetPoseParameter("aim_pitch", math.Clamp(pitch, -90, 90))
-	ply:SetPoseParameter("aim_yaw", math.Clamp(yaw, -90, 90))
+	-- Clamping prevents the character from twisting into an impossible shape
+	ply:SetPoseParameter("aim_pitch", math.Clamp(pitch, -89, 89))
+	ply:SetPoseParameter("aim_yaw", math.Clamp(yaw, -55, 55)) -- Tightened clamp prevents arm break
 	ply:SetPoseParameter("head_pitch", math.Clamp(pitch, -45, 45)); ply:SetPoseParameter("head_yaw", math.Clamp(yaw, -60, 60))
 	local leanTarget = (velocity:Dot(ply:GetRight()) / 350) * 20
 	ply:SetPoseParameter("body_yaw", Lerp(FrameTime() * 10, ply:GetPoseParameter("body_yaw") or 0, leanTarget))
@@ -399,5 +414,5 @@ hook.Add("UpdateAnimation", "SND_ClientAnims", function(ply, velocity, maxSeqGro
 			ply:SetPlaybackRate(1.0)
 		end
 	end
-	SND.UpdatePoseParameters(ply, velocity)
+	SND.UpdatePoseParameters(ply)
 end)
