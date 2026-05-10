@@ -164,6 +164,7 @@ local C_PILL   = col( 35,  38,  48, 210) -- Slightly lighter for score backgroun
 -- Smooth Lerp Targets
 local lerpStamina = 1
 local lerpHP = 100
+local lerpXP = 0
 
 -- ── Rounded pill helper ───────────────────────────────────────────────────
 local function pill(x, y, w, h, c)
@@ -335,6 +336,9 @@ local function drawXPBar(sw, sh, sc, lp)
 	local xpInLevel = currentXP % 2000 -- Matches XP_PER_LEVEL in snd_levels.lua
 	local progress = xpInLevel / 2000
 
+	-- Smoothly transition the XP bar
+	lerpXP = Lerp(FrameTime() * 4, lerpXP, progress)
+
 	local w, h = 400 * sc, 10 * sc
 	local x, y = sw * 0.5 - w * 0.5, sh - 20 * sc
 
@@ -344,7 +348,7 @@ local function drawXPBar(sw, sh, sc, lp)
 
 	-- Fill
 	surface.SetDrawColor(255, 210, 50, 255)
-	surface.DrawRect(x, y, w * progress, h)
+	surface.DrawRect(x, y, w * lerpXP, h)
 
 	-- Label
 	draw.SimpleText("RANK " .. level .. " PROGRESS", "Trebuchet18", x, y - 15 * sc, Color(255, 210, 50, 200), TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
