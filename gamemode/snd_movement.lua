@@ -159,26 +159,6 @@ hook.Add("SetupMove", "SND_Movement", function(ply, mv, cmd)
 	mv:SetMaxSpeed(targetSpeed)
 end)
 
--- ── Air acceleration tweak ────────────────────────────────────────────────
-hook.Add("Move", "SND_AirAccel", function(ply, mv)
-	if not IsValid(ply) or not ply:Alive() then return end
-	if SND.Round.Phase == SND.PHASE_FREEZE then return end
-	if ply:IsOnGround() then return end
-
-	local scale   = SND.Settings.Get("air_accel_scale", 1.35)
-	local forward = mv:GetForwardSpeed()
-	local side    = mv:GetSideSpeed()
-	if forward == 0 and side == 0 then return end
-
-	local wish = (ply:GetForward() * forward + ply:GetRight() * side)
-	wish.z = 0
-	if wish:Length() > 0 then
-		wish:Normalize()
-		local vel = mv:GetVelocity() + wish * (FrameTime() * 45 * scale)
-		mv:SetVelocity(vel)
-	end
-end)
-
 -- ── Fall Feedback (Screen Shake / View Punch) ─────────────────────────────
 if SERVER then
 	hook.Add("OnPlayerHitGround", "SND_FallLandingEffects", function(ply, inWater, onFloater, speed)
@@ -230,3 +210,23 @@ if CLIENT then
         end
     end)
 end
+
+-- ── Air acceleration tweak ────────────────────────────────────────────────
+hook.Add("Move", "SND_AirAccel", function(ply, mv)
+	if not IsValid(ply) or not ply:Alive() then return end
+	if (SERVER and SND.Round.Phase == SND.PHASE_FREEZE) or (CLIENT and SND.Client.Phase == SND.PHASE_FREEZE) then return end
+	if ply:IsOnGround() then return end
+
+	local scale   = SND.Settings.Get("air_accel_scale", 1.35)
+	local forward = mv:GetForwardSpeed()
+	local side    = mv:GetSideSpeed()
+	if forward == 0 and side == 0 then return end
+
+	local wish = (ply:GetForward() * forward + ply:GetRight() * side)
+	wish.z = 0
+	if wish:Length() > 0 then
+		wish:Normalize()
+		local vel = mv:GetVelocity() + wish * (FrameTime() * 45 * scale)
+		mv:SetVelocity(vel)
+	end
+end)

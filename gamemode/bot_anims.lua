@@ -45,6 +45,10 @@ local function updatePoseParams(ply)
 		ply:SetPoseParameter("move_y", 0)
 	end
 
+	-- 3. Dynamic Leaning
+	local lean = (vel:Dot(ply:GetRight()) / maxSpd) * 15
+	ply:SetPoseParameter("body_yaw", lean)
+
 	if CLIENT then ply:InvalidateBoneCache() end
 end
 
