@@ -67,6 +67,17 @@ end
 hook.Add("TranslateActivity", "SND_BotAnimTranslate", function(ply, act)
     if not IsValid(ply) or not ply:Alive() or not isCSSModel(ply) then return end
 
+    -- FORCE CSS MOVEMENT: Prevent ARC9 from remapping base movement activities.
+    -- This ensures that Idle, Walk, Run, and Crouch use our CSS resolver logic.
+    if act == ACT_MP_STAND_IDLE or 
+       act == ACT_MP_WALK or 
+       act == ACT_MP_RUN or 
+       act == ACT_MP_CROUCH_IDLE or 
+       act == ACT_MP_CROUCHWALK or 
+       act == ACT_MP_JUMP then
+        return nil 
+    end
+
     local wep = ply:GetActiveWeapon()
     if IsValid(wep) and wep.TranslateActivity then
         local translated = wep:TranslateActivity(act)

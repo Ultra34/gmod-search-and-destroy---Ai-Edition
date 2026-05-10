@@ -74,6 +74,7 @@ end
 function SND.Bots.OnPlayerSpawn(ply)
 	if not ply.SND_IsBot then return end
 	SND.Teams.ApplyFactionModel(ply)
+	ply:SetNWBool("SND_IsBot", true)
 	ply.SND_AI = newAI()
 end
 
@@ -93,7 +94,6 @@ function SND.Bots.EnsureCount()
 		local bot = player.CreateNextBot("[BOT] " .. string.sub(rawName, 1, 25))
 		if IsValid(bot) then
 			bot.SND_IsBot = true
-			bot:SetNWBool("SND_IsBot", true)
 			bot.SND_AI = newAI()
 			
 			-- Forced Identity: Titles, Unified Background & Emblem

@@ -266,15 +266,22 @@ function SND.Bots.CombatThink(bot, cmd)
 			if mode == "bolt" then
 				ai.tapUntil = now + TAP_HOLD_BOLT
 				addRecoil(ai, wep, dist, skill)
+				if IsValid(wep) and wep.ARC9 then wep:PlayAnimation("fire") end
+				bot:SetAnimation(PLAYER_ATTACK1)
 			elseif mode == "semi" then
 				if now >= (ai.semiSettleUntil or 0) then
 					ai.tapUntil = now + TAP_HOLD_SEMI
 					addRecoil(ai, wep, dist, skill)
 					ai.semiSettleUntil = now + (SEMI_SETTLE[bucket] or 0.1)
+					if IsValid(wep) and wep.ARC9 then wep:PlayAnimation("fire") end
+					bot:SetAnimation(PLAYER_ATTACK1)
 				end
 			else
 				ai.wantAttack = true
 				addRecoil(ai, wep, dist, skill)
+				-- Trigger third-person attack gesture
+				if IsValid(wep) and wep.ARC9 then wep:PlayAnimation("fire") end
+				bot:SetAnimation(PLAYER_ATTACK1)
 			end
 		else
 			ai.wantAttack = false
@@ -314,6 +321,7 @@ function SND.Bots.WeaponCheck(bot, cmd)
 			local sw = bot:GetWeapon(sClass)
 			if IsValid(sw) and sw:Clip1() > 0 then
 				bot:SelectWeapon(sClass)
+				if sw.ARC9 then sw:Deploy() end
 				return
 			end
 		end
@@ -323,6 +331,7 @@ function SND.Bots.WeaponCheck(bot, cmd)
 	if max > 0 and bot:GetAmmoCount(wep:GetPrimaryAmmoType()) > 0 then
 		if clip <= 0 or (clip < max * 0.5 and ai.state ~= 2) then
 			cmd:SetButtons(bit.bor(cmd:GetButtons(), IN_RELOAD))
+			if wep.ARC9 then wep:Reload() end
 		end
 	end
 end
