@@ -77,11 +77,12 @@ function SND.Bots.OnPlayerSpawn(ply)
 	ply:SetNWBool("SND_IsBot", true)
 	ply.SND_AI = newAI()
 
-	-- Ensure weapon state is synchronized for animation resolution
+	-- Force holdtype update to prevent T-posing on initial spawn for CSS rigs
 	timer.Simple(0.1, function()
 		if IsValid(ply) and ply:Alive() then
 			local wep = ply:GetActiveWeapon()
 			if IsValid(wep) then
+				ply:SetupHands()
 				wep:SetHoldType(wep:GetHoldType())
 			end
 		end

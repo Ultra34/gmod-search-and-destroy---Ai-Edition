@@ -58,7 +58,8 @@ end
 -- ── Shared Animation Activity Resolution (CSS Models) ──────────────────────
 function SND.IsCSSModel(ply)
 	local model = string.lower(ply:GetModel() or "")
-	return string.find(model, "/ct_") or string.find(model, "/t_")
+	-- Catch standard CSS paths and common variations
+	return string.find(model, "/ct_") or string.find(model, "/t_") or string.find(model, "player/ct_") or string.find(model, "player/t_")
 end
 
 local holdTypeToSuffix = {
