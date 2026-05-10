@@ -387,7 +387,7 @@ function SND.UpdatePoseParameters(ply, velocity)
 
 	local pitch = math.NormalizeAngle(eye.p)
 	local yaw = math.NormalizeAngle(eye.y - body.y)
-	ply:SetPoseParameter("aim_pitch", pitch); ply:SetPoseParameter("aim_yaw", yaw)
+	ply:SetPoseParameter("aim_pitch", math.Clamp(pitch, -90, 90)); ply:SetPoseParameter("aim_yaw", math.Clamp(yaw, -90, 90))
 	ply:SetPoseParameter("head_pitch", math.Clamp(pitch, -45, 45)); ply:SetPoseParameter("head_yaw", math.Clamp(yaw, -60, 60))
 	local leanTarget = (velocity:Dot(ply:GetRight()) / 350) * 25
 	ply:SetPoseParameter("body_yaw", Lerp(FrameTime() * 5, ply:GetPoseParameter("body_yaw") or 0, leanTarget))

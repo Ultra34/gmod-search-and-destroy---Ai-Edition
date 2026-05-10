@@ -146,15 +146,86 @@ hook.Add("Think", "SND_BotManager", function()
 	if CurTime() % 2 < 0.1 then SND.Bots.EnsureCount() end
 end)
 
+-- ── Acoustic Awareness: Reacting to footsteps and gunshots ───────────────
+hook.Add("EntityEmitSound", "SND_BotHearing", function(t)
+	local src = t.Entity
+	if not IsValid(src) or not src:IsPlayer() or not src:Alive() then return end
+
+	local soundPos = t.Pos or src:GetPos()
+	local isGunshot = string.find(t.SoundName:lower(), "fire") or string.find(t.SoundName:lower(), "shoot")
+	local isFootstep = string.find(t.SoundName:lower(), "step")
+
+	-- Define hearing ranges
+	local range = 0
+	if isGunshot then range = 2500 end
+	if isFootstep then range = 500 end
+	if range == 0 then return end
+
+	for _, bot in ipairs(player.GetAll()) do
+		if not bot.SND_IsBot or not bot:Alive() or bot:Team() == src:Team() then continue end
+		
+		local ai = bot.SND_AI
+		if not ai or ai.state == 2 then continue end -- 2 = BS_ENGAGE
+
+		local dist = bot:GetPos():Distance(soundPos)
+		local skill = SND.Bots.GetSkill()
+		
+		-- High skill bots hear better and from further away
+		local modifiedRange = range * (0.5 + (SND.Bots.SkillT(skill)))
+
+		if dist < modifiedRange then
+			if not SND.Bots.CanSee(bot, src) then
+				ai.lastKnownPos = soundPos
+				ai.lastKnownTime = CurTime()
+				-- Mark for investigation in bot_think
+				ai.investigating = true
+			end
+		end
+	end
+end)
+
+-- ── Suppression: Reacting to bullets whizzing past ──────────────────────
+hook.Add("EntityFireBullets", "SND_BotSuppression", function(ent, data)
+	if not IsValid(ent) or not ent:IsPlayer() then return end
+
+	local src = data.Src
+	local dir = data.Dir
+	local dist = data.Distance or 4096
+
+	for _, bot in ipairs(player.GetAll()) do
+		if not bot.SND_IsBot or not bot:Alive() or bot:Team() == ent:Team() then continue end
+
+		local ai = bot.SND_AI
+		if not ai then continue end
+
+		local botPos = bot:WorldSpaceCenter()
+		local lineVec = botPos - src
+		local dot = lineVec:Dot(dir)
+
+		-- If bullet is flying towards or past the bot
+		if dot > 0 and dot < dist then
+			local closestPoint = src + dir * dot
+			local distToBullet = closestPoint:Distance(botPos)
+
+			if distToBullet < 80 then -- Bullet whizzed within 80 units
+				ai.suppressedEnd = CurTime() + math.Rand(0.8, 2.0)
+			end
+		end
+	end
+end)
+
 -- ── Server-Side Bot Rotation & Flinching ───────────────────────────────────
 hook.Add("Think", "SND_ServerBotAnims", function()
 	for _, bot in ipairs(player.GetAll()) do
 		if not bot.SND_IsBot or not bot:Alive() then continue end
-		local vel = bot:GetVelocity()
-		if vel:Length2D() > 5 then
-			local ang = bot:GetAngles()
-			ang.y = LerpAngle(FrameTime() * 5, ang, Angle(0, bot:EyeAngles().y, 0)).y
-			bot:SetAngles(Angle(0, ang.y, 0))
+		local eyeYaw = bot:EyeAngles().y
+		local bodyYaw = bot:GetAngles().y
+		local diff = math.abs(math.NormalizeAngle(eyeYaw - bodyYaw))
+
+		-- Rotate body if moving OR if looking too far to the side (prevents spine snapping)
+		if bot:GetVelocity():Length2D() > 5 or diff > 45 then
+			local targetAng = Angle(0, eyeYaw, 0)
+			bot:SetAngles(LerpAngle(FrameTime() * 15, bot:GetAngles(), targetAng))
 		end
 	end
 end)
