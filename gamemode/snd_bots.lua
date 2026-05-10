@@ -26,13 +26,18 @@ if SERVER then
 end
 
 -- ── Bot states ────────────────────────────────────────────────────────────
-local BS_IDLE   = 0
-local BS_PATROL = 1
-local BS_ENGAGE = 2
-local BS_CHASE  = 3
-local BS_PLANT  = 4
-local BS_DEFUSE = 5
-local BS_RELOAD = 6
+local BS_IDLE        = 0
+local BS_PATROL      = 1
+local BS_ENGAGE      = 2
+local BS_CHASE       = 3
+local BS_PLANT       = 4
+local BS_DEFUSE      = 5
+local BS_RELOAD      = 6
+local BS_INVESTIGATE = 7
+local BS_SEARCH      = 8
+local BS_RECOVER     = 9
+local BS_FOLLOW      = 10
+local BS_GRENADE     = 11
 
 -- ── Skill 1-10 → internal float helpers ──────────────────────────────────
 local function skillT(s)       return (math.Clamp(s, 1, 10) - 1) / 9 end
@@ -350,22 +355,12 @@ local function moveToward(bot, cmd, targetPos, speed)
 		ai.lastPathGoal = targetPos
 	end
 
-	-- If the path remains invalid (blocked or no route), halt movement entirely.
-	if not ai.path:IsValid() then
-		cmd:ClearMovement()
-		return myPos:Distance(targetPos)
 	local moveDest = targetPos
 	if ai.path:IsValid() then
 		ai.path:Update(bot)
 		local segments = ai.path:GetAllSegments()
 		moveDest = (segments and #segments > 1) and segments[2].pos or targetPos
 	end
-
-	ai.path:Update(bot)
-
-	-- Determine the next segment to follow on the NavMesh
-	local segments = ai.path:GetAllSegments()
-	local moveDest = (segments and #segments > 1) and segments[2].pos or targetPos
 
 	-- Proactive Wall Detection & Obstacle Avoidance
 	local eyePos = bot:EyePos()
