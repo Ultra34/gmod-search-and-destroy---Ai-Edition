@@ -126,10 +126,11 @@ hook.Add("TranslateActivity", "SND_BotAnimTranslate", function(ply, act)
 	
 	-- Comprehensive holdtype to Suffix mapping for legacy CSS rigs
 	local holdToSuffix = {
-		["pistol"] = "PISTOL", ["revolver"] = "REVOLVER", ["smg"] = "SMG1", ["smg1"] = "SMG1",
+		["pistol"] = "PISTOL", ["revolver"] = "REVOLVER", ["smg"] = "SMG1", ["smg1"] = "SMG1", ["smg2"] = "SMG1",
 		["ar2"] = "AR2", ["rpg"] = "RPG", ["physgun"] = "AR2", ["shotgun"] = "SHOTGUN",
 		["melee"] = "MELEE", ["melee2"] = "MELEE", ["fist"] = "FIST", ["knife"] = "KNIFE",
-		["grenade"] = "GRENADE", ["slam"] = "SLAM", ["duel"] = "PISTOL",
+		["grenade"] = "GRENADE", ["slam"] = "SLAM", ["duel"] = "PISTOL", ["revolver"] = "REVOLVER",
+		["rpg7"] = "RPG", ["crossbow"] = "AR2", ["magic"] = "",
 		["passive"] = "", ["normal"] = "", ["camera"] = "", ["magic"] = ""
 	}
 

@@ -12,6 +12,15 @@ function SND.Movement.Setup(ply)
 	ply.SND_Sprinting = false
 end
 
+if CLIENT then
+	SND.AutoRunActive = false
+	concommand.Add("snd_autorun", function()
+		SND.AutoRunActive = not SND.AutoRunActive
+		local status = SND.AutoRunActive and "ENABLED" or "DISABLED"
+		chat.AddText(Color(255, 120, 0), "[SND] ", Color(255, 255, 255), "Auto-Run: " .. status)
+	end)
+end
+
 hook.Add("StartCommand", "SND_FreezeInput", function(ply, cmd)
 	if not IsValid(ply) or not ply:Alive() then return end
 
@@ -27,6 +36,15 @@ hook.Add("StartCommand", "SND_FreezeInput", function(ply, cmd)
 	-- Quick Throw: Force the attack button if the server-side logic requested it
 	if ply.SND_ForceAttackGrenade then
 		cmd:SetButtons(bit.bor(cmd:GetButtons(), IN_ATTACK))
+	end
+
+	-- Auto-Run logic: Inject forward movement when enabled.
+	if CLIENT and SND.AutoRunActive and ply == LocalPlayer() then
+		if cmd:KeyDown(IN_BACK) then
+			SND.AutoRunActive = false -- Cancel autorun if moving backward manually
+		elseif phase == SND.PHASE_LIVE or phase == SND.PHASE_DEBUG then
+			cmd:SetForwardMove(ply:GetMaxSpeed())
+		end
 	end
 
 	-- Prevent sprinting if exhausted
