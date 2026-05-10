@@ -263,37 +263,37 @@ function SND.Bots.CombatThink(bot, cmd)
 			aligned = ai.aimAngles:Forward():Dot(toTgt) > (AIM_THRESH[bucket] or 0.93)
 		end
 
-		if aligned and now >= nextFire then
-			if mode == "bolt" then
-				ai.tapUntil = now + TAP_HOLD_BOLT
-				addRecoil(ai, wep, dist, skill)
-				if IsValid(wep) and wep.ARC9 then wep:PlayAnimation("fire") end
-				bot:DoAnimationEvent(PLAYERANIMEVENT_ATTACK_PRIMARY)
-			elseif mode == "semi" then
-				if now >= (ai.semiSettleUntil or 0) then
-					ai.tapUntil = now + TAP_HOLD_SEMI
-					addRecoil(ai, wep, dist, skill)
-					ai.semiSettleUntil = now + (SEMI_SETTLE[bucket] or 0.1)
-					if IsValid(wep) and wep.ARC9 then wep:PlayAnimation("fire") end
-					bot:DoAnimationEvent(PLAYERANIMEVENT_ATTACK_PRIMARY)
-				end
-			else
-				ai.wantAttack = true
-				addRecoil(ai, wep, dist, skill)
-				if IsValid(wep) and wep.ARC9 then
-					if now >= (ai.nextAutoAnimAt or 0) then
-						bot:DoAnimationEvent(PLAYERANIMEVENT_ATTACK_PRIMARY)
-						wep:PlayAnimation("fire")
-						local delay = (wep.Primary and wep.Primary.Delay) or 0.1
-						ai.nextAutoAnimAt = now + math.max(delay, 0.15)
-					end
-				else
-					bot:SetAnimation(PLAYER_ATTACK1)
-				end
-			end
+		ai.wantAttack = aligned and (now >= nextFire)
+	end
+
+	-- Suppression overrides (LMG Suppression)
+	if not canSee and now < (ai.suppressUntil or 0) and ai.suppressPos then
+		ai.wantAttack = true
+	end
+
+	-- ── Centralized Firing Animation Trigger ──
+	if ai.wantAttack and now >= nextFire then
+		local wep = bot:GetActiveWeapon()
+		local mode = getFireMode(wep)
+		addRecoil(ai, wep, bot:GetPos():Distance(ai.target:GetPos()), bucket)
+
+		if mode == "bolt" or mode == "semi" then
+			ai.tapUntil = now + (mode == "bolt" and TAP_HOLD_BOLT or TAP_HOLD_SEMI)
+			if mode == "semi" then ai.semiSettleUntil = now + (SEMI_SETTLE[bucket] or 0.1) end
+			bot:DoAnimationEvent(PLAYERANIMEVENT_ATTACK_PRIMARY)
+			if IsValid(wep) and wep.ARC9 then wep:PlayAnimation("fire") end
 		else
-			ai.wantAttack = false
+			-- Automatic / Burst
+			if now >= (ai.nextAutoAnimAt or 0) then
+				bot:DoAnimationEvent(PLAYERANIMEVENT_ATTACK_PRIMARY)
+				if IsValid(wep) and wep.ARC9 then wep:PlayAnimation("fire") end
+				local delay = (wep and wep.Primary and wep.Primary.Delay) or 0.1
+				ai.nextAutoAnimAt = now + math.max(delay, 0.12)
+			end
 		end
+	end
+
+	if not ai.wantAttack then ai.wantAttack = false end
 
 		-- Suppression Setup (LMGs)
 		if wep:GetClass():find("_lm_", 1, true) and dist > SUPPRESS_MIN and dist < SUPPRESS_MAX then

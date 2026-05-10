@@ -14,6 +14,40 @@ local HOLD_SUFFIXES = {
 	knife = "KNIFE", fist = "FIST", grenade = "GRENADE", slam = "SLAM", passive = ""
 }
 
+-- ── Shared Pose Update (Essential for legacy rigs) ─────────────────────────
+local function updatePoseParams(ply)
+	local vel = ply:GetVelocity()
+	local speed = vel:Length2D()
+	local maxSpd = math.max(ply:GetMaxSpeed(), 1)
+	local angles = ply:GetAngles()
+	local eye = ply:EyeAngles()
+
+	-- 1. Aiming (Arms/Head)
+	local pitch = math.NormalizeAngle(eye.p)
+	local yaw = math.NormalizeAngle(eye.y - angles.y)
+	ply:SetPoseParameter("aim_pitch", math.Clamp(pitch, -90, 90))
+	ply:SetPoseParameter("aim_yaw", math.Clamp(yaw, -60, 60))
+	ply:SetPoseParameter("head_pitch", math.Clamp(pitch, -45, 45))
+	ply:SetPoseParameter("head_yaw", math.Clamp(yaw, -60, 60))
+
+	-- 2. Directional blending (Legs)
+	if speed > 10 then
+		local moveYaw = math.NormalizeAngle(vel:Angle().y - angles.y)
+		ply:SetPoseParameter("move_yaw", moveYaw)
+		
+		local fwd = ply:GetForward()
+		local rt = ply:GetRight()
+		ply:SetPoseParameter("move_x", vel:Dot(fwd) / maxSpd)
+		ply:SetPoseParameter("move_y", -vel:Dot(rt) / maxSpd)
+	else
+		ply:SetPoseParameter("move_yaw", 0)
+		ply:SetPoseParameter("move_x", 0)
+		ply:SetPoseParameter("move_y", 0)
+	end
+
+	if CLIENT then ply:InvalidateBoneCache() end
+end
+
 -- ── Movement Activity Translation (Shared) ─────────────────────────────────
 hook.Add("TranslateActivity", "SND_LegacyAnimationFix", function(ply, act)
 	if not IsValid(ply) or not ply:Alive() or not isLegacyRig(ply) then return end
@@ -26,8 +60,7 @@ hook.Add("TranslateActivity", "SND_LegacyAnimationFix", function(ply, act)
 		[ACT_MP_CROUCH_IDLE] = "IDLE_CROUCH",
 		[ACT_MP_CROUCHWALK]  = "WALK_CROUCH",
 		[ACT_MP_JUMP]        = "JUMP",
-		[ACT_MP_SWIM]        = "SWIM",
-		[ACT_MP_ATTACK_STAND_PRIMARYFIRE] = "GESTURE_RANGE_ATTACK"
+		[ACT_MP_SWIM]        = "SWIM"
 	}
 
 	local base = map[act]
@@ -67,29 +100,22 @@ hook.Add("DoAnimationEvent", "SND_LegacyGestureHandler", function(ply, event, da
 	end
 end)
 
+-- ── Shared Playback & Pose Hook ────────────────────────────────────────────
+hook.Add("UpdateAnimation", "SND_SharedAnimLogic", function(ply, vel, maxSeqGroundSpeed)
+	if not IsValid(ply) or not ply:Alive() then return end
+	
+	local speed = vel:Length2D()
+	if speed > 10 and maxSeqGroundSpeed > 0 then
+		ply:SetPlaybackRate(math.Clamp(speed / maxSeqGroundSpeed, 0.2, 2.0))
+	else
+		ply:SetPlaybackRate(1.0)
+	end
+
+	updatePoseParams(ply)
+end)
+
 -- ── Orientation & Reactions (Server) ───────────────────────────────────────
 if SERVER then
-	-- Procedural rotation to prevent "moonwalking" for Bots
-	hook.Add("Think", "SND_BotOrientationController", function()
-		for _, bot in ipairs(player.GetAll()) do
-			if not bot.SND_IsBot or not bot:Alive() then continue end
-
-			local vel = bot:GetVelocity()
-			local speed = vel:Length2D()
-			local angles = bot:GetAngles()
-			local eyeYaw = bot:EyeAngles().y
-
-			if speed > 15 then
-				bot:SetAngles(Angle(0, vel:Angle().y, 0))
-			else
-				local diff = math.NormalizeAngle(eyeYaw - angles.y)
-				if math.abs(diff) > 40 then
-					angles.y = LerpAngle(FrameTime() * 15, angles, Angle(0, eyeYaw, 0)).y
-					bot:SetAngles(angles)
-				end
-			end
-		end
-	end)
 
 	-- Shared reaction/flinch animations
 	hook.Add("EntityTakeDamage", "SND_BotReactionHandler", function(target, dmg)
