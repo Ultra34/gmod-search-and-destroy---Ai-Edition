@@ -100,9 +100,9 @@ ttt_rust_v2c
 
 ### Step 4 — Workshop addons
 
-1. Subscribe to **TFA Base**.
-2. Subscribe to **[TFA][AT] Call of Duty: Modern Warfare 2 Weapons Pack**.
-3. Enable both addons in the GMod Addons menu.
+1. Subscribe to **ARC9 Base**.
+2. Subscribe to **[ARC9] Black Ops Classic** and **[ARC9] Modern Warfare Classic**.
+3. Enable the addons in the GMod Addons menu.
 
 ### Step 5 — Launch
 
