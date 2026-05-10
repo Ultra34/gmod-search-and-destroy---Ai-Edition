@@ -323,5 +323,5 @@ if SERVER then
 	CreateConVar("snd_loadout_attack_sec", "", FCVAR_ARCHIVE)
 	CreateConVar("snd_loadout_defend_pri", "", FCVAR_ARCHIVE)
 	CreateConVar("snd_loadout_defend_sec", "", FCVAR_ARCHIVE)
---[[ TFA MW2 Extended loadouts — respects gun-picker choice, then ConVars, then random pool ]]
+--[[ ARC9 MW2 Extended loadouts — respects gun-picker choice, then ConVars, then random pool ]]
 end

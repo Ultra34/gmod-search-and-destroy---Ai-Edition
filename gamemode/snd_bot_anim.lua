@@ -61,7 +61,7 @@ local function resolveCSSActivity(ply, velocity)
 end
 
 -- ── 1. TranslateActivity — weapon overrides only ──────────────────────────
--- FIX: This hook is now ONLY for TFA/ARC9 weapons that supply their own
+-- FIX: This hook is now ONLY for ARC9 weapons that supply their own
 -- activity. All standard movement translation was moved into resolveCSSActivity.
 -- This prevents any ordering issue between the two hooks from breaking things.
 hook.Add("TranslateActivity", "SND_BotAnimTranslate", function(ply, act)

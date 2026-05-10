@@ -421,13 +421,13 @@ local function drawWeaponInventory(sw, sh, sc, lp)
 		if SND.GunPicker and SND.GunPicker.GetFriendlyName then
 			return SND.GunPicker.GetFriendlyName(class):upper()
 		end
-		return class:gsub("iw[345]_", ""):upper()
+		return class:gsub("arc9_.-_", ""):upper()
 	end
 
 	-- Helper to draw weapon icon
 	local function drawIcon(class, label, iconX, iconY, alpha)
 		local wep = lp:GetWeapon(class)
-		local icon = IsValid(wep) and (wep.WepIcon or wep.Icon)
+		local icon = IsValid(wep) and wep.Icon
 		if icon then
 			local mat = (type(icon) == "string") and SND.GetIMaterial(icon) or icon
 			if not mat or type(mat) ~= "IMaterial" or mat:IsError() then return end

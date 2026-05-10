@@ -12,7 +12,7 @@ TABLE OF CONTENTS
   3. Locate your Garry's Mod directory
   4. PART A — Install the gamemode (required)
   5. PART B — Install data files (strongly recommended)
-  6. PART C — Workshop: ARC9 and MW2 weapon packs
+  6. PART C — Workshop: ARC9 weapon packs
   7. First launch — listen server (single PC / host)
   8. First launch — dedicated server (short overview)
   9. Tutorial: How a round works (bomb, teams, spectate)
@@ -37,7 +37,7 @@ This is a Garry's Mod GAMEMODE (not a simple Workshop Lua addon). It replaces
 normal Sandbox rules with a Call of Duty-style Search & Destroy loop:
 
   - Two teams (attackers / defenders), bomb plant/defuse, one life per round.
-  - Loadouts use ARC9 "MW2 Extended" class names (arc9_mw2e_*) from pools in
+  - Loadouts use ARC9 Call of Duty class names from pools in
     gamemode/snd_config.lua unless you override them.
   - Optional map voting, team-only spectating, Lua bots, and optional Rust
     map auto-layout (ttt_rust_v1a).
@@ -57,10 +57,9 @@ HARD REQUIREMENTS
 
 SOFT REQUIREMENTS (for intended gameplay)
 -----------------------------------------
-  - ARC9 base (Workshop) and an ARC9 MW2 Extended weapon collection that
-    actually registers the SWEP classes listed in snd_config.lua
-    (e.g. arc9_mw2e_m4a1). If a class is wrong for your pack, the server will
-    print a missing-weapon message when giving loadouts.
+  - ARC9 base (Workshop) and ARC9 Call of Duty weapon collections that
+    register the SWEP classes listed in snd_config.lua. If a class is missing, 
+    the server will alert you when giving loadouts.
 
 OPTIONAL
 --------
@@ -165,13 +164,12 @@ WHY THIS MATTERS
 
 
 ================================================================================
- 6. PART C — WORKSHOP: ARC9 AND MW2 WEAPON PACKS
+ 6. PART C — WORKSHOP: ARC9 WEAPON PACKS
 ================================================================================
 
 STEP 1 — Subscribe to ARC9 (and dependencies the ARC9 page lists).
 
-STEP 2 — Subscribe to your ARC9 MW2 Extended / compatible weapon pack that
-         provides classes like arc9_mw2e_m4a1.
+STEP 2 — Subscribe to the ARC9 Black Ops, Modern Warfare, and WaW Classic packs.
 
 STEP 3 — Enable addons in the GMod menu (Addons → filter enabled).
 
@@ -180,7 +178,7 @@ STEP 4 — VERIFY CLASS NAMES (important tutorial step)
   Wrong class names are the #1 support issue.
 
   On a local listen server, after subscribing:
-    - Open spawn menu → Weapons → find your MW2 pack weapons.
+    - Open spawn menu → Weapons → find your ARC9 CoD weapons.
     - Or run (client console) something that prints the weapon class of the
       SWEP you are holding (many packs show class in spawn icon tooltip).
 
@@ -193,7 +191,7 @@ STEP 4 — VERIFY CLASS NAMES (important tutorial step)
     SND.Config.Mw2eSecondaries
     SND.Config.Mw2eSpecial   (launchers — not given on spawn by default)
 
-  If your pack renames a gun (e.g. typo arc9_mw2e_m4a1 vs arc9_mw2_m4a1),
+  If your pack renames a gun,
   either edit snd_config.lua on the server OR override via loadouts.lua /
   ConVars (see sections 11–12).
 

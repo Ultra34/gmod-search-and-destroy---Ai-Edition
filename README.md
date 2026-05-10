@@ -50,17 +50,15 @@ One life per round, bomb plant and defuse, team scoring, visual map voting, Lua-
 | Requirement | Notes |
 |---|---|
 | Garry's Mod (Steam) | Updated to the current branch |
-| **[TFA] Call of Duty World at War SWEPs** | Workshop — provides `robotnik_waw_*` classes |
-| **[TFA][AT] CoD Black Ops SWEPs Pack** | Workshop — provides `robotnik_bo1_*` classes |
-| **[TFA][AT] CoD Black Ops II SWEPs** | Workshop — provides `mac_bo2_*` classes |
-| **[TFA][AT] Call of Duty 4: Modern Warfare Weapons Pack** | Workshop — provides all `iw3_*` SWEP classes |
-| **[TFA][AT] Call of Duty: Modern Warfare 2 Weapons Pack** | Workshop — provides all `iw4_*` SWEP classes |
-| **[TFA][AT] Call of Duty: Modern Warfare 3 Weapons Pack** | Workshop — provides all `iw5_*` SWEP classes |
-| **TFA Base** | Required by the weapon pack above |
+| **[ARC9] Black Ops Classic** | Workshop — provides `arc9_bo1_*` classes |
+| **[ARC9] Black Ops II** | Workshop — provides `arc9_bo2_*` classes |
+| **[ARC9] World at War** | Workshop — provides `arc9_waw_*` classes |
+| **[ARC9] Modern Warfare Classic** | Workshop — provides `arc9_mw3_*` classes |
+| **ARC9 Base** | Required by all weapon packs above |
 | Counter-Strike: Source (mounted) | CSS player models and bomb sounds (`c4_plant.wav`, `c4_beep1.wav`, etc.) |
 
 > If CS:S is not mounted, player models will show as ERROR and bomb sounds will be silent.
-> Subscribe to TFA Base **before** the weapon packs or weapons will not register.
+> Subscribe to ARC9 Base **before** the weapon packs or weapons will not register.
 
 ---
 
@@ -119,36 +117,14 @@ Or select the gamemode from the **Create Game** menu.
 
 ## Weapon Classes
 
-All weapons use the `iw4_` prefix from the TFA MW2 pack.
-
-The gamemode supports weapons from CoD4 (IW3), MW2 (IW4), and MW3 (IW5) TFA packs.
+The gamemode is designed for ARC9 weapon packs using classic Call of Duty prefixes.
 
 | Game | Category | Classes (Examples) |
 |---|---|---|
-| **WaW (Robotnik)** | Rifles / SMGs | `robotnik_waw_stg` `robotnik_waw_mp40` |
-| | Special | `robotnik_waw_rg` (Ray Gun) |
-| **Black Ops (Robotnik)** | ARs / SMGs | `robotnik_bo1_ak47` `robotnik_bo1_74u` |
-| | Special | `robotnik_bo1_dm` (Death Machine) |
-| **Black Ops II ([MAC])** | ARs / SMGs | `mac_bo2_an94` `mac_bo2_mp7` |
-| | Special | `mac_bo2_warmach` (War Machine) |
-| **CoD4 (IW3)** | Assault Rifles | `iw3_ak47` `iw3_m16a4` `iw3_g36c` |
-| | SMGs | `iw3_mp5` `iw3_p90` `iw3_ak74u` |
-| | Sniper Rifles | `iw3_barrett` `iw3_m40a3` `iw3_dragunov` |
-| | LMGs & Shotguns | `iw3_m249` `iw3_m1014` |
-| | Pistols | `iw3_usp` `iw3_deserteagle` |
-| | Launchers | `iw3_at4` `iw3_rpg` |
-| **MW2 (IW4)** | Assault Rifles | `iw4_acr` `iw4_m4a1` `iw4_famas` |
-| | SMGs | `iw4_mp5` `iw4_vector` `iw4_ump45` |
-| | Sniper Rifles | `iw4_barrett` `iw4_cheytac` `iw4_wa2000` |
-| | LMGs & Shotguns | `iw4_rpd` `iw4_aa12` `iw4_spas12` |
-| | Pistols | `iw4_anaconda` `iw4_glock` `iw4_usp` |
-| | Launchers | `iw4_at4` `iw4_javelin` `iw4_rpg` |
-| **MW3 (IW5)** | Assault Rifles | `iw5_acr` `iw5_m4a1` `iw5_scar` |
-| | SMGs | `iw5_mp7` `iw5_p90` `iw5_ump45` |
-| | Sniper Rifles | `iw5_msr` `iw5_barrett` `iw5_as50` |
-| | LMGs & Shotguns | `iw5_mk46` `iw5_striker` |
-| | Pistols | `iw5_anaconda` `iw5_fmg9` `iw5_usp` |
-| | Launchers | `iw5_xm25` `iw5_stinger` `iw5_rpg` |
+| **Black Ops Classic** | AR / SMG | `arc9_bo1_ultimate_ak`, `arc9_bo1_mp5k` |
+| **Black Ops II** | AR / SMG | `arc9_bo2_an94`, `arc9_bo2_scorpion` |
+| **World at War** | Rifles / LMG | `arc9_waw_stg44`, `arc9_waw_mg42` |
+| **MW Classic** | AR / SMG | `arc9_mw3_acr`, `arc9_mw3_mp7` |
 
 Launchers are in `SND.Config.Mw2eSpecial` and are **not** given on spawn by default. Wire them to pickups or a data loadout if wanted.
 

@@ -286,6 +286,12 @@ local function getWeaponModel(class)
 	return swep and swep.WorldModel or "models/weapons/w_pist_usp.mdl"
 end
 
+-- Helper to get the ARC9 icon for a weapon class
+local function getWeaponIcon(class)
+	local swep = weapons.Get(class)
+	return swep and swep.Icon
+end
+
 function SND.GunPicker.GetFriendlyName(class)
 	return DISPLAY_NAMES[class] or class
 end
@@ -435,21 +441,36 @@ function SND.GunPicker.Open()
 
 			for _, class in ipairs(pool) do
 				local wrapper = grid:Add("DPanel") -- Add a DPanel wrapper to the layout
-				wrapper:SetSize(64 * sc, 64 * sc) -- Match the size of the SpawnIcon
+				wrapper:SetSize(110 * sc, 64 * sc) -- Wider slots to accommodate 2:1 weapon icons
 				wrapper.Paint = function(self, w, h)
 					if data[slotKey] == class then
 						draw.RoundedBox(0, 0, 0, w, h, Color(255, 120, 0, 150)) -- Draw background on the wrapper
 					end
 				end
 
-				local icon = vgui.Create("SpawnIcon", wrapper) -- Create SpawnIcon inside the wrapper
-				icon:SetModel(getWeaponModel(class))
-				icon:SetTooltip(SND.GunPicker.GetFriendlyName(class))
-				icon:SetSize(64 * sc, 64 * sc)
-				icon:Dock(FILL) -- Make SpawnIcon fill the wrapper
+				local btn = vgui.Create("DButton", wrapper)
+				btn:Dock(FILL)
+				btn:SetText("")
+				btn:SetTooltip(SND.GunPicker.GetFriendlyName(class))
 
-				-- SpawnIcons handle their own mouse events, so we must use icon.DoClick
-				icon.DoClick = function()
+				local iconMat = getWeaponIcon(class)
+
+				btn.Paint = function(self, w, h)
+					if iconMat then
+						local mat = (type(iconMat) == "string") and SND.GetIMaterial(iconMat) or iconMat
+						if mat and not mat:IsError() then
+							surface.SetMaterial(mat)
+							-- Highlight icon on hover
+							surface.SetDrawColor(255, 255, 255, self:IsHovered() and 255 or 180)
+							-- Draw centered with a 2:1 aspect ratio
+							surface.DrawTexturedRect(5 * sc, h/2 - 25 * sc, w - 10 * sc, 50 * sc)
+						end
+					else
+						draw.SimpleText("?", "DermaDefault", w/2, h/2, Color(100, 100, 100), 1, 1)
+					end
+				end
+
+				btn.DoClick = function()
 					net.Start("SND_GunPickerChoose")
 						net.WriteString(slotKey)
 						net.WriteString(class)
