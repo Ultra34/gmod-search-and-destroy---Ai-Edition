@@ -424,32 +424,17 @@ local function drawWeaponInventory(sw, sh, sc, lp)
 		return class:gsub("arc9_.-_", ""):upper()
 	end
 
-	-- Helper to draw weapon icon
-	local function drawIcon(class, label, iconX, iconY, alpha)
-		local wep = lp:GetWeapon(class) or weapons.Get(class)
-		if wep then
-			local icon = Material(wep.Icon or "entities/weapon_ar2.png", "smooth mips")
-			surface.SetFont("Trebuchet24")
-			local tw, _ = surface.GetTextSize(label)
-			surface.SetMaterial(icon)
-			surface.SetDrawColor(255, 255, 255, alpha)
-			surface.DrawTexturedRect(iconX - tw - 110 * sc, iconY - 35 * sc, 100 * sc, 50 * sc)
-		end
-	end
-
 	-- Secondary
 	local sName = "2: " .. cleanName(sec)
 	local secCol = (activeClass == sec) and C_WHITE or C_DIM
 	local secAlpha = (activeClass == sec) and 255 or 80
 	draw.SimpleText(sName, "Trebuchet24", x, y, col(secCol.r, secCol.g, secCol.b, 200), TEXT_ALIGN_RIGHT, TEXT_ALIGN_BOTTOM)
-	drawIcon(sec, sName, x, y, secAlpha)
 
 	-- Primary
 	local pName = "1: " .. cleanName(pri)
 	local priCol = (activeClass == pri) and C_WHITE or C_DIM
 	local priAlpha = (activeClass == pri) and 255 or 80
 	draw.SimpleText(pName, "Trebuchet24", x, y - 40 * sc, col(priCol.r, priCol.g, priCol.b, 200), TEXT_ALIGN_RIGHT, TEXT_ALIGN_BOTTOM)
-	drawIcon(pri, pName, x, y - 40 * sc, priAlpha)
 end
 
 -- ── Ammo Counter HUD ─────────────────────────────────────────────────────
