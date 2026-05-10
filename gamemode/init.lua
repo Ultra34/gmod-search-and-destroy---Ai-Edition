@@ -14,6 +14,7 @@ AddCSLuaFile("snd_movement.lua")      -- Movement & Stamina logic
 AddCSLuaFile("snd_teams.lua")         -- Faction logic
 AddCSLuaFile("snd_bomb.lua")          -- Bomb logic
 AddCSLuaFile("snd_round.lua")         -- Round manager
+AddCSLuaFile("bot_anims.lua")         -- Animation system
 
 include("shared.lua")
 include("snd_settings.lua")
@@ -25,6 +26,7 @@ include("snd_loadout.lua")
 include("snd_mapvote.lua")
 include("snd_announcer.lua")
 include("bot_core.lua")
+include("bot_anims.lua")
 include("snd_spawns.lua")
 include("snd_rust.lua")
 include("snd_spectate.lua")

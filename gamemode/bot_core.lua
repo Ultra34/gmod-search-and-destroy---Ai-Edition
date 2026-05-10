@@ -77,16 +77,6 @@ function SND.Bots.OnPlayerSpawn(ply)
 	ply:SetNWBool("SND_IsBot", true)
 	ply.SND_AI = newAI()
 
-	-- Force holdtype update to prevent T-posing on initial spawn for CSS rigs
-	timer.Simple(0.1, function()
-		if IsValid(ply) and ply:Alive() then
-			local wep = ply:GetActiveWeapon()
-			if IsValid(wep) then
-				ply:SetupHands()
-				wep:SetHoldType(wep:GetHoldType())
-			end
-		end
-	end)
 end
 
 function SND.Bots.EnsureCount()
@@ -214,43 +204,6 @@ hook.Add("EntityFireBullets", "SND_BotSuppression", function(ent, data)
 				ai.suppressedEnd = CurTime() + math.Rand(0.8, 2.0)
 			end
 		end
-	end
-end)
-
--- ── Server-Side Bot Rotation & Flinching ───────────────────────────────────
-hook.Add("Think", "SND_ServerBotAnims", function()
-	for _, bot in ipairs(player.GetAll()) do
-		if not bot.SND_IsBot or not bot:Alive() then continue end
-
-		local velocity = bot:GetVelocity()
-		local speed = velocity:Length2D()
-		local eyeYaw = bot:EyeAngles().y
-		local bodyYaw = bot:GetAngles().y
-		local diff = math.NormalizeAngle(eyeYaw - bodyYaw)
-
-		-- Smoothed Snap-Threshold Rotation:
-		-- Mimics human player turn-in-place behavior and prevents bone snapping.
-		if speed > 10 then
-			local moveAng = velocity:Angle()
-			bot:SetAngles(Angle(0, moveAng.y, 0))
-		elseif math.abs(diff) > 35 then 
-			-- Gradually rotate the body hull if stationary to minimize torso twist
-			local targetAng = Angle(0, eyeYaw - (diff > 0 and 30 or -30), 0)
-			bot:SetAngles(LerpAngle(FrameTime() * 20, bot:GetAngles(), targetAng))
-		end
-	end
-end)
-
-hook.Add("EntityTakeDamage", "SND_BotDamageAnims", function(target, dmg)
-	if not IsValid(target) or not target.SND_IsBot or not target:Alive() or not dmg then return end
-	if not target.SND_NextFlinch or CurTime() > target.SND_NextFlinch then
-		target:AnimRestartGesture(GESTURE_SLOT_FLINCH, ACT_FLINCH_PHYSICS, true)
-		
-		-- Use weight to scale the flinch jerk based on damage (capped at 1.0)
-		local intensity = math.Clamp(dmg:GetDamage() / 50, 0.2, 1.0)
-		target:SetLayerWeight(GESTURE_SLOT_FLINCH, intensity)
-
-		target.SND_NextFlinch = CurTime() + 0.8
 	end
 end)
 
