@@ -102,7 +102,10 @@ function SND.Bots.EnsureCount()
 			table.remove(currentBotNames, idx)
 		end
 
-		local bot = player.CreateNextBot("[BOT] " .. string.sub(rawName, 1, 25))
+		local npcMode = SND.Settings.GetInt("bot_npc_mode", 0) == 1
+		local finalName = npcMode and rawName or ("[BOT] " .. rawName)
+
+		local bot = player.CreateNextBot(string.sub(finalName, 1, 25))
 		if IsValid(bot) then
 			bot.SND_IsBot = true
 			bot.SND_AI = newAI()

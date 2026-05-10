@@ -14,42 +14,6 @@ local SEMI_SETTLE = { [1] = 0.10, [2] = 0.05, [3] = 0.02 }
 local AIM_LERP    = { [1] = 0.12, [2] = 0.25, [3] = 0.55 }
 
 -- ── Combat Animation Gestures ──────────────────────────────────────────────
-local FIRE_GESTURE_MAP = {
-	pistol   = ACT_HL2MP_GESTURE_RANGE_ATTACK_PISTOL, revolver = ACT_HL2MP_GESTURE_RANGE_ATTACK_REVOLVER,
-	smg      = ACT_HL2MP_GESTURE_RANGE_ATTACK_SMG1,   ar2      = ACT_HL2MP_GESTURE_RANGE_ATTACK_AR2,
-	shotgun  = ACT_HL2MP_GESTURE_RANGE_ATTACK_SHOTGUN,rpg      = ACT_HL2MP_GESTURE_RANGE_ATTACK_RPG,
-	melee    = ACT_HL2MP_GESTURE_RANGE_ATTACK_MELEE,  knife    = ACT_HL2MP_GESTURE_RANGE_ATTACK_KNIFE,
-	fist     = ACT_HL2MP_GESTURE_RANGE_ATTACK_FIST,   grenade  = ACT_HL2MP_GESTURE_RANGE_ATTACK_GRENADE,
-	slam     = ACT_HL2MP_GESTURE_RANGE_ATTACK_SLAM,
-}
-
-local RELOAD_GESTURE_MAP = {
-	pistol   = ACT_HL2MP_GESTURE_RELOAD_PISTOL, revolver = ACT_HL2MP_GESTURE_RELOAD_REVOLVER,
-	smg      = ACT_HL2MP_GESTURE_RELOAD_SMG1,   ar2      = ACT_HL2MP_GESTURE_RELOAD_AR2,
-	shotgun  = ACT_HL2MP_GESTURE_RELOAD_SHOTGUN,rpg      = ACT_HL2MP_GESTURE_RELOAD_RPG,
-	melee    = ACT_HL2MP_GESTURE_RELOAD_MELEE,  knife    = ACT_HL2MP_GESTURE_RELOAD_KNIFE,
-	fist     = ACT_HL2MP_GESTURE_RELOAD_FIST,   grenade  = ACT_HL2MP_GESTURE_RELOAD_GRENADE,
-	slam     = ACT_HL2MP_GESTURE_RELOAD_SLAM,
-}
-
-local function PlayCombatGesture(bot, wep, isReload)
-	local h = IsValid(wep) and wep:GetHoldType() or "ar2"
-	local map = isReload and RELOAD_GESTURE_MAP or FIRE_GESTURE_MAP
-	local act = map[h] or (isReload and ACT_HL2MP_GESTURE_RELOAD_AR2 or ACT_HL2MP_GESTURE_RANGE_ATTACK_AR2)
-
-	bot:AnimRestartGesture(GESTURE_SLOT_ATTACK_AND_RELOAD, act, true)
-
-	-- Use BaseAnimatingOverlay concepts to sync reload speed
-	-- This ensures the third-person animation lasts exactly as long as the weapon's reload timer
-	if isReload and IsValid(wep) then
-		local reloadTime = wep.ReloadTime or DEFAULT_RELOAD_TIME
-		-- Standard gestures are roughly 2.2 seconds long; we scale the playback rate to match
-		local animDuration = 2.2 
-		local playbackRate = animDuration / reloadTime
-		bot:SetLayerPlaybackRate(GESTURE_SLOT_ATTACK_AND_RELOAD, playbackRate)
-	end
-end
-
 local WEP_RANGE = {
 	sniper   = { ideal = 2400, tooClose = 220, tooFar = 8000 },
 	ar       = { ideal = 350,  tooClose = 120, tooFar = 800  },
@@ -304,21 +268,21 @@ function SND.Bots.CombatThink(bot, cmd)
 				ai.tapUntil = now + TAP_HOLD_BOLT
 				addRecoil(ai, wep, dist, skill)
 				if IsValid(wep) and wep.ARC9 then wep:PlayAnimation("fire") end
-				PlayCombatGesture(bot, wep, false)
+				bot:DoAnimationEvent(PLAYERANIMEVENT_ATTACK_PRIMARY)
 			elseif mode == "semi" then
 				if now >= (ai.semiSettleUntil or 0) then
 					ai.tapUntil = now + TAP_HOLD_SEMI
 					addRecoil(ai, wep, dist, skill)
 					ai.semiSettleUntil = now + (SEMI_SETTLE[bucket] or 0.1)
 					if IsValid(wep) and wep.ARC9 then wep:PlayAnimation("fire") end
-					PlayCombatGesture(bot, wep, false)
+					bot:DoAnimationEvent(PLAYERANIMEVENT_ATTACK_PRIMARY)
 				end
 			else
 				ai.wantAttack = true
 				addRecoil(ai, wep, dist, skill)
 				if IsValid(wep) and wep.ARC9 then
 					if now >= (ai.nextAutoAnimAt or 0) then
-						PlayCombatGesture(bot, wep, false)
+						bot:DoAnimationEvent(PLAYERANIMEVENT_ATTACK_PRIMARY)
 						wep:PlayAnimation("fire")
 						local delay = (wep.Primary and wep.Primary.Delay) or 0.1
 						ai.nextAutoAnimAt = now + math.max(delay, 0.15)
@@ -375,7 +339,7 @@ function SND.Bots.WeaponCheck(bot, cmd)
 	if max > 0 and bot:GetAmmoCount(wep:GetPrimaryAmmoType()) > 0 then
 		if clip <= 0 or (clip < max * 0.5 and ai.state ~= 2) then
 			if not ai.isReloadingAnims then
-				PlayCombatGesture(bot, wep, true)
+				bot:DoAnimationEvent(PLAYERANIMEVENT_RELOAD)
 				ai.isReloadingAnims = true
 				timer.Simple(2, function() if IsValid(bot) and bot.SND_AI then bot.SND_AI.isReloadingAnims = false end end)
 			end

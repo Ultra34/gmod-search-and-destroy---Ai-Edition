@@ -260,7 +260,14 @@ local function createScoreboard()
 		if not self.NextRefresh or CurTime() > self.NextRefresh then
 			scroll:Clear()
 			
-			local players = player.GetAll()
+			local players = {}
+			local npcMode = SND.Settings.GetInt("bot_npc_mode", 0) == 1
+			for _, p in ipairs(player.GetAll()) do
+				-- In NPC Mode, bots are hidden from the scoreboard
+				if npcMode and p:GetNWBool("SND_IsBot") then continue end
+				table.insert(players, p)
+			end
+
 			table.sort(players, function(a, b)
 				if a:Team() ~= b:Team() then return a:Team() < b:Team() end
 				return a:Frags() > b:Frags()

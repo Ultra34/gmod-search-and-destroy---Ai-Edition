@@ -1033,8 +1033,14 @@ hook.Add("HUDPaint", "SND_HUD", function()
 		local alpha = math.Clamp(255 * (1 - (dist - startFade) / (endFade - startFade)), isTeammate and 40 or 0, 220)
 		if alpha <= 0 then continue end
 
+		local isBot = target:GetNWBool("SND_IsBot")
+		local npcMode = SND.Settings.GetInt("bot_npc_mode", 0) == 1
 		local teamColor = (target:Team() == SND.TEAM_ATTACK) and C_ATTACK or C_DEFEND
-		draw.SimpleText(target:Nick(), "Trebuchet24", scr.x, scr.y, Color(teamColor.r, teamColor.g, teamColor.b, alpha), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+
+		-- Don't show nameplates for bots in NPC mode unless they are teammates
+		if not npcMode or not isBot or isTeammate then
+			draw.SimpleText(target:Nick(), "Trebuchet24", scr.x, scr.y, Color(teamColor.r, teamColor.g, teamColor.b, alpha), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+		end
 
 		-- 3D Overhead Bomb Carrier Indicator
 		if SND.Client.BombCarrierIdx == target:EntIndex() then

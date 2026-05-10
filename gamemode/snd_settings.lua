@@ -23,6 +23,7 @@ SND.Settings.Defaults = {
 	win_limit        = 4,
 	bot_count        = 0,
 	bot_skill        = 5,    -- 1 (worst) to 10 (best)
+	bot_npc_mode     = 0,    -- 1 = Hide bots from Scoreboard/HUD to feel like NPCs
 	team_balance     = 1,
 	mapvote_enabled  = 1,
 	mapvote_time     = 20,

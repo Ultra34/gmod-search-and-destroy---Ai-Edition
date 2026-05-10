@@ -69,32 +69,6 @@ local holdTypeToSuffix = {
 	["grenade"] = "GRENADE", ["slam"] = "SLAM", ["passive"] = "PASSIVE", ["normal"] = "PASSIVE"
 }
 
-function SND.ResolveCSSActivity(ply, velocity)
-	local speed = velocity:Length2D()
-
-	-- Use standard activities as the base; SND_BotAnimTranslate will map to HL2MP versions for CSS models.
-	if not ply:IsOnGround() then return ACT_MP_JUMP end
-
-	if ply:Crouching() then
-		return (speed < 15) and ACT_MP_CROUCH_IDLE or ACT_MP_CROUCHWALK
-	end
-
-	if speed < 10 then
-		return ACT_MP_STAND_IDLE
-	elseif ply:IsSprinting() then
-		return ACT_MP_RUN
-	elseif speed < 150 then
-		return ACT_MP_WALK
-	else
-		return ACT_MP_RUN
-	end
-end
-
-hook.Add("CalcMainActivity", "SND_SharedCalcActivity", function(ply, velocity)
-	if not IsValid(ply) or not ply:Alive() or not SND.IsCSSModel(ply) then return end
-	return SND.ResolveCSSActivity(ply, velocity), -1
-end)
-
 hook.Add("TranslateActivity", "SND_BotAnimTranslate", function(ply, act)
 	if not IsValid(ply) or not ply:Alive() or not SND.IsCSSModel(ply) then return end
 
@@ -152,58 +126,30 @@ hook.Add("TranslateActivity", "SND_BotAnimTranslate", function(ply, act)
 	return _G["ACT_HL2MP_" .. base .. "_AR2"] or _G["ACT_HL2MP_" .. base] or ACT_HL2MP_IDLE_AR2
 end)
 
--- ── Shared Pose Parameter & Animation Scaling ──────────────────────────────
--- Running this in a shared hook ensures Server hitboxes match Client visuals.
-function SND.UpdatePoseParameters(ply)
-	local velocity = ply:GetVelocity()
-	local speed = velocity:Length2D()
-	local eye = ply:EyeAngles()
-	local body = ply:GetAngles()
-	local maxSpd = math.max(ply:GetMaxSpeed(), 1)
+-- ── Shared Animation Events (CSS Models) ───────────────────────────────────
+hook.Add("DoAnimationEvent", "SND_BotAnimEvents", function(ply, event, data)
+	if not SND.IsCSSModel(ply) then return end
 
-	-- 1. Movement Direction (Legs)
-	if speed > 1 then
-		local moveYaw = math.NormalizeAngle(velocity:Angle().y - body.y)
-		ply:SetPoseParameter("move_yaw", moveYaw)
+	local wep = ply:GetActiveWeapon()
+	local hold = IsValid(wep) and wep:GetHoldType() or "ar2"
+	
+	local holdToSuffix = {
+		["pistol"] = "PISTOL", ["revolver"] = "REVOLVER", ["smg"] = "SMG1", ["smg1"] = "SMG1", ["smg2"] = "SMG1",
+		["ar2"] = "AR2", ["rpg"] = "RPG", ["physgun"] = "AR2", ["shotgun"] = "SHOTGUN",
+		["melee"] = "MELEE", ["melee2"] = "MELEE", ["fist"] = "FIST", ["knife"] = "KNIFE",
+		["grenade"] = "GRENADE", ["slam"] = "SLAM", ["duel"] = "PISTOL", ["revolver"] = "REVOLVER",
+		["rpg7"] = "RPG", ["crossbow"] = "AR2"
+	}
 
-		-- Standard Move X/Y for non-CSS models
-		local fwd = ply:GetForward()
-		local rt = ply:GetRight()
-		ply:SetPoseParameter("move_x", velocity:Dot(fwd) / maxSpd)
-		ply:SetPoseParameter("move_y", -velocity:Dot(rt) / maxSpd)
-	else
-		ply:SetPoseParameter("move_yaw", 0)
-		ply:SetPoseParameter("move_x", 0)
-		ply:SetPoseParameter("move_y", 0)
+	local suffix = holdToSuffix[hold] or "AR2"
+	
+	if event == PLAYERANIMEVENT_ATTACK_PRIMARY then
+		local act = _G["ACT_HL2MP_GESTURE_RANGE_ATTACK_" .. suffix] or ACT_HL2MP_GESTURE_RANGE_ATTACK_AR2
+		ply:AnimRestartGesture(GESTURE_SLOT_ATTACK_AND_RELOAD, act, true)
+		return ACT_INVALID
+	elseif event == PLAYERANIMEVENT_RELOAD then
+		local act = _G["ACT_HL2MP_GESTURE_RELOAD_" .. suffix] or ACT_HL2MP_GESTURE_RELOAD_AR2
+		ply:AnimRestartGesture(GESTURE_SLOT_ATTACK_AND_RELOAD, act, true)
+		return ACT_INVALID
 	end
-
-	-- 2. Aiming Logic (Head/Arms)
-	local pitch = math.NormalizeAngle(eye.p)
-	local yaw = math.NormalizeAngle(eye.y - body.y)
-
-	ply:SetPoseParameter("aim_pitch", math.Clamp(pitch, -90, 90))
-	ply:SetPoseParameter("aim_yaw", math.Clamp(yaw, -60, 60))
-	ply:SetPoseParameter("head_pitch", math.Clamp(pitch, -45, 45))
-	ply:SetPoseParameter("head_yaw", math.Clamp(yaw, -60, 60))
-
-	-- 3. Dynamic Leaning
-	local lean = (velocity:Dot(ply:GetRight()) / maxSpd) * 15
-	ply:SetPoseParameter("body_yaw", lean)
-
-	if CLIENT then ply:InvalidateBoneCache() end
-end
-
-hook.Add("UpdateAnimation", "SND_SharedAnimation", function(ply, velocity, maxSeqGroundSpeed)
-	if not IsValid(ply) or not ply:Alive() then return end
-
-	-- Prevent foot sliding by scaling playback rate to velocity
-	local speed = velocity:Length2D()
-	if speed > 10 and maxSeqGroundSpeed > 0 then
-		local playback = math.Clamp(speed / maxSeqGroundSpeed, 0.2, 2.0)
-		ply:SetPlaybackRate(playback)
-	else
-		ply:SetPlaybackRate(1.0)
-	end
-
-	SND.UpdatePoseParameters(ply)
 end)
