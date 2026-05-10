@@ -427,11 +427,14 @@ local function drawWeaponInventory(sw, sh, sc, lp)
 	-- Helper to draw weapon icon
 	local function drawIcon(class, label, iconX, iconY, alpha)
 		local wep = lp:GetWeapon(class)
-		local icon = IsValid(wep) and (wep.WepIcon or wep.Icon) -- ARC9 uses wep.Icon
-		if icon and not (type(icon) == "IMaterial" and icon:IsError()) then
+		local icon = IsValid(wep) and (wep.WepIcon or wep.Icon)
+		if icon then
+			local mat = (type(icon) == "string") and SND.GetIMaterial(icon) or icon
+			if not mat or type(mat) ~= "IMaterial" or mat:IsError() then return end
+
 			surface.SetFont("Trebuchet24")
 			local tw, _ = surface.GetTextSize(label)
-			surface.SetMaterial(icon)
+			surface.SetMaterial(mat)
 			surface.SetDrawColor(255, 255, 255, alpha)
 			surface.DrawTexturedRect(iconX - tw - 110 * sc, iconY - 35 * sc, 100 * sc, 50 * sc)
 		end
