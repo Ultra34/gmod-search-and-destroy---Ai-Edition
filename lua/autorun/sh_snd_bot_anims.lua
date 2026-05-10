@@ -1,6 +1,7 @@
 -- ── Bot & Legacy Rig Animation System (Autorun) ───────────────────────────
 -- Centrally manages animations for CSS models and Bot specific behaviors.
 
+-- ── Shared utility function (available to both client and server) ──────────
 local function isLegacyRig(ply)
 	local mdl = string.lower(ply:GetModel() or "")
 	local result = mdl:find("/ct_", 1, true) or mdl:find("/t_", 1, true) or mdl:find("player/ct_", 1, true) or mdl:find("player/t_", 1, true)
@@ -54,10 +55,11 @@ local function updatePoseParams(ply)
 		ply:SetPoseParameter("move_y", 0)
 	end
 
-	if CLIENT then ply:InvalidateBoneCache() end
+	ply:InvalidateBoneCache()
 end
 
--- ── Movement Activity Translation (Shared) ─────────────────────────────────
+-- ── Movement Activity Translation (Client & Server) ────────────────────────
+-- This hook needs to run on both client and server for proper prediction
 hook.Add("TranslateActivity", "SND_LegacyAnimationFix", function(ply, act)
 	if not IsValid(ply) or not ply:Alive() or not isLegacyRig(ply) then return end
 
@@ -82,55 +84,58 @@ hook.Add("TranslateActivity", "SND_LegacyAnimationFix", function(ply, act)
 	return _G[actName] or _G["ACT_HL2MP_" .. base .. "_AR2"] or _G["ACT_HL2MP_" .. base] or ACT_HL2MP_IDLE_AR2
 end)
 
--- ── Combat Gesture Handling (Shared) ───────────────────────────────────────
-hook.Add("DoAnimationEvent", "SND_LegacyGestureHandler", function(ply, event, data)
-	if not isLegacyRig(ply) then return end
+-- ── Client-side animation hooks ────────────────────────────────────────────
+if CLIENT then
+	-- ── Combat Gesture Handling (Client only) ──────────────────────────────
+	hook.Add("DoAnimationEvent", "SND_LegacyGestureHandler", function(ply, event, data)
+		if not isLegacyRig(ply) then return end
 
-	local wep = ply:GetActiveWeapon()
-	local hold = IsValid(wep) and wep:GetHoldType() or "ar2"
-	local suffix = HOLD_SUFFIXES[hold] or "AR2"
+		local wep = ply:GetActiveWeapon()
+		local hold = IsValid(wep) and wep:GetHoldType() or "ar2"
+		local suffix = HOLD_SUFFIXES[hold] or "AR2"
 
-	if event == PLAYERANIMEVENT_ATTACK_PRIMARY then
-		local act = _G["ACT_HL2MP_GESTURE_RANGE_ATTACK_" .. suffix] or ACT_HL2MP_GESTURE_RANGE_ATTACK_AR2
-		ply:AnimRestartGesture(GESTURE_SLOT_ATTACK_AND_RELOAD, act, true)
-		return ACT_INVALID
-	elseif event == PLAYERANIMEVENT_RELOAD then
-		local act = _G["ACT_HL2MP_GESTURE_RELOAD_" .. suffix] or ACT_HL2MP_GESTURE_RELOAD_AR2
-		ply:AnimRestartGesture(GESTURE_SLOT_ATTACK_AND_RELOAD, act, true)
-		return ACT_INVALID
-	end
-end)
-
--- ── Shared Playback & Pose Hook ────────────────────────────────────────────
-hook.Add("UpdateAnimation", "SND_SharedAnimLogic", function(ply, vel, maxSeqGroundSpeed)
-	if not IsValid(ply) or not ply:Alive() then return end
-
-	-- Use networked check to ensure client-side aiming logic runs for bots
-	local isBot = ply:IsBot() or ply:GetNWBool("SND_IsBot")
-	if not isBot then return end
-
-	-- Debug: Verify that the animation loop is actually running for this entity
-	if not ply._snd_anim_active then
-		local cv = GetConVar("snd_debug_mode")
-		if cv and cv:GetBool() then
-			print(string.format("[SND_ANIM] Animation Logic Active for Bot: %s", ply:Nick()))
-			ply._snd_anim_active = true
+		if event == PLAYERANIMEVENT_ATTACK_PRIMARY then
+			local act = _G["ACT_HL2MP_GESTURE_RANGE_ATTACK_" .. suffix] or ACT_HL2MP_GESTURE_RANGE_ATTACK_AR2
+			ply:AnimRestartGesture(GESTURE_SLOT_ATTACK_AND_RELOAD, act, true)
+			return ACT_INVALID
+		elseif event == PLAYERANIMEVENT_RELOAD then
+			local act = _G["ACT_HL2MP_GESTURE_RELOAD_" .. suffix] or ACT_HL2MP_GESTURE_RELOAD_AR2
+			ply:AnimRestartGesture(GESTURE_SLOT_ATTACK_AND_RELOAD, act, true)
+			return ACT_INVALID
 		end
-	end
+	end)
 
-	local speed = vel:Length2D()
-	if speed > 10 and maxSeqGroundSpeed > 0 then
-		ply:SetPlaybackRate(math.Clamp(speed / maxSeqGroundSpeed, 0.2, 2.0))
-	else
-		ply:SetPlaybackRate(1.0)
-	end
+	-- ── Bot Playback & Pose Hook (Client only) ─────────────────────────────
+	hook.Add("UpdateAnimation", "SND_SharedAnimLogic", function(ply, vel, maxSeqGroundSpeed)
+		if not IsValid(ply) or not ply:Alive() then return end
 
-	updatePoseParams(ply)
-end)
+		-- Use networked check to ensure client-side aiming logic runs for bots
+		local isBot = ply:IsBot() or ply:GetNWBool("SND_IsBot")
+		if not isBot then return end
 
--- ── Orientation & Reactions (Server) ───────────────────────────────────────
+		-- Debug: Verify that the animation loop is actually running for this entity
+		if not ply._snd_anim_active then
+			local cv = GetConVar("snd_debug_mode")
+			if cv and cv:GetBool() then
+				print(string.format("[SND_ANIM] Animation Logic Active for Bot: %s", ply:Nick()))
+				ply._snd_anim_active = true
+			end
+		end
+
+		local speed = vel:Length2D()
+		if speed > 10 and maxSeqGroundSpeed > 0 then
+			ply:SetPlaybackRate(math.Clamp(speed / maxSeqGroundSpeed, 0.2, 2.0))
+		else
+			ply:SetPlaybackRate(1.0)
+		end
+
+		updatePoseParams(ply)
+	end)
+end
+
+-- ── Server-side animation hooks ────────────────────────────────────────────
 if SERVER then
-	-- Shared reaction/flinch animations
+	-- Reaction/flinch animations for bots
 	hook.Add("EntityTakeDamage", "SND_BotReactionHandler", function(target, dmg)
 		if not IsValid(target) or not target.SND_IsBot or not target:Alive() then return end
 		target:AnimRestartGesture(GESTURE_SLOT_FLINCH, ACT_FLINCH_PHYSICS, true)
@@ -140,10 +145,19 @@ if SERVER then
 	-- Force synchronization on spawn to prevent T-posing
 	hook.Add("PlayerSpawn", "SND_BotAnimationInitializer", function(ply)
 		if not ply.SND_IsBot then return end
-		timer.Simple(0.1, function()
+		timer.Simple(0.2, function()
 			if not IsValid(ply) then return end
+			-- Force animation reset to prevent T-pose
+			ply:AnimRestartGesture(GESTURE_SLOT_ATTACK_AND_RELOAD, ACT_INVALID, true)
+			-- Refresh weapon hold type to ensure correct animations
 			local wep = ply:GetActiveWeapon()
-			if IsValid(wep) then wep:SetHoldType(wep:GetHoldType()) end
+			if IsValid(wep) then
+				local holdType = wep:GetHoldType()
+				wep:SetHoldType("normal")
+				timer.Simple(0.1, function()
+					if IsValid(wep) then wep:SetHoldType(holdType) end
+				end)
+			end
 		end)
 	end)
 end
