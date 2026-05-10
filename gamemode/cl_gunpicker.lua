@@ -289,6 +289,11 @@ end
 -- Helper to get the ARC9 icon for a weapon class
 local function getWeaponIcon(class)
 	local swep = weapons.Get(class)
+	-- Some ARC9 packs store icons in the SWEP table, others need an instance
+	-- We check the class table first as it's most reliable for the picker
+	if swep and swep.Icon then return swep.Icon end
+	
+	-- Fallback to standard engine icon if ARC9 icon is missing
 	return swep and swep.Icon
 end
 
@@ -497,10 +502,10 @@ function SND.GunPicker.Open()
 					gameHeader:SetTall(32 * sc)
 					gameHeader:Dock(TOP)
 					gameHeader:DockMargin(0, 20 * sc, 0, 5 * sc)
+					local currentIcon = g.icon -- Use the icon path sent from config
 					gameHeader.Paint = function(self, w, h)
-						local iconName = gameName:lower() -- Configs use lowercase
-						local iconPath = "data/snd_mwclassic/game_icons/" .. iconName .. ".png"
-						local iconMat = SND.GetIMaterial(iconPath)
+						local iconPath = currentIcon and ("data/snd_mwclassic/" .. currentIcon) or nil
+						local iconMat = iconPath and SND.GetIMaterial(iconPath) or nil
 						local textX = 0
 						
 						if iconMat and not iconMat:IsError() then
@@ -643,10 +648,11 @@ net.Receive("SND_GunPickerOpen", function()
 	for i = 1, nGroups do
 		local name = net.ReadString()
 		local isSec = net.ReadBool()
+		local icon = net.ReadString()
 		local count = net.ReadUInt(8)
 		local weapons = {}
 		for j = 1, count do weapons[j] = net.ReadString() end
-		groups[i] = { name = name, isSecondary = isSec, weapons = weapons }
+		groups[i] = { name = name, isSecondary = isSec, weapons = weapons, icon = icon }
 	end
 
 	local nSec = net.ReadUInt(8)

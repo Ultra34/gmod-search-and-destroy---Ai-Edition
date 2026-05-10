@@ -427,10 +427,12 @@ local function drawWeaponInventory(sw, sh, sc, lp)
 	-- Helper to draw weapon icon
 	local function drawIcon(class, label, iconX, iconY, alpha)
 		local wep = lp:GetWeapon(class)
-		local icon = IsValid(wep) and wep.Icon
+		local swep = weapons.Get(class)
+		-- Try to get icon from active weapon, fallback to weapon class table
+		local icon = (IsValid(wep) and wep.Icon) or (swep and swep.Icon)
 		if icon then
 			local mat = (type(icon) == "string") and SND.GetIMaterial(icon) or icon
-			if not mat or type(mat) ~= "IMaterial" or mat:IsError() then return end
+			if not mat or mat:IsError() then return end
 
 			surface.SetFont("Trebuchet24")
 			local tw, _ = surface.GetTextSize(label)
