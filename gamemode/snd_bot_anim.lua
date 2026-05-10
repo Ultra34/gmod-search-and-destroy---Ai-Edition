@@ -1,257 +1,168 @@
 --[[ CSS player model animation fix for bots AND human players
-     Fixes: T-pose on bots, broken weapon hold animations, missing move_yaw/body_yaw
-     IMPROVED: Better animation blending, reduced jitter, stable pose parameters
-     NEW FILE: gamemode/snd_bot_anim.lua  (SHARED — runs on both server and client)
-
-     Add to init.lua:    include("snd_bot_anim.lua")
-     Add to cl_init.lua: include("snd_bot_anim.lua")
-     Add to shared.lua (inside SERVER block):  AddCSLuaFile("snd_bot_anim.lua")
+--[[ 
+    SND Bot Animation Overhaul (Complete Rewrite)
+    Purpose: Standardize CSS player model animations for NextBots and Humans.
+    Fixes: T-Posing, Floating Guns, Sliding movement.
+    This script ensures consistent animation state across server and client.
 ]]
 
--- ── Activity translation for CSS model skeleton ───────────────────────────
--- CSS player models ship with the standard HL2/GMod ACT_ sequences, so the
--- default GMod animation system works — but CreateNextBot bots don't run the
--- same animation state machine as human players.  TranslateActivity ensures
--- activities resolve to sequences that exist in the CSS model.
-hook.Add("TranslateActivity", "SND_CSSAnimTranslate", function(ply, act)
-	if act == nil then return end
+-- ── 1. Shared Activity Translation ───────────────────────────────────────
+-- This hook maps generic movement activities to weapon-specific activities.
+-- It's crucial for both bots and human players using CSS models.
+hook.Add("TranslateActivity", "SND_BotAnimTranslate", function(ply, act)
+    if not IsValid(ply) or not ply:Alive() or act == nil then return end
 
-	local model = ply:GetModel() or ""
-	local isCSS = string.find(model, "models/player/ct_") ~= nil or string.find(model, "models/player/t_") ~= nil
-	if not isCSS then return end
+    local model = ply:GetModel() or ""
+    local isCSS = string.find(model, "/ct_") or string.find(model, "/t_")
+    if not isCSS then return end
 
-	local wep = ply:GetActiveWeapon()
-	local hold = IsValid(wep) and wep:GetHoldType() or "normal"
+    local wep = ply:GetActiveWeapon()
+    
+    -- Priority 1: Let TFA/ARC9 Weapons define their own arm/body poses
+    if IsValid(wep) and wep.TranslateActivity then
+        local translated = wep:TranslateActivity(act)
+        if translated and translated != -1 then return translated end
+    end
 
-	-- 1. Prioritize Weapon-Specific Translation (Fixes floating guns/TFA alignment)
-	if IsValid(wep) and wep.TranslateActivity then
-		local translated = wep:TranslateActivity(act)
-		if translated and translated ~= -1 then return translated end
-	end
+    -- Priority 2: Standard HL2MP fallback mapping for CSS models
+    -- This ensures that even if a weapon doesn't have a specific translation,
+    -- the player model still uses a sensible pose based on hold type.
+    local h = IsValid(wep) and wep:GetHoldType() or "normal"
+    local holdMap = {
+        ["pistol"]   = "PISTOL", ["revolver"] = "REVOLVER", ["smg"] = "SMG1",
+        ["ar2"]      = "AR2",    ["shotgun"]  = "SHOTGUN",  ["rpg"] = "RPG",
+        ["melee"]    = "MELEE",  ["knife"]    = "KNIFE",    ["fist"] = "FIST"
+    }
+    local suffix = holdMap[h] or "AR2"
 
-	-- 2. "Original Style" mapping (Activity based)
-	-- Maps weapon hold types to standard HL2MP activities which CSS models support.
-	local map = {
-		["pistol"]   = "PISTOL",
-		["revolver"] = "REVOLVER",
-		["smg"]      = "SMG1",
-		["ar2"]      = "AR2",
-		["shotgun"]  = "SHOTGUN",
-		["rpg"]      = "RPG",
-		["melee"]    = "MELEE",
-		["knife"]    = "KNIFE",
-		["melee2"]   = "MELEE2",
-		["fist"]     = "FIST",
-		["grenade"]  = "GRENADE",
-		["slam"]     = "SLAM",
-		["passive"]  = "PASSIVE",
-	}
+    if act == ACT_MP_STAND_IDLE then return _G["ACT_HL2MP_IDLE_" .. suffix] or ACT_HL2MP_IDLE
+    elseif act == ACT_MP_WALK   then return _G["ACT_HL2MP_WALK_" .. suffix] or ACT_HL2MP_WALK
+    elseif act == ACT_MP_RUN    then return _G["ACT_HL2MP_RUN_" .. suffix] or ACT_HL2MP_RUN
+    elseif act == ACT_MP_CROUCH_IDLE then return _G["ACT_HL2MP_IDLE_CROUCH_" .. suffix] or ACT_HL2MP_IDLE_CROUCH
+    elseif act == ACT_MP_CROUCHWALK then return _G["ACT_HL2MP_WALK_CROUCH_" .. suffix] or ACT_HL2MP_WALK_CROUCH
+    elseif act == ACT_MP_JUMP   then return ACT_HL2MP_JUMP_AR2 end
 
-	local suffix = map[hold] or "AR2"
-
-	if act == ACT_MP_STAND_IDLE then
-		return _G["ACT_HL2MP_IDLE_" .. suffix] or ACT_HL2MP_IDLE_AR2
-	elseif act == ACT_MP_WALK then
-		return _G["ACT_HL2MP_WALK_" .. suffix] or ACT_HL2MP_WALK_AR2
-	elseif act == ACT_MP_RUN then
-		return _G["ACT_HL2MP_RUN_" .. suffix] or ACT_HL2MP_RUN_AR2
-	elseif act == ACT_MP_CROUCH_IDLE then
-		return _G["ACT_HL2MP_IDLE_CROUCH_" .. suffix] or ACT_HL2MP_IDLE_CROUCH_AR2
-	elseif act == ACT_MP_CROUCHWALK then
-		return _G["ACT_HL2MP_WALK_CROUCH_" .. suffix] or ACT_HL2MP_WALK_CROUCH_AR2
-	elseif act == ACT_MP_JUMP or act == ACT_MP_JUMP_START or act == ACT_MP_JUMP_FLOAT then
-		return ACT_HL2MP_JUMP_AR2 -- Generic jump activity
-	elseif act == ACT_MP_JUMP_LAND then
-		return ACT_HL2MP_IDLE_AR2 -- Landing reset
-	end
-
-	return act
+    return act
 end)
 
--- ── Damage Flinching (Gestures) ──────────────────────────────────────────
-if SERVER then
-	hook.Add("EntityTakeDamage", "SND_BotFlinchAnim", function(target, dmg)
-		if not IsValid(target) or not target:IsPlayer() or not target.SND_IsBot then return end
-		if not target:Alive() then return end
+-- ── 2. Shared Main Activity Logic ────────────────────────────────────────
+-- This hook tells the engine which generic state the player is in.
+-- It MUST run on both server and client for bots to animate correctly.
+hook.Add("CalcMainActivity", "SND_SharedCalcActivity", function(ply, velocity)
+    if not IsValid(ply) or not ply:Alive() then return end
 
-		-- Don't flinch too often (every 0.7s max)
-		if target.SND_NextFlinch and CurTime() < target.SND_NextFlinch then return end
-		target.SND_NextFlinch = CurTime() + 0.7
+    local model = ply:GetModel() or ""
+    local isCSSModel = string.find(model, "/ct_") or string.find(model, "/t_")
+    if not isCSSModel then return end
 
-		-- Play flinch gesture based on physics impact
-		local act = ACT_FLINCH_PHYSICS
-		target:AnimRestartGesture(GESTURE_SLOT_FLINCH, act, true)
-	end)
+    local speed = velocity:Length2D()
+    local onGround = ply:IsOnGround()
+
+    if not onGround then
+        return ACT_MP_JUMP, -1
+    end
+
+    if ply:Crouching() or ply:GetNWBool("SND_BotCrouching", false) then
+        return (speed < 10) and ACT_MP_CROUCH_IDLE or ACT_MP_CROUCHWALK, -1
+    end
+
+    if speed < 10 then
+        return ACT_MP_STAND_IDLE, -1
+    elseif speed < 150 then
+        return ACT_MP_WALK, -1
+    else
+        return ACT_MP_RUN, -1
+    end
+end)
+
+-- ── 3. Authoritative Pose Parameters (Server & Client) ───────────────────
+-- This ensures guns aren't floating by aligning the arms with the eyes.
+-- It also drives procedural leaning and head tracking.
+local function updatePoseParams(ply, velocity)
+    local speed = velocity:Length()
+    local eye   = ply:EyeAngles()
+    local body  = ply:GetAngles()
+
+    -- 8-Way Movement (move_x, move_y)
+    if speed > 10 then
+        ply:SetPoseParameter("move_x", (velocity:Dot(ply:GetForward()) / speed))
+        ply:SetPoseParameter("move_y", (velocity:Dot(ply:GetRight()) / speed) * -1)
+        
+        -- Foot alignment: Direction of movement relative to where we look
+        local moveYaw = math.NormalizeAngle(velocity:Angle().y - body.y)
+        ply:SetPoseParameter("move_yaw", moveYaw)
+    end
+
+    -- Aim Alignment (Fixes Floating Guns & Hand Positioning)
+    local pitch = math.NormalizeAngle(eye.p)
+    local yaw   = math.NormalizeAngle(eye.y - body.y)
+
+    ply:SetPoseParameter("aim_pitch", pitch)
+    ply:SetPoseParameter("aim_yaw", yaw)
+    
+    -- Head Tracking
+    ply:SetPoseParameter("head_pitch", math.Clamp(pitch, -45, 45))
+    ply:SetPoseParameter("head_yaw", math.Clamp(yaw, -60, 60))
+    
+    -- Procedural Leaning (Torso)
+    local sideSpeed = velocity:Dot(ply:GetRight())
+    ply:SetPoseParameter("body_yaw", Lerp(FrameTime() * 5, ply:GetPoseParameter("body_yaw") or 0, (sideSpeed / 350) * 25))
 end
 
--- ── SERVER: drive pose parameters for bots each tick ─────────────────────
--- Human players have their pose params set by the engine; bots do not.
 if SERVER then
-	hook.Add("Think", "SND_BotPoseParams", function()
-		for _, bot in ipairs(player.GetAll()) do
-			if not bot.SND_IsBot or not bot:Alive() then continue end
+    hook.Add("Think", "SND_ServerBotAnims", function()
+        for _, bot in ipairs(player.GetAll()) do
+            if not bot.SND_IsBot or not bot:Alive() then continue end
 
-			local vel   = bot:GetVelocity()
-			local speed = vel:Length2D()
+            local vel = bot:GetVelocity()
+            if vel:Length2D() > 5 then
+                -- Force the physics body to rotate with movement
+                bot:SetAngles(Angle(0, bot:EyeAngles().y, 0))
+            end
 
-			-- move_yaw: direction of movement relative to feet
-			local moveYaw = 0
-			local eyeAng  = bot:EyeAngles()
-			local bodyAng = bot:GetAngles() -- Direction feet are facing
+            updatePoseParams(bot, vel)
+        end
+    end)
 
-			if speed > 5 then
-				bot:SetAngles(Angle(0, eyeAng.y, 0))
-			end
+    -- ── 5. Gesture Support (Flinching/Firing) ────────────────────────────────
+    hook.Add("EntityTakeDamage", "SND_BotDamageAnims", function(target, dmg)
+        if not IsValid(target) or not target.SND_IsBot or not target:Alive() then return end
+        
+        if not target.SND_NextFlinch or CurTime() > target.SND_NextFlinch then
+            target:AnimRestartGesture(GESTURE_SLOT_FLINCH, ACT_FLINCH_PHYSICS, true)
+            target.SND_NextFlinch = CurTime() + 0.8
+        end
+    end)
 
-			-- TFA weapons rely on aim_yaw and aim_pitch for arm alignment.
-			-- This fix eliminates "floating guns" on bots.
-			local aimYaw = math.NormalizeAngle(eyeAng.y - bodyAng.y)
-			bot:SetPoseParameter("aim_yaw", aimYaw)
-			local aimPitch = math.NormalizeAngle(eyeAng.p)
-			bot:SetPoseParameter("aim_pitch", aimPitch)
-
-			if speed > 10 then
-				local moveDir = vel:Angle()
-				moveYaw = math.NormalizeAngle(moveDir.y - bodyAng.y)
-				-- Smooth out yaw changes to reduce jitter
-				local prevYaw = bot:GetPoseParameter("move_yaw") or 0
-				moveYaw = Lerp(0.15, prevYaw, moveYaw)
-			end
-			bot:SetPoseParameter("move_yaw",   moveYaw)
-
-			-- Procedural Leaning: Tilt torso based on horizontal velocity
-			local localVel = bot:WorldToLocal(bot:GetPos() + vel)
-			local targetLean = (localVel.y / 320) * 15
-			local curLean = bot:GetPoseParameter("body_yaw") or 0
-			bot:SetPoseParameter("body_yaw", Lerp(0.1, curLean, targetLean))
-
-			-- Torso rotation: Upper body looks at target while feet move independently
-			local aimYaw = math.NormalizeAngle(eyeAng.y - bodyAng.y)
-			bot:SetPoseParameter("aim_yaw", aimYaw)
-
-			-- body_pitch: match eye pitch (so they appear to aim up/down)
-			local pitch = math.NormalizeAngle(eyeAng.p)
-			bot:SetPoseParameter("body_pitch", math.Clamp(pitch, -60, 60))
-			bot:SetPoseParameter("head_pitch", math.Clamp(pitch, -45, 45))
-			bot:SetPoseParameter("head_yaw",   0) -- Handled by turning body
-		end
-	end)
+    -- ── 6. Weapon Refresh Fix ────────────────────────────────────────────────
+    -- Forces the 3rd-person world model to refresh its hold type after Loadout.Apply
+    hook.Add("PlayerSpawn", "SND_BotWeaponRefresh", function(ply)
+        if not ply.SND_IsBot then return end
+        timer.Simple(0.25, function()
+            if not IsValid(ply) or not ply:Alive() then return end
+            local weps = ply:GetWeapons()
+            if #weps >= 2 then
+                ply:SelectWeapon(weps[2]:GetClass())
+                timer.Simple(0.1, function() if IsValid(ply) then ply:SelectWeapon(weps[1]:GetClass()) end end)
+            end
+        end)
+    end)
 end
 
--- ── CLIENT: UpdateAnimation — drive bot animation sequences ───────────────
--- This hook fires once per frame per player on the CLIENT and lets us
--- override which animation sequence plays.  Critical for NextBot bots.
 if CLIENT then
-	hook.Add("UpdateAnimation", "SND_BotAnimUpdate", function(ply, velocity, maxSeqGroundSpeed)
-		if not ply:Alive() then return end
+    hook.Add("UpdateAnimation", "SND_ClientBotAnims", function(ply, velocity, maxSeqGroundSpeed)
+        if not IsValid(ply) or not ply:Alive() then return end
 
-		-- Apply to both bots AND human players using CSS models so they look identical
-		local isCSSModel = string.find(ply:GetModel(), "models/player/ct_") ~= nil
-		                or string.find(ply:GetModel(), "models/player/t_")  ~= nil
-		if not isCSSModel then return end
+        local isBot = ply:IsBot() or ply:GetNWBool("SND_IsBot", false)
+        
+        -- Manually drive frame advance for bots (Prevents T-Pose/Sliding)
+        if isBot then
+            ply:FrameAdvance(FrameTime())
+            local speed = velocity:Length2D()
+            local rate  = (speed > 10) and math.Clamp(speed / maxSeqGroundSpeed, 0.2, 2) or 1
+            ply:SetPlaybackRate(rate)
+        end
 
-		local speed = velocity:Length2D()
-		local isBot = ply:IsBot() or ply:GetNWBool("SND_IsBot", false)
-
-		-- Manually drive frame advancement on the client for NextBots to prevent static sliding
-		if isBot then
-			ply:FrameAdvance(FrameTime())
-			if speed > 1 then
-				ply:SetPlaybackRate(math.Clamp(speed / math.max(maxSeqGroundSpeed, 0.1), 0, 2))
-			else
-				ply:SetPlaybackRate(1)
-			end
-		end
-		
-		-- Update the move_x and move_y pose parameters for animations
-		if speed > 1 then
-			ply:SetPoseParameter("move_x", (velocity:Dot(ply:GetForward()) / speed))
-			ply:SetPoseParameter("move_y", (velocity:Dot(ply:GetRight()) / speed) * -1)
-		end
-
-		-- Resolve the hold type from the active weapon so the arms look right
-		local wep     = ply:GetActiveWeapon()
-		local hold    = IsValid(wep) and wep:GetHoldType() or "normal"
-
-		-- Map hold type to a gesture layer sequence name that CSS models have.
-		-- CSS models have: "idle_all_aim", "walk_all", "run_all", "crouch_all_aim"
-		-- The standard GMod animation system handles hold-type overlays via
-		-- ACT_ activities, but we also reinforce aim and movement here.
-
-		local eyeAng = ply:EyeAngles()
-		local bodyAng = ply:GetAngles()
-
-		-- Torso rotation and pitch for high-fidelity aiming
-		local aimYaw = math.NormalizeAngle(eyeAng.y - bodyAng.y)
-		ply:SetPoseParameter("aim_yaw", aimYaw)
-		local pitch = math.NormalizeAngle(eyeAng.p)
-		ply:SetPoseParameter("body_pitch", math.Clamp(pitch, -60, 60))
-		ply:SetPoseParameter("head_pitch", math.Clamp(pitch, -45, 45))
-
-		local moveYaw = 0
-		if speed > 10 then
-			local moveDir = velocity:Angle()
-			moveYaw = math.NormalizeAngle(moveDir.y - bodyAng.y)
-			-- Smooth out yaw to prevent erratic animation snapping
-			local prevYaw = ply:GetPoseParameter("move_yaw") or 0
-			moveYaw = Lerp(0.15, prevYaw, moveYaw)
-		end
-		ply:SetPoseParameter("move_yaw",   moveYaw)
-	end)
-
-	-- ── CalcMainActivity: tell the engine which activity to use ───────────
-	-- This is the hook that controls whether the player plays IDLE, WALK, or RUN.
-	-- Without this, bots may get stuck on IDLE regardless of their velocity.
-	hook.Add("CalcMainActivity", "SND_BotCalcActivity", function(ply, velocity)
-		if not ply:Alive() then return end
-
-		local isCSSModel = string.find(ply:GetModel(), "models/player/ct_") ~= nil
-		                or string.find(ply:GetModel(), "models/player/t_")  ~= nil
-		if not isCSSModel then return end
-
-		local speed = velocity:Length2D()
-		local onGround = ply:IsOnGround()
-
-		if not onGround then
-			return ACT_MP_JUMP, -1
-		end
-
-		if ply:Crouching() or ply:GetNWBool("SND_BotCrouching", false) then
-			return speed < 10 and ACT_MP_CROUCH_IDLE or ACT_MP_CROUCHWALK, -1
-		end
-
-		if speed < 10 then
-			return ACT_MP_STAND_IDLE, -1
-		elseif speed < 140 then
-			return ACT_MP_WALK, -1
-		else
-			return ACT_MP_RUN, -1
-		end
-	end)
-end
-
--- ── SERVER: force correct weapon world-model hold type on bots ────────────
--- When a bot spawns with an ARC9 weapon the worldmodel (3rd-person visible gun)
--- sometimes doesn't update.  Switching weapon twice forces a refresh.
-if SERVER then
-	hook.Add("PlayerSpawn", "SND_BotWeaponHoldFix", function(ply)
-		if not ply.SND_IsBot then return end
-		-- Small delay so Give() in Loadout.Apply has finished
-		timer.Simple(0.2, function()
-			if not IsValid(ply) or not ply:Alive() then return end
-			local weps = ply:GetWeapons()
-			if #weps < 1 then return end
-
-			-- Select secondary, then primary — forces the hold-type VM/WM refresh
-			if #weps >= 2 then
-				ply:SelectWeapon(weps[2]:GetClass())
-			end
-			timer.Simple(0.05, function()
-				if IsValid(ply) and ply:Alive() then
-					ply:SelectWeapon(weps[1]:GetClass())
-				end
-			end)
-		end)
-	end)
--- When a bot spawns with a TFA weapon the worldmodel (3rd-person visible gun)
+        updatePoseParams(ply, velocity)
+    end)
 end
