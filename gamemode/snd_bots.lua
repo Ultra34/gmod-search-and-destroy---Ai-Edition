@@ -37,11 +37,11 @@ local BS_RELOAD = 6
 -- ── Skill 1-10 → internal float helpers ──────────────────────────────────
 local function skillT(s)       return (math.Clamp(s, 1, 10) - 1) / 9 end
 local function getSkill()      return SND.Settings.GetInt("bot_skill", 5) end
-local function aimNoise(s)     return math.Lerp(skillT(s), 70, 2) end
-local function reactionSec(s)  return math.Lerp(skillT(s), 1.3, 0.04) end
-local function engageRange(s)  return math.Lerp(skillT(s), 600, 3800) end
-local function botMoveSpeed(s) return math.Lerp(skillT(s), 120, 310) end
-local function reloadThresh(s) return math.Lerp(skillT(s), 0.6, 0.12) end
+local function aimNoise(s)     return Lerp(skillT(s), 70, 2) end
+local function reactionSec(s)  return Lerp(skillT(s), 1.3, 0.04) end
+local function engageRange(s)  return Lerp(skillT(s), 600, 3800) end
+local function botMoveSpeed(s) return Lerp(skillT(s), 120, 310) end
+local function reloadThresh(s) return Lerp(skillT(s), 0.6, 0.12) end
 
 -- ── AI State ──────────────────────────────────────────────────────────────
 local function newAI()
