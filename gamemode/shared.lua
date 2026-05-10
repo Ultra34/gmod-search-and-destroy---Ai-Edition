@@ -100,9 +100,7 @@ hook.Add("TranslateActivity", "SND_BotAnimTranslate", function(ply, act)
 		[ACT_MP_JUMP] = "JUMP",
 	}
 
-	-- Fallback to standard activities if we aren't handling a specific movement act
-	local suffix = actMap[act] or actMap[ACT_MP_STAND_IDLE]
-	if not actMap[act] then return end
+	local suffix = actMap[act]
 
 	if suffix then
 		-- Fallback holdtypes to prevent T-posing on older CSS model rigs

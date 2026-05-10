@@ -405,6 +405,10 @@ function SND.UpdatePoseParameters(ply)
 	
 	local leanTarget = (velocity:Dot(ply:GetRight()) / maxSpd) * 20
 	ply:SetPoseParameter("body_yaw", Lerp(FrameTime() * 10, ply:GetPoseParameter("body_yaw") or 0, leanTarget))
+
+	-- Force engine to refresh bones immediately after updating pose parameters
+	-- This stops the arms from detaching or breaking during fast turns.
+	ply:InvalidateBoneCache()
 end
 
 hook.Add("UpdateAnimation", "SND_ClientAnims", function(ply, velocity, maxSeqGroundSpeed)
