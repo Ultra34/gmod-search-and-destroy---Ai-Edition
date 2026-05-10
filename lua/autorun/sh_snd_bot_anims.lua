@@ -1,6 +1,8 @@
 -- ── Bot & Legacy Rig Animation System (Autorun) ───────────────────────────
 -- Centrally manages animations for CSS models and Bot specific behaviors.
 
+AddCSLuaFile()
+
 -- ── Shared utility function (available to both client and server) ──────────
 local function isLegacyRig(ply)
 	local mdl = string.lower(ply:GetModel() or "")
@@ -20,15 +22,15 @@ end
 
 local HOLD_SUFFIXES = {
 	pistol = "PISTOL", revolver = "REVOLVER", smg = "SMG1", smg1 = "SMG1", smg2 = "SMG1",
-	ar2 = "AR2", shotgun = "SHOTGUN", rpg = "RPG", rpg7 = "RPG", melee = "MELEE",
+	ar2 = "RIFLE", shotgun = "SHOTGUN", rpg = "RPG", rpg7 = "RPG", melee = "MELEE",
 	knife = "KNIFE", fist = "FIST", grenade = "GRENADE", slam = "SLAM", passive = ""
 }
 
 -- ── Shared Pose Update (Essential for legacy rigs) ─────────────────────────
 local function updatePoseParams(ply)
 	local vel = ply:GetVelocity()
-	local speed = vel:Length2D()
-	local maxSpd = math.max(ply:GetMaxSpeed(), 1)
+	local speed = vel:Length()
+	local maxSpd = math.max(ply:GetMaxSpeed(), 250)
 	local angles = ply:GetAngles()
 	local eye = ply:EyeAngles()
 
@@ -55,7 +57,11 @@ local function updatePoseParams(ply)
 		ply:SetPoseParameter("move_y", 0)
 	end
 
-	ply:InvalidateBoneCache()
+	-- Throttled bone invalidation to prevent jitter
+	if (ply._snd_next_bone_clear or 0) < CurTime() then
+		ply:InvalidateBoneCache()
+		ply._snd_next_bone_clear = CurTime() + 0.1
+	end
 end
 
 -- ── Movement Activity Translation (Client & Server) ────────────────────────
@@ -138,25 +144,20 @@ if SERVER then
 	-- Reaction/flinch animations for bots
 	hook.Add("EntityTakeDamage", "SND_BotReactionHandler", function(target, dmg)
 		if not IsValid(target) or not target.SND_IsBot or not target:Alive() then return end
-		target:AnimRestartGesture(GESTURE_SLOT_FLINCH, ACT_FLINCH_PHYSICS, true)
-		target:SetLayerWeight(GESTURE_SLOT_FLINCH, math.Clamp(dmg:GetDamage() / 45, 0.2, 1.0))
+		local act = target:Crouching() and ACT_FLINCH_CROUCH or ACT_FLINCH_PHYSICS
+		target:AnimRestartGesture(GESTURE_SLOT_FLINCH, act, true)
+		target:SetLayerWeight(GESTURE_SLOT_FLINCH, math.Clamp(dmg:GetDamage() / 30, 0.4, 1.0))
 	end)
 
 	-- Force synchronization on spawn to prevent T-posing
 	hook.Add("PlayerSpawn", "SND_BotAnimationInitializer", function(ply)
 		if not ply.SND_IsBot then return end
-		timer.Simple(0.2, function()
+		timer.Simple(0.1, function()
 			if not IsValid(ply) then return end
-			-- Force animation reset to prevent T-pose
-			ply:AnimRestartGesture(GESTURE_SLOT_ATTACK_AND_RELOAD, ACT_INVALID, true)
 			-- Refresh weapon hold type to ensure correct animations
 			local wep = ply:GetActiveWeapon()
 			if IsValid(wep) then
-				local holdType = wep:GetHoldType()
-				wep:SetHoldType("normal")
-				timer.Simple(0.1, function()
-					if IsValid(wep) then wep:SetHoldType(holdType) end
-				end)
+				wep:SetHoldType(wep:GetHoldType())
 			end
 		end)
 	end)

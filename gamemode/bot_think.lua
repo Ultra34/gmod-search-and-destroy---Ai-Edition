@@ -60,7 +60,8 @@ function SND.Bots.Think(bot, cmd)
 				if isCarrier or isDefusing then
 					cmd:ClearMovement()
 					cmd:SetButtons(bit.bor(cmd:GetButtons(), IN_USE))
-					bot:SetEyeAngles(LerpAngle(0.1, bot:EyeAngles(), Angle(75, bot:EyeAngles().y, 0)))
+					-- Soften the angle to 45 degrees so the model doesn't "break" its neck
+					bot:SetEyeAngles(LerpAngle(0.1, bot:EyeAngles(), Angle(45, bot:EyeAngles().y, 0)))
 				end
 			end
 		end
