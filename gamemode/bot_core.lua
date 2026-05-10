@@ -76,6 +76,16 @@ function SND.Bots.OnPlayerSpawn(ply)
 	SND.Teams.ApplyFactionModel(ply)
 	ply:SetNWBool("SND_IsBot", true)
 	ply.SND_AI = newAI()
+
+	-- Ensure weapon state is synchronized for animation resolution
+	timer.Simple(0.1, function()
+		if IsValid(ply) and ply:Alive() then
+			local wep = ply:GetActiveWeapon()
+			if IsValid(wep) then
+				wep:SetHoldType(wep:GetHoldType())
+			end
+		end
+	end)
 end
 
 function SND.Bots.EnsureCount()

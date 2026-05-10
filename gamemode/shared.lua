@@ -63,19 +63,41 @@ end
 
 function SND.ResolveCSSActivity(ply, velocity)
 	local speed = velocity:Length2D()
+	local wep = ply:GetActiveWeapon()
+	local hold = IsValid(wep) and wep:GetHoldType() or "ar2"
 
-	-- Use standard activities; TranslateActivity will handle the weapon mapping.
-	if not ply:IsOnGround() then return ACT_MP_JUMP end
+	-- Activity Suffix Resolution (Strict Mapping for CS:S Skeletons)
+	local suffix = "AR2"
+	if hold == "pistol" or hold == "revolver" then suffix = "PISTOL"
+	elseif hold == "smg" or hold == "smg1" then suffix = "SMG1"
+	elseif hold == "ar2" or hold == "rpg" or hold == "physgun" then suffix = "AR2"
+	elseif hold == "shotgun" then suffix = "SHOTGUN"
+	elseif hold == "melee" or hold == "melee2" or hold == "fist" then suffix = "MELEE"
+	elseif hold == "knife" then suffix = "KNIFE"
+	elseif hold == "grenade" then suffix = "GRENADE"
+	elseif hold == "slam" then suffix = "SLAM"
+	elseif hold == "passive" or hold == "normal" then suffix = "PASSIVE"
+	end
+
+	-- Resolve final HL2MP activities directly to bypass engine translation gaps
+	if not ply:IsOnGround() then
+		return _G["ACT_HL2MP_JUMP_" .. suffix] or ACT_HL2MP_JUMP_AR2
+	end
+
 	if ply:Crouching() then
-		return (speed < 15) and ACT_MP_CROUCH_IDLE or ACT_MP_CROUCHWALK
+		if speed < 15 then
+			return _G["ACT_HL2MP_IDLE_CROUCH_" .. suffix] or ACT_HL2MP_IDLE_CROUCH
+		else
+			return ACT_HL2MP_WALK_CROUCH
+		end
 	end
 
 	if speed < 10 then
-		return ACT_MP_STAND_IDLE
+		return _G["ACT_HL2MP_IDLE_" .. suffix] or ACT_HL2MP_IDLE_AR2
 	elseif speed < 150 then
-		return ACT_MP_WALK
+		return _G["ACT_HL2MP_WALK_" .. suffix] or ACT_HL2MP_WALK_AR2
 	else
-		return ACT_MP_RUN
+		return _G["ACT_HL2MP_RUN_" .. suffix] or ACT_HL2MP_RUN_AR2
 	end
 end
 
@@ -87,43 +109,10 @@ end)
 hook.Add("TranslateActivity", "SND_BotAnimTranslate", function(ply, act)
 	if not IsValid(ply) or not ply:Alive() or not SND.IsCSSModel(ply) then return end
 
-	local wep = ply:GetActiveWeapon()
-	local hold = IsValid(wep) and wep:GetHoldType() or "ar2"
+	-- Movement is now handled directly via HL2MP activities in CalcMainActivity.
+	-- This hook now primarily handles action-based remapping (e.g. Firing/Reloading).
 	
-	-- Map standard acts to the holdtype versions that CSS models support.
-	local actMap = {
-		[ACT_MP_STAND_IDLE] = "IDLE",
-		[ACT_MP_WALK] = "WALK",
-		[ACT_MP_RUN] = "RUN",
-		[ACT_MP_CROUCH_IDLE] = "IDLE_CROUCH",
-		[ACT_MP_CROUCHWALK] = "WALK_CROUCH",
-		[ACT_MP_JUMP] = "JUMP",
-	}
-
-	local suffix = actMap[act]
-	if suffix then
-		-- CSS models typically don't have 'normal', 'passive', or 'rpg' specific sets, so we map to AR2.
-		if hold == "normal" or hold == "passive" or hold == "rpg" or hold == "physgun" or hold == "grenade" or hold == "slam" then 
-			hold = "ar2" 
-		end
-		if hold == "smg1" or hold == "smg" then hold = "smg1" end
-		if hold == "revolver" then hold = "pistol" end
-		
-		local holdUpper = string.upper(hold)
-		local mapped = _G["ACT_HL2MP_" .. suffix .. "_" .. holdUpper]
-		
-		-- Special construction for jump as it doesn't always follow the suffix_holdtype pattern
-		if suffix == "JUMP" and not mapped then
-			mapped = _G["ACT_HL2MP_JUMP_" .. holdUpper] or ACT_HL2MP_JUMP_AR2
-		end
-
-		if mapped then return mapped end
-
-		-- Ultimate fallback to AR2 activities for CSS models to prevent T-posing
-		local fallback = _G["ACT_HL2MP_" .. suffix .. "_AR2"]
-		if fallback then return fallback end
-	end
-
+	local wep = ply:GetActiveWeapon()
 	if IsValid(wep) and wep.TranslateActivity then
 		local translated = wep:TranslateActivity(act)
 		if translated and translated ~= -1 then return translated end
