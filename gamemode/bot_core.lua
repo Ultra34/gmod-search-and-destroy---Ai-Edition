@@ -215,13 +215,12 @@ hook.Add("Think", "SND_ServerBotAnims", function()
 		local diff = math.NormalizeAngle(eyeYaw - bodyYaw)
 
 		-- Smoothed threshold rotation:
-		-- Prevents arm-snapping by gradually rotating the feet once the aim 
-		-- angle exceeds a comfortable cone (50 degrees).
 		if speed > 10 then
+			-- If moving, body should follow movement direction more directly.
 			bot:SetAngles(Angle(0, velocity:Angle().y, 0))
-		elseif math.abs(diff) > 45 then
-			local target = Angle(0, eyeYaw - (diff > 0 and 40 or -40), 0)
-			bot:SetAngles(LerpAngle(FrameTime() * 20, bot:GetAngles(), target))
+		elseif math.abs(diff) > 30 then -- Rotate feet if eye is more than 30 degrees off body
+			-- Lerp the body towards the eye yaw to minimize arm twist.
+			bot:SetAngles(LerpAngle(FrameTime() * 15, bot:GetAngles(), Angle(0, eyeYaw, 0)))
 		end
 	end
 end)
