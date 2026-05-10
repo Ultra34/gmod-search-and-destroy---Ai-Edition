@@ -229,10 +229,10 @@ hook.Add("Think", "SND_ServerBotAnims", function()
 		if speed > 10 then
 			local moveAng = velocity:Angle()
 			bot:SetAngles(Angle(0, moveAng.y, 0))
-		elseif math.abs(diff) > 45 then 
+		elseif math.abs(diff) > 35 then 
 			-- Gradually rotate the body hull if stationary to minimize torso twist
-			local targetAng = Angle(0, eyeYaw - (diff > 0 and 40 or -40), 0)
-			bot:SetAngles(LerpAngle(FrameTime() * 10, bot:GetAngles(), targetAng))
+			local targetAng = Angle(0, eyeYaw - (diff > 0 and 30 or -30), 0)
+			bot:SetAngles(LerpAngle(FrameTime() * 20, bot:GetAngles(), targetAng))
 		end
 	end
 end)

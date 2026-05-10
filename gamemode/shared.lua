@@ -70,36 +70,20 @@ local holdTypeToSuffix = {
 
 function SND.ResolveCSSActivity(ply, velocity)
 	local speed = velocity:Length2D()
-	local wep = ply:GetActiveWeapon()
-	local hold = IsValid(wep) and wep:GetHoldType() or "ar2"
-	local suffix = holdTypeToSuffix[hold] or "AR2"
 
-	-- 1. Jumping
-	if not ply:IsOnGround() then
-		if suffix == "PASSIVE" then return ACT_HL2MP_JUMP_PASSIVE end
-		return _G["ACT_HL2MP_JUMP_" .. suffix] or ACT_HL2MP_JUMP_AR2
-	end
+	-- Use standard activities as the base; SND_BotAnimTranslate will map to HL2MP versions for CSS models.
+	if not ply:IsOnGround() then return ACT_MP_JUMP end
 
-	-- 2. Crouching
 	if ply:Crouching() then
-		if speed < 15 then
-			if suffix == "PASSIVE" then return ACT_HL2MP_IDLE_CROUCH end
-			return _G["ACT_HL2MP_IDLE_CROUCH_" .. suffix] or ACT_HL2MP_IDLE_CROUCH_AR2
-		else
-			return ACT_HL2MP_WALK_CROUCH
-		end
+		return (speed < 15) and ACT_MP_CROUCH_IDLE or ACT_MP_CROUCHWALK
 	end
 
-	-- 3. Standing/Moving
 	if speed < 10 then
-		if suffix == "PASSIVE" then return ACT_HL2MP_IDLE end
-		return _G["ACT_HL2MP_IDLE_" .. suffix] or ACT_HL2MP_IDLE_AR2
+		return ACT_MP_STAND_IDLE
 	elseif speed < 150 then
-		if suffix == "PASSIVE" then return ACT_HL2MP_WALK_PASSIVE end
-		return _G["ACT_HL2MP_WALK_" .. suffix] or ACT_HL2MP_WALK_AR2
+		return ACT_MP_WALK
 	else
-		if suffix == "PASSIVE" then return ACT_HL2MP_RUN_PASSIVE end
-		return _G["ACT_HL2MP_RUN_" .. suffix] or ACT_HL2MP_RUN_AR2
+		return ACT_MP_RUN
 	end
 end
 
@@ -108,13 +92,36 @@ hook.Add("CalcMainActivity", "SND_SharedCalcActivity", function(ply, velocity)
 	return SND.ResolveCSSActivity(ply, velocity), -1
 end)
 
+local holdTypeToSuffix = {
+	["pistol"] = "PISTOL", ["revolver"] = "REVOLVER", ["smg"] = "SMG1", ["smg1"] = "SMG1",
+	["ar2"] = "AR2", ["rpg"] = "RPG", ["physgun"] = "AR2", ["shotgun"] = "SHOTGUN",
+	["melee"] = "MELEE", ["melee2"] = "MELEE", ["fist"] = "FIST", ["knife"] = "KNIFE",
+	["grenade"] = "GRENADE", ["slam"] = "SLAM", ["passive"] = "PASSIVE", ["normal"] = "PASSIVE"
+}
+
 hook.Add("TranslateActivity", "SND_BotAnimTranslate", function(ply, act)
 	if not IsValid(ply) or not ply:Alive() or not SND.IsCSSModel(ply) then return end
 
-	-- Movement is now handled directly via HL2MP activities in CalcMainActivity.
-	-- This hook now primarily handles action-based remapping (e.g. Firing/Reloading).
+	-- Map generic player activities to the specific HL2MP versions that legacy CSS models recognize.
+	local moveMap = {
+		[ACT_MP_STAND_IDLE] = "IDLE", [ACT_MP_WALK] = "WALK", [ACT_MP_RUN] = "RUN",
+		[ACT_MP_CROUCH_IDLE] = "IDLE_CROUCH", [ACT_MP_CROUCHWALK] = "WALK_CROUCH", [ACT_MP_JUMP] = "JUMP"
+	}
 	
 	local wep = ply:GetActiveWeapon()
+	local hold = IsValid(wep) and wep:GetHoldType() or "ar2"
+	local suffix = holdTypeToSuffix[hold] or "AR2"
+
+	local base = moveMap[act]
+	if base then
+		if suffix == "PASSIVE" then
+			if base == "JUMP" then return ACT_HL2MP_JUMP_PASSIVE end
+			return _G["ACT_HL2MP_" .. base] or ACT_HL2MP_IDLE
+		end
+		-- Resolve to final activity, falling back to AR2 if the specific holdtype animation is missing.
+		return _G["ACT_HL2MP_" .. base .. "_" .. suffix] or _G["ACT_HL2MP_" .. base .. "_AR2"] or ACT_HL2MP_IDLE_AR2
+	end
+
 	if IsValid(wep) and wep.TranslateActivity then
 		local translated = wep:TranslateActivity(act)
 		if translated and translated ~= -1 then return translated end
