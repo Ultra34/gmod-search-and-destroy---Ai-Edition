@@ -36,7 +36,18 @@ local function PlayCombatGesture(bot, wep, isReload)
 	local h = IsValid(wep) and wep:GetHoldType() or "ar2"
 	local map = isReload and RELOAD_GESTURE_MAP or FIRE_GESTURE_MAP
 	local act = map[h] or (isReload and ACT_HL2MP_GESTURE_RELOAD_AR2 or ACT_HL2MP_GESTURE_RANGE_ATTACK_AR2)
+
 	bot:AnimRestartGesture(GESTURE_SLOT_ATTACK_AND_RELOAD, act, true)
+
+	-- Use BaseAnimatingOverlay concepts to sync reload speed
+	-- This ensures the third-person animation lasts exactly as long as the weapon's reload timer
+	if isReload and IsValid(wep) then
+		local reloadTime = wep.ReloadTime or DEFAULT_RELOAD_TIME
+		-- Standard gestures are roughly 2.2 seconds long; we scale the playback rate to match
+		local animDuration = 2.2 
+		local playbackRate = animDuration / reloadTime
+		bot:SetLayerPlaybackRate(GESTURE_SLOT_ATTACK_AND_RELOAD, playbackRate)
+	end
 end
 
 local WEP_RANGE = {

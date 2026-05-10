@@ -76,17 +76,6 @@ function SND.Bots.OnPlayerSpawn(ply)
 	SND.Teams.ApplyFactionModel(ply)
 	ply:SetNWBool("SND_IsBot", true)
 	ply.SND_AI = newAI()
-
-	-- Weapon Refresh for ARC9/CSS alignment
-	timer.Simple(0.25, function()
-		if not IsValid(ply) or not ply:Alive() then return end
-		local weps = ply:GetWeapons()
-		if #weps >= 2 then
-			local oldWep = ply:GetActiveWeapon()
-			ply:SelectWeapon(weps[2]:GetClass())
-			timer.Simple(0.1, function() if IsValid(ply) and IsValid(oldWep) then ply:SelectWeapon(oldWep:GetClass()) end end)
-		end
-	end)
 end
 
 function SND.Bots.EnsureCount()
@@ -225,22 +214,27 @@ hook.Add("Think", "SND_ServerBotAnims", function()
 		local bodyYaw = bot:GetAngles().y
 		local diff = math.NormalizeAngle(eyeYaw - bodyYaw)
 
-		-- Standard threshold rotation:
-		-- If moving, the body faces the movement direction.
-		-- If standing, the feet only shift once the torso turns more than 45 degrees.
+		-- Smoothed threshold rotation:
+		-- Prevents arm-snapping by gradually rotating the feet once the aim 
+		-- angle exceeds a comfortable cone (50 degrees).
 		if speed > 10 then
-			local moveAng = velocity:Angle()
-			bot:SetAngles(Angle(0, moveAng.y, 0))
-		elseif math.abs(diff) > 45 then
-			bot:SetAngles(Angle(0, eyeYaw - (diff > 0 and 45 or -45), 0))
+			bot:SetAngles(Angle(0, velocity:Angle().y, 0))
+		elseif math.abs(diff) > 50 then
+			local target = Angle(0, eyeYaw - (diff > 0 and 45 or -45), 0)
+			bot:SetAngles(LerpAngle(FrameTime() * 10, bot:GetAngles(), target))
 		end
 	end
 end)
 
-hook.Add("EntityTakeDamage", "SND_BotDamageAnims", function(target)
-	if not IsValid(target) or not target.SND_IsBot or not target:Alive() then return end
+hook.Add("EntityTakeDamage", "SND_BotDamageAnims", function(target, dmg)
+	if not IsValid(target) or not target.SND_IsBot or not target:Alive() or not dmg then return end
 	if not target.SND_NextFlinch or CurTime() > target.SND_NextFlinch then
 		target:AnimRestartGesture(GESTURE_SLOT_FLINCH, ACT_FLINCH_PHYSICS, true)
+		
+		-- Use weight to scale the flinch jerk based on damage (capped at 1.0)
+		local intensity = math.Clamp(dmg:GetDamage() / 50, 0.2, 1.0)
+		target:SetLayerWeight(GESTURE_SLOT_FLINCH, intensity)
+
 		target.SND_NextFlinch = CurTime() + 0.8
 	end
 end)

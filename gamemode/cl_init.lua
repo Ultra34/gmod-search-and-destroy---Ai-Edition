@@ -398,7 +398,7 @@ function SND.UpdatePoseParameters(ply)
 
 	-- Clamping prevents the character from twisting into an impossible shape
 	ply:SetPoseParameter("aim_pitch", math.Clamp(pitch, -89, 89))
-	ply:SetPoseParameter("aim_yaw", math.Clamp(yaw, -55, 55)) -- Tightened clamp prevents arm break
+	ply:SetPoseParameter("aim_yaw", math.Clamp(yaw, -60, 60)) -- Safest range for CSS model rigs
 	ply:SetPoseParameter("head_pitch", math.Clamp(pitch, -45, 45)); ply:SetPoseParameter("head_yaw", math.Clamp(yaw, -60, 60))
 	local leanTarget = (velocity:Dot(ply:GetRight()) / 350) * 20
 	ply:SetPoseParameter("body_yaw", Lerp(FrameTime() * 10, ply:GetPoseParameter("body_yaw") or 0, leanTarget))
