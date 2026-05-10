@@ -240,10 +240,12 @@ function SND.Bots.CombatThink(bot, cmd)
 	if ai.gadgetPhase then runGadgetFSM(bot, cmd, now) return end
 
 	-- 4. Engagement Logic
-	if IsValid(target) and canSee then
-		local dist = bot:GetPos():Distance(target:GetPos())
-		local wep = bot:GetActiveWeapon()
-		if not IsValid(wep) then return end
+	local dist = IsValid(target) and bot:GetPos():Distance(target:GetPos()) or 0
+	local wep = bot:GetActiveWeapon()
+	
+	if IsValid(target) and canSee and IsValid(wep) then
+		ai.lastSeenAt = now
+		ai.lastKnownPos = target:GetPos()
 
 		SND.Bots.RefreshNoise(bot, dist)
 		local liveAim = SND.Bots.ComputeLiveAim(bot)
@@ -254,46 +256,14 @@ function SND.Bots.CombatThink(bot, cmd)
 			cmd:SetViewAngles(ai.aimAngles)
 		end
 
-		-- Firing Logic
-		local mode = getFireMode(wep)
-		local nextFire = wep:GetNextPrimaryFire()
+		-- Firing Alignment Check
 		local aligned = false
 		if ai.aimAngles then
 			local toTgt = (target:EyePos() - bot:EyePos()):GetNormalized()
 			aligned = ai.aimAngles:Forward():Dot(toTgt) > (AIM_THRESH[bucket] or 0.93)
 		end
 
-		ai.wantAttack = aligned and (now >= nextFire)
-	end
-
-	-- Suppression overrides (LMG Suppression)
-	if not canSee and now < (ai.suppressUntil or 0) and ai.suppressPos then
-		ai.wantAttack = true
-	end
-
-	-- ── Centralized Firing Animation Trigger ──
-	if ai.wantAttack and now >= nextFire then
-		local wep = bot:GetActiveWeapon()
-		local mode = getFireMode(wep)
-		addRecoil(ai, wep, bot:GetPos():Distance(ai.target:GetPos()), bucket)
-
-		if mode == "bolt" or mode == "semi" then
-			ai.tapUntil = now + (mode == "bolt" and TAP_HOLD_BOLT or TAP_HOLD_SEMI)
-			if mode == "semi" then ai.semiSettleUntil = now + (SEMI_SETTLE[bucket] or 0.1) end
-			bot:DoAnimationEvent(PLAYERANIMEVENT_ATTACK_PRIMARY)
-			if IsValid(wep) and wep.ARC9 then wep:PlayAnimation("fire") end
-		else
-			-- Automatic / Burst
-			if now >= (ai.nextAutoAnimAt or 0) then
-				bot:DoAnimationEvent(PLAYERANIMEVENT_ATTACK_PRIMARY)
-				if IsValid(wep) and wep.ARC9 then wep:PlayAnimation("fire") end
-				local delay = (wep and wep.Primary and wep.Primary.Delay) or 0.1
-				ai.nextAutoAnimAt = now + math.max(delay, 0.12)
-			end
-		end
-	end
-
-	if not ai.wantAttack then ai.wantAttack = false end
+		ai.wantAttack = aligned and (now >= wep:GetNextPrimaryFire())
 
 		-- Suppression Setup (LMGs)
 		if wep:GetClass():find("_lm_", 1, true) and dist > SUPPRESS_MIN and dist < SUPPRESS_MAX then
@@ -304,10 +274,32 @@ function SND.Bots.CombatThink(bot, cmd)
 			end
 		end
 	else
-		ai.wantAttack = false
-		-- LMG Suppressing a ghost
+		-- Visibility lost or no target - check suppression state
 		if now < (ai.suppressUntil or 0) and ai.suppressPos then
 			ai.wantAttack = true
+		else
+			ai.wantAttack = false
+		end
+	end
+
+	-- ── Centralized Firing Animation Trigger ──
+	if ai.wantAttack and IsValid(wep) and now >= wep:GetNextPrimaryFire() then
+		local mode = getFireMode(wep)
+		addRecoil(ai, wep, dist, skill)
+
+		if mode == "bolt" or mode == "semi" then
+			ai.tapUntil = now + (mode == "bolt" and TAP_HOLD_BOLT or TAP_HOLD_SEMI)
+			if mode == "semi" then ai.semiSettleUntil = now + (SEMI_SETTLE[bucket] or 0.1) end
+			bot:DoAnimationEvent(PLAYERANIMEVENT_ATTACK_PRIMARY)
+			if wep.ARC9 then wep:PlayAnimation("fire") end
+		else
+			-- Automatic / Burst
+			if now >= (ai.nextAutoAnimAt or 0) then
+				bot:DoAnimationEvent(PLAYERANIMEVENT_ATTACK_PRIMARY)
+				if wep.ARC9 then wep:PlayAnimation("fire") end
+				local delay = (wep.Primary and wep.Primary.Delay) or 0.1
+				ai.nextAutoAnimAt = now + math.max(delay, 0.12)
+			end
 		end
 	end
 
