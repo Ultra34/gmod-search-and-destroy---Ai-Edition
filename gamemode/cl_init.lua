@@ -8,7 +8,6 @@ include("cl_levels.lua")
 include("cl_debug_menu.lua")
 include("cl_sites.lua")
 include("cl_mapvote.lua")
-include("bot_anims.lua")
 
 SND = SND or {}
 SND.Client = SND.Client or {}
