@@ -377,12 +377,12 @@ function SND.UpdatePoseParameters(ply)
 	local speed = velocity:Length2D()
 	local eye = ply:EyeAngles()
 	local body = ply:GetAngles()
+	local maxSpd = math.max(ply:GetMaxSpeed(), 1)
 
 	-- ── Movement Parameters (Legs) ──
 	if speed > 1 then
 		local fwd = ply:GetForward()
 		local rt = ply:GetRight()
-		local maxSpd = math.max(ply:GetMaxSpeed(), 1)
 		local moveX = velocity:Dot(fwd) / maxSpd
 		local moveY = velocity:Dot(rt) / maxSpd
 		
