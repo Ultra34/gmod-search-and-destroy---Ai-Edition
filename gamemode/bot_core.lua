@@ -219,9 +219,9 @@ hook.Add("Think", "SND_ServerBotAnims", function()
 		-- angle exceeds a comfortable cone (50 degrees).
 		if speed > 10 then
 			bot:SetAngles(Angle(0, velocity:Angle().y, 0))
-		elseif math.abs(diff) > 50 then
-			local target = Angle(0, eyeYaw - (diff > 0 and 45 or -45), 0)
-			bot:SetAngles(LerpAngle(FrameTime() * 10, bot:GetAngles(), target))
+		elseif math.abs(diff) > 45 then
+			local target = Angle(0, eyeYaw - (diff > 0 and 40 or -40), 0)
+			bot:SetAngles(LerpAngle(FrameTime() * 20, bot:GetAngles(), target))
 		end
 	end
 end)

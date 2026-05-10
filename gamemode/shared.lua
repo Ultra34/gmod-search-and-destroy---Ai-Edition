@@ -106,8 +106,9 @@ hook.Add("TranslateActivity", "SND_BotAnimTranslate", function(ply, act)
 
 	if suffix then
 		-- Fallback holdtypes to prevent T-posing on older CSS model rigs
-		if hold == "rpg" or hold == "physgun" or hold == "grenade" or hold == "slam" then hold = "ar2" end
+		if hold == "rpg" or hold == "physgun" or hold == "grenade" or hold == "slam" or hold == "passive" then hold = "ar2" end
 		if hold == "smg1" then hold = "smg" end
+		if hold == "revolver" then hold = "pistol" end
 		
 		local mapped = _G["ACT_HL2MP_" .. suffix .. "_" .. string.upper(hold)]
 		if mapped then return mapped end
