@@ -1,5 +1,5 @@
 --[[ Bot AI — state machine, skill 1-10, weapon reload/switch, bomb objectives
---[[ Bot AI — "Pro Edition" Overhaul ]]
+--[[ Bot AI — Professional Tactical Overhaul ]]
 -- Improved combat movement, recoil control, grenade usage, and tactical pathfinding.
 
 SND.Bots = SND.Bots or {}
@@ -26,25 +26,22 @@ if SERVER then
 end
 
 -- ── Bot states ────────────────────────────────────────────────────────────
-local BS_IDLE      = 0   -- Frozen (Freeze phase)
-local BS_PATROL    = 1   -- Moving toward objective/site
-local BS_ENGAGE    = 2   -- Active combat
-local BS_INVESTIGATE = 3 -- Heading toward a sound/last seen point
-local BS_SEARCH    = 4   -- Clearing corners at a location
-local BS_PLANT     = 5   -- Moving to plant
-local BS_DEFUSE    = 6   -- Moving to defuse
-local BS_FOLLOW    = 7   -- Escorting the carrier
-local BS_RECOVER   = 8   -- Recovering dropped bomb
-local BS_GRENADE   = 9   -- Preparing/throwing equipment
+local BS_IDLE   = 0
+local BS_PATROL = 1
+local BS_ENGAGE = 2
+local BS_CHASE  = 3
+local BS_PLANT  = 4
+local BS_DEFUSE = 5
+local BS_RELOAD = 6
 
 -- ── Skill 1-10 → internal float helpers ──────────────────────────────────
 local function skillT(s)       return (math.Clamp(s, 1, 10) - 1) / 9 end
 local function getSkill()      return SND.Settings.GetInt("bot_skill", 5) end
-local function aimNoise(s)     return Lerp(skillT(s), 18, 0.1) end
--- Elite bots have 100ms reaction, level 1 has ~1.2s
-local function reactionSec(s)  return Lerp(skillT(s)^1.5, 1.2, 0.1) end
-local function engageRange(s)  return Lerp(skillT(s), 2000, 6000) end
-local function botMoveSpeed(s) return Lerp(skillT(s), 180, 320) end
+local function aimNoise(s)     return math.Lerp(skillT(s), 70, 2) end
+local function reactionSec(s)  return math.Lerp(skillT(s), 1.3, 0.04) end
+local function engageRange(s)  return math.Lerp(skillT(s), 600, 3800) end
+local function botMoveSpeed(s) return math.Lerp(skillT(s), 120, 310) end
+local function reloadThresh(s) return math.Lerp(skillT(s), 0.6, 0.12) end
 
 -- ── AI State ──────────────────────────────────────────────────────────────
 local function newAI()
@@ -53,19 +50,17 @@ local function newAI()
 		enemy         = nil,
 		lastKnownPos  = nil,
 		lastKnownTime = 0,
-		searchPoints  = {},      -- Points to check when "investigating"
-		currentSearchIdx = 1,
-		nextSearchSwitch = 0,
-		nextGrenade   = 0,
-		nextFireGesture = 0,
-		
+		canShoot      = false,
 		shootGate     = 0,
-		nextJump      = 0,
+		patrolAngle   = math.Rand(0, 360),
 		patrolFlip    = 0,
 		needsReload   = false,
 		reloadEnd     = 0,
 		strafeDir     = 1,
 		strafeFlip    = 0,
+		nextGrenade   = 0,
+		nextFireGesture = 0,
+
 		stuckPos      = Vector(0,0,0),
 		stuckCheck    = 0,
 		stuckStartTime = 0,
@@ -73,10 +68,8 @@ local function newAI()
 		path          = nil, -- PathFollower object
 		nextPathUpdate = 0,
 		lastPathGoal  = Vector(0,0,0),
-		nextScan      = 0,
-		scanOffset    = 0,
-		isScanning    = false,
-		suppressedEnd = 0
+		suppressedEnd = 0,
+		nextJump      = 0
 	}
 end
 

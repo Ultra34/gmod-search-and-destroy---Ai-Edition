@@ -1,6 +1,6 @@
 --[[ CSS player model animation fix for bots AND human players
 --[[ 
-    SND Bot Animation Overhaul 
+    SND Bot Animation Overhaul (Merged Professional Edition)
     Purpose: Standardize CSS player model animations for NextBots and Humans.
     Fixes: T-Posing, Floating Guns, Sliding movement.
 ]]
@@ -8,37 +8,50 @@
 -- ── 1. Shared Activity Translation ───────────────────────────────────────
 -- This hook maps generic movement activities to weapon-specific activities.
 hook.Add("TranslateActivity", "SND_BotAnimTranslate", function(ply, act)
-    if not IsValid(ply) or not ply:Alive() then return end
+    if not IsValid(ply) or not ply:Alive() or act == nil then return end
 
     local model = ply:GetModel() or ""
-    local isCSS = string.find(model, "/ct_") or string.find(model, "/t_")
+    local isCSS = string.find(model, "models/player/ct_", 1, true) ~= nil or string.find(model, "models/player/t_", 1, true) ~= nil
     if not isCSS then return end
 
     local wep = ply:GetActiveWeapon()
     
-    -- Priority 1: Let TFA/ARC9 Weapons define their own arm/body poses
     if IsValid(wep) and wep.TranslateActivity then
         local translated = wep:TranslateActivity(act)
         if translated and translated != -1 then return translated end
     end
 
-    -- Priority 2: Standard HL2MP fallback mapping
-    local h = IsValid(wep) and wep:GetHoldType() or "normal"
-    local holdMap = {
-        ["pistol"]   = "PISTOL", ["revolver"] = "REVOLVER", ["smg"] = "SMG1",
-        ["ar2"]      = "AR2",    ["shotgun"]  = "SHOTGUN",  ["rpg"] = "RPG",
-        ["melee"]    = "MELEE",  ["knife"]    = "KNIFE",    ["fist"] = "FIST"
+    -- Priority 2: CSS Native Activity Mapping
+    -- This maps standard multiplayer activities to the specific sequences CSS models possess.
+    local t = {
+        [ACT_MP_STAND_IDLE]   = ACT_IDLE,
+        [ACT_MP_WALK]         = ACT_WALK,
+        [ACT_MP_RUN]          = ACT_RUN,
+        [ACT_MP_CROUCHWALK]   = ACT_WALK,
+        [ACT_MP_CROUCH_IDLE]  = ACT_IDLE,
+        [ACT_MP_JUMP]         = ACT_JUMP,
+        [ACT_MP_JUMP_START]   = ACT_JUMP,
+        [ACT_MP_JUMP_FLOAT]   = ACT_GLIDE,
+        [ACT_MP_JUMP_LAND]    = ACT_LAND,
+        -- HL2MP hold-type activities -> base equivalents
+        [ACT_HL2MP_IDLE]             = ACT_IDLE,
+        [ACT_HL2MP_RUN]              = ACT_RUN,
+        [ACT_HL2MP_WALK]             = ACT_WALK,
+        [ACT_HL2MP_IDLE_PISTOL]      = ACT_IDLE,
+        [ACT_HL2MP_RUN_PISTOL]       = ACT_RUN,
+        [ACT_HL2MP_WALK_PISTOL]      = ACT_WALK,
+        [ACT_HL2MP_IDLE_SMG1]        = ACT_IDLE,
+        [ACT_HL2MP_RUN_SMG1]         = ACT_RUN,
+        [ACT_HL2MP_WALK_SMG1]        = ACT_WALK,
+        [ACT_HL2MP_IDLE_AR2]         = ACT_IDLE,
+        [ACT_HL2MP_RUN_AR2]          = ACT_RUN,
+        [ACT_HL2MP_WALK_AR2]         = ACT_WALK,
+        [ACT_HL2MP_IDLE_SHOTGUN]     = ACT_IDLE,
+        [ACT_HL2MP_RUN_SHOTGUN]      = ACT_RUN,
+        [ACT_HL2MP_WALK_SHOTGUN]     = ACT_WALK,
     }
-    local suffix = holdMap[h] or "AR2"
 
-    if act == ACT_MP_STAND_IDLE then return _G["ACT_HL2MP_IDLE_" .. suffix] or ACT_HL2MP_IDLE
-    elseif act == ACT_MP_WALK   then return _G["ACT_HL2MP_WALK_" .. suffix] or ACT_HL2MP_WALK
-    elseif act == ACT_MP_RUN    then return _G["ACT_HL2MP_RUN_" .. suffix] or ACT_HL2MP_RUN
-    elseif act == ACT_MP_CROUCH_IDLE then return _G["ACT_HL2MP_IDLE_CROUCH_" .. suffix] or ACT_HL2MP_IDLE_CROUCH
-    elseif act == ACT_MP_CROUCHWALK then return _G["ACT_HL2MP_WALK_CROUCH_" .. suffix] or ACT_HL2MP_WALK_CROUCH
-    elseif act == ACT_MP_JUMP   then return ACT_HL2MP_JUMP_AR2 end
-
-    return act
+    return t[act] or act
 end)
 
 -- ── 2. Shared Main Activity Logic ────────────────────────────────────────
@@ -71,7 +84,6 @@ end)
 local function updatePoseParams(ply, velocity)
     local speed = velocity:Length()
     local eye   = ply:EyeAngles()
-    local speed2d = velocity:Length2D()
     local body  = ply:GetAngles()
 
     -- 8-Way Movement
@@ -80,24 +92,27 @@ local function updatePoseParams(ply, velocity)
         ply:SetPoseParameter("move_y", (velocity:Dot(ply:GetRight()) / speed) * -1)
         
         -- Foot alignment: Direction of movement relative to where we look
-        local moveYaw = math.NormalizeAngle(velocity:Angle().y - body.y)
+        local moveYaw = math.NormalizeAngle(velocity:Angle().y - eye.y)
         ply:SetPoseParameter("move_yaw", moveYaw)
     end
 
-    -- Aim Alignment (Fixes Floating Guns)
+    -- Aim Alignment (Fixes Floating Guns & Hand Positioning)
     local pitch = math.NormalizeAngle(eye.p)
     local yaw   = math.NormalizeAngle(eye.y - body.y)
 
     ply:SetPoseParameter("aim_pitch", pitch)
     ply:SetPoseParameter("aim_yaw", yaw)
     
+    -- Body pitch (Upper body tilt)
+    ply:SetPoseParameter("body_pitch", math.Clamp(pitch, -60, 60))
+    
     -- Head Tracking
     ply:SetPoseParameter("head_pitch", math.Clamp(pitch, -45, 45))
     ply:SetPoseParameter("head_yaw", math.Clamp(yaw, -60, 60))
     
-    -- Procedural Leaning (Torso)
+    -- Procedural Leaning / Stability
     local sideSpeed = velocity:Dot(ply:GetRight())
-    ply:SetPoseParameter("body_yaw", Lerp(FrameTime() * 5, ply:GetPoseParameter("body_yaw"), (sideSpeed / 350) * 25))
+    ply:SetPoseParameter("body_yaw", Lerp(FrameTime() * 5, ply:GetPoseParameter("body_yaw") or 0, (sideSpeed / 350) * 25))
 end
 
 if SERVER then
