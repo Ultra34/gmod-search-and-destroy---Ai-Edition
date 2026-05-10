@@ -375,30 +375,29 @@ end)
 function SND.UpdatePoseParameters(ply, velocity)
 	local speed = velocity:Length()
 	local eye = ply:EyeAngles()
-	local body = ply:GetAngles()
-
-	if speed > 10 then
-		ply:SetPoseParameter("move_x", velocity:Dot(ply:GetForward()) / speed)
-		ply:SetPoseParameter("move_y", (velocity:Dot(ply:GetRight()) / speed) * -1)
-		ply:SetPoseParameter("move_yaw", math.NormalizeAngle(velocity:Angle().y - body.y))
-	else
-		ply:SetPoseParameter("move_x", 0); ply:SetPoseParameter("move_y", 0); ply:SetPoseParameter("move_yaw", 0)
-	end
+	local body = ply:GetRenderAngles() -- Sync parameters to the visible mesh, not the physics hull
 
 	local pitch = math.NormalizeAngle(eye.p)
 	local yaw = math.NormalizeAngle(eye.y - body.y)
-	ply:SetPoseParameter("aim_pitch", math.Clamp(pitch, -90, 90)); ply:SetPoseParameter("aim_yaw", math.Clamp(yaw, -90, 90))
+
+	-- Clamping aim_yaw to 90 prevents the spine from snapping backward.
+	-- Using RenderAngles ensures the arms track precisely with the weapon model.
+	ply:SetPoseParameter("aim_pitch", math.Clamp(pitch, -90, 90))
+	ply:SetPoseParameter("aim_yaw", math.Clamp(yaw, -90, 90))
 	ply:SetPoseParameter("head_pitch", math.Clamp(pitch, -45, 45)); ply:SetPoseParameter("head_yaw", math.Clamp(yaw, -60, 60))
-	local leanTarget = (velocity:Dot(ply:GetRight()) / 350) * 25
-	ply:SetPoseParameter("body_yaw", Lerp(FrameTime() * 5, ply:GetPoseParameter("body_yaw") or 0, leanTarget))
+	local leanTarget = (velocity:Dot(ply:GetRight()) / 350) * 20
+	ply:SetPoseParameter("body_yaw", Lerp(FrameTime() * 10, ply:GetPoseParameter("body_yaw") or 0, leanTarget))
 end
 
 hook.Add("UpdateAnimation", "SND_ClientAnims", function(ply, velocity, maxSeqGroundSpeed)
 	if not IsValid(ply) or not ply:Alive() then return end
 	if ply:IsBot() or ply:GetNWBool("SND_IsBot", false) then
 		local speed = velocity:Length2D()
-		local rate = math.Clamp(speed / math.max(maxSeqGroundSpeed, 1), 0.8, 1.4)
-		if speed < 10 then rate = 1 end; ply:SetPlaybackRate(rate)
+		if speed > 10 and maxSeqGroundSpeed > 0 then
+			ply:SetPlaybackRate(math.Clamp(speed / maxSeqGroundSpeed, 0.5, 2.0))
+		else
+			ply:SetPlaybackRate(1.0)
+		end
 	end
 	SND.UpdatePoseParameters(ply, velocity)
 end)

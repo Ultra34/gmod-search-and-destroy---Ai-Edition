@@ -46,7 +46,6 @@ if SERVER then
 	AddCSLuaFile("cl_init.lua")
 	AddCSLuaFile("cl_hud.lua")
 	AddCSLuaFile("cl_settings.lua")
-	AddCSLuaFile("snd_bot_anim.lua")
 	AddCSLuaFile("snd_movement.lua")
 end
 
@@ -55,3 +54,64 @@ include("snd_config.lua")
 if CLIENT then
 	include("snd_settings.lua")
 end
+
+-- ── Shared Animation Activity Resolution (CSS Models) ──────────────────────
+function SND.IsCSSModel(ply)
+	local model = string.lower(ply:GetModel() or "")
+	return string.find(model, "/ct_") or string.find(model, "/t_")
+end
+
+function SND.ResolveCSSActivity(ply, velocity)
+	local speed = velocity:Length2D()
+
+	-- Use standard activities; TranslateActivity will handle the weapon mapping.
+	if not ply:IsOnGround() then return ACT_MP_JUMP end
+	if ply:Crouching() then
+		return (speed < 15) and ACT_MP_CROUCH_IDLE or ACT_MP_CROUCHWALK
+	end
+
+	if speed < 10 then
+		return ACT_MP_STAND_IDLE
+	elseif speed < 150 then
+		return ACT_MP_WALK
+	else
+		return ACT_MP_RUN
+	end
+end
+
+hook.Add("CalcMainActivity", "SND_SharedCalcActivity", function(ply, velocity)
+	if not IsValid(ply) or not ply:Alive() or not SND.IsCSSModel(ply) then return end
+	return SND.ResolveCSSActivity(ply, velocity), -1
+end)
+
+hook.Add("TranslateActivity", "SND_BotAnimTranslate", function(ply, act)
+	if not IsValid(ply) or not ply:Alive() or not SND.IsCSSModel(ply) then return end
+
+	local wep = ply:GetActiveWeapon()
+	local hold = IsValid(wep) and wep:GetHoldType() or "ar2"
+	
+	-- Map standard acts to the holdtype versions that CSS models support.
+	local actMap = {
+		[ACT_MP_STAND_IDLE] = "IDLE",
+		[ACT_MP_WALK] = "WALK",
+		[ACT_MP_RUN] = "RUN",
+		[ACT_MP_CROUCH_IDLE] = "IDLE_CROUCH",
+		[ACT_MP_CROUCHWALK] = "WALK_CROUCH",
+		[ACT_MP_JUMP] = "JUMP",
+	}
+
+	local suffix = actMap[act]
+	if suffix then
+		-- Fallback holdtypes to prevent T-posing on older CSS model rigs
+		if hold == "rpg" or hold == "physgun" or hold == "grenade" or hold == "slam" then hold = "ar2" end
+		if hold == "smg1" then hold = "smg" end
+		
+		local mapped = _G["ACT_HL2MP_" .. suffix .. "_" .. string.upper(hold)]
+		if mapped then return mapped end
+	end
+
+	if IsValid(wep) and wep.TranslateActivity then
+		local translated = wep:TranslateActivity(act)
+		if translated and translated ~= -1 then return translated end
+	end
+end)

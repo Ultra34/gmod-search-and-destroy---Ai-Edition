@@ -218,14 +218,15 @@ end)
 hook.Add("Think", "SND_ServerBotAnims", function()
 	for _, bot in ipairs(player.GetAll()) do
 		if not bot.SND_IsBot or not bot:Alive() then continue end
-		local eyeYaw = bot:EyeAngles().y
-		local bodyYaw = bot:GetAngles().y
-		local diff = math.abs(math.NormalizeAngle(eyeYaw - bodyYaw))
+		local vel = bot:GetVelocity():Length2D()
+		local eye = bot:EyeAngles().y
+		local body = bot:GetAngles().y
+		local diff = math.NormalizeAngle(eye - body)
 
-		-- Rotate body if moving OR if looking too far to the side (prevents spine snapping)
-		if bot:GetVelocity():Length2D() > 5 or diff > 45 then
-			local targetAng = Angle(0, eyeYaw, 0)
-			bot:SetAngles(LerpAngle(FrameTime() * 15, bot:GetAngles(), targetAng))
+		-- Rotate body immediately if moving.
+		-- If standing, only turn the feet if the aim offset exceeds a comfortable 40-degree limit.
+		if vel > 10 or math.abs(diff) > 40 then
+			bot:SetAngles(Angle(0, vel > 10 and eye or (eye - (diff > 0 and 40 or -40)), 0))
 		end
 	end
 end)
