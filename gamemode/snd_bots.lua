@@ -316,7 +316,8 @@ end
 -- ── Navigation ────────────────────────────────────────────────────────────
 local function moveToward(bot, cmd, targetPos, speed)
 	if not isvector(targetPos) then return 0 end
-
+    
+	speed = tonumber(speed) or 200
 	local ai = bot.SND_AI
 	local myPos = bot:GetPos()
 

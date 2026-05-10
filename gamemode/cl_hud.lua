@@ -333,9 +333,7 @@ local function drawXPBar(sw, sh, sc, lp)
 	local currentXP = lp.SND_XP or 0
 	local level = lp:GetNWInt("SND_Level", 1)
 	local xpInLevel = currentXP % 2000 -- Matches XP_PER_LEVEL in snd_levels.lua
-	local targetProgress = xpInLevel / 2000
-
-	SND.HUD.LerpXP = Lerp(FrameTime() * 4, SND.HUD.LerpXP, targetProgress)
+	local progress = xpInLevel / 2000
 
 	local w, h = 400 * sc, 10 * sc
 	local x, y = sw * 0.5 - w * 0.5, sh - 20 * sc
@@ -346,7 +344,7 @@ local function drawXPBar(sw, sh, sc, lp)
 
 	-- Fill
 	surface.SetDrawColor(255, 210, 50, 255)
-	surface.DrawRect(x, y, w * SND.HUD.LerpXP, h)
+	surface.DrawRect(x, y, w * progress, h)
 
 	-- Label
 	draw.SimpleText("RANK " .. level .. " PROGRESS", "Trebuchet18", x, y - 15 * sc, Color(255, 210, 50, 200), TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
@@ -422,10 +420,6 @@ local function drawWeaponInventory(sw, sh, sc, lp)
 		return class:gsub("iw[345]_", ""):upper()
 	end
 
-	-- Update Weapon Alphas (Smooth highlighting)
-	SND.HUD.WepAlphas.pri = Lerp(FrameTime() * 10, SND.HUD.WepAlphas.pri, (activeClass == pri) and 255 or 80)
-	SND.HUD.WepAlphas.sec = Lerp(FrameTime() * 10, SND.HUD.WepAlphas.sec, (activeClass == sec) and 255 or 80)
-
 	-- Helper to draw weapon icon
 	local function drawIcon(class, label, iconX, iconY, alpha)
 		local wep = lp:GetWeapon(class)
@@ -441,14 +435,16 @@ local function drawWeaponInventory(sw, sh, sc, lp)
 	-- Secondary
 	local sName = "2: " .. cleanName(sec)
 	local secCol = (activeClass == sec) and C_WHITE or C_DIM
-	draw.SimpleText(sName, "Trebuchet24", x, y, col(secCol.r, secCol.g, secCol.b, SND.HUD.WepAlphas.sec * 0.8), TEXT_ALIGN_RIGHT, TEXT_ALIGN_BOTTOM)
-	drawIcon(sec, sName, x, y, SND.HUD.WepAlphas.sec)
+	local secAlpha = (activeClass == sec) and 255 or 80
+	draw.SimpleText(sName, "Trebuchet24", x, y, col(secCol.r, secCol.g, secCol.b, 200), TEXT_ALIGN_RIGHT, TEXT_ALIGN_BOTTOM)
+	drawIcon(sec, sName, x, y, secAlpha)
 
 	-- Primary
 	local pName = "1: " .. cleanName(pri)
 	local priCol = (activeClass == pri) and C_WHITE or C_DIM
-	draw.SimpleText(pName, "Trebuchet24", x, y - 40 * sc, col(priCol.r, priCol.g, priCol.b, SND.HUD.WepAlphas.pri * 0.8), TEXT_ALIGN_RIGHT, TEXT_ALIGN_BOTTOM)
-	drawIcon(pri, pName, x, y - 40 * sc, SND.HUD.WepAlphas.pri)
+	local priAlpha = (activeClass == pri) and 255 or 80
+	draw.SimpleText(pName, "Trebuchet24", x, y - 40 * sc, col(priCol.r, priCol.g, priCol.b, 200), TEXT_ALIGN_RIGHT, TEXT_ALIGN_BOTTOM)
+	drawIcon(pri, pName, x, y - 40 * sc, priAlpha)
 end
 
 -- ── Ammo Counter HUD ─────────────────────────────────────────────────────
@@ -673,16 +669,6 @@ hook.Add("HUDPaint", "SND_HUD", function()
 	local lp = LocalPlayer()
 	if not IsValid(lp) then return end
 
-	-- Professional Defensive Check: Ensure animation buffers are always ready
-	SND.HUD = SND.HUD or {}
-	SND.HUD.LerpStamina = SND.HUD.LerpStamina or 1
-	SND.HUD.LerpHP      = SND.HUD.LerpHP or 100
-	SND.HUD.LerpScores  = SND.HUD.LerpScores or { [1] = 0, [2] = 0 }
-	SND.HUD.LerpBomb    = SND.HUD.LerpBomb or 0
-	SND.HUD.LerpXP      = SND.HUD.LerpXP or 0
-	SND.HUD.LerpFreeze  = SND.HUD.LerpFreeze or 0
-	SND.HUD.WepAlphas   = SND.HUD.WepAlphas or { pri = 80, sec = 80 }
-
 	local cv = GetConVar("snd_hud_scale")
 	local sc = math.Clamp(cv and cv:GetFloat() or 1, 0.75, 1.5)
 	local sw, sh = ScrW(), ScrH()
@@ -780,19 +766,10 @@ hook.Add("HUDPaint", "SND_HUD", function()
 	local scoreW, scoreH = 220 * sc, 44 * sc
 	local sx, sy = 32 * sc + mSize, 16 * sc
 
-	-- Update Score Buffers
-	local attKey, defKey = 1, 2
-
-	SND.HUD.LerpScores[attKey] = SND.HUD.LerpScores[attKey] or 0
-	SND.HUD.LerpScores[defKey] = SND.HUD.LerpScores[defKey] or 0
-
-	SND.HUD.LerpScores[attKey] = Lerp(FrameTime() * 5, SND.HUD.LerpScores[attKey], SND.Client.AttackScore or 0)
-	SND.HUD.LerpScores[defKey] = Lerp(FrameTime() * 5, SND.HUD.LerpScores[defKey], SND.Client.DefendScore or 0)
-
 	pill(sx, sy, scoreW, scoreH, C_PILL)
 
 	draw.SimpleText(
-		tostring(math.Round(SND.HUD.LerpScores[attKey])),
+		tostring(SND.Client.AttackScore or 0),
 		"DermaLarge", sx + 18 * sc, sy + scoreH * 0.5,
 		C_ATTACK, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER
 	)
@@ -802,7 +779,7 @@ hook.Add("HUDPaint", "SND_HUD", function()
 		C_DIM, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER
 	)
 	draw.SimpleText(
-		tostring(math.Round(SND.HUD.LerpScores[defKey])),
+		tostring(SND.Client.DefendScore or 0),
 		"DermaLarge", sx + scoreW - 18 * sc, sy + scoreH * 0.5,
 		C_DEFEND, TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER
 	)
@@ -901,9 +878,7 @@ hook.Add("HUDPaint", "SND_HUD", function()
 	-- ── FREEZE COUNTDOWN BAR (bottom-center) ──────────────────────────────
 	if phase == SND.PHASE_FREEZE and freezeEndTime > 0 then
 		local remaining = math.max(0, freezeEndTime - CurTime())
-		local targetFrac = math.Clamp(remaining / math.max(freezeDuration, 0.01), 0, 1)
-		
-		SND.HUD.LerpFreeze = Lerp(FrameTime() * 15, SND.HUD.LerpFreeze, targetFrac)
+		local frac      = math.Clamp(remaining / math.max(freezeDuration, 0.01), 0, 1)
 
 		local bw = 360 * sc
 		local bh = 26 * sc
@@ -915,11 +890,11 @@ hook.Add("HUDPaint", "SND_HUD", function()
 		pill(bx, by, bw, bh, col(30, 32, 40, 220))
 
 		-- Fill (green → yellow → red as time runs out)
-		local r = math.floor(Lerp(SND.HUD.LerpFreeze, 220, 60))
-		local g = math.floor(Lerp(SND.HUD.LerpFreeze, 80, 200))
+		local r = math.floor(Lerp(frac, 220, 60))
+		local g = math.floor(Lerp(frac, 80, 200))
 		local fillCol = col(r, g, 60, 220)
-		if bw * SND.HUD.LerpFreeze > 4 then
-			pill(bx, by, bw * SND.HUD.LerpFreeze, bh, fillCol)
+		if bw * frac > 4 then
+			pill(bx, by, bw * frac, bh, fillCol)
 		end
 
 		-- Text
@@ -1227,15 +1202,9 @@ hook.Add("HUDPaint", "SND_BombProgressBar", function()
 	if BombProg.kind == 0 then return end
 	if not IsValid(BombProg.who) then BombProg.kind = 0 return end
 
-	-- Defensive Check for Bomb Bar
-	SND.HUD = SND.HUD or {}
-	SND.HUD.LerpBomb = SND.HUD.LerpBomb or 0
-
 	local elapsed  = CurTime() - BombProg.started
-	local targetFrac = math.Clamp(elapsed / math.max(BombProg.total, 0.01), 0, 1)
-	SND.HUD.LerpBomb = Lerp(FrameTime() * 15, SND.HUD.LerpBomb, targetFrac)
-	
-	if SND.HUD.LerpBomb >= 0.999 and targetFrac >= 1 then BombProg.kind = 0 SND.HUD.LerpBomb = 0 return end
+	local frac     = math.Clamp(elapsed / math.max(BombProg.total, 0.01), 0, 1)
+	if frac >= 1 then BombProg.kind = 0 return end
 
 	local sw, sh = ScrW(), ScrH()
 	local bw, bh = 320, 24
@@ -1246,8 +1215,8 @@ hook.Add("HUDPaint", "SND_BombProgressBar", function()
 	local fillC  = BombProg.kind == 1 and col(220, 80, 40) or col(40, 160, 220)
 
 	draw.RoundedBox(5, bx, by, bw, bh, col(25, 27, 35, 220))
-	if bw * SND.HUD.LerpBomb > 4 then
-		draw.RoundedBox(5, bx, by, bw * SND.HUD.LerpBomb, bh, fillC)
+	if bw * frac > 4 then
+		draw.RoundedBox(5, bx, by, bw * frac, bh, fillC)
 	end
 
 	draw.SimpleText(lbl, "Trebuchet18", sw * 0.5, by + bh * 0.5,

@@ -129,24 +129,21 @@ local function sendNavToPlayer(ply)
 end
 
 function GM:PlayerInitialSpawn(ply)
-    self.BaseClass.PlayerInitialSpawn(self, ply)
-    
-    -- Initial State
-    ply.SND_Joined = true
-    ply.SND_IsReady = false
-    
-    -- Team Assignment (Balanced)
-    local a, d = #team.GetPlayers(SND.TEAM_ATTACK), #team.GetPlayers(SND.TEAM_DEFEND)
-    ply:SetTeam(a <= d and SND.TEAM_ATTACK or SND.TEAM_DEFEND)
-    
-    -- Load Identity Persistence
-    ply:SetNWString("SND_CardTitle", ply:GetPData("snd_card_title", "New Recruit"))
-    local isBot = (ply:IsBot() or ply.SND_IsBot)
-    ply:SetNWString("SND_CardMat", ply:GetPData("snd_card_mat", isBot and (SND.Config.DefaultBotBanner or "") or ""))
-    ply:SetNWBool("SND_ShowTitle", ply:GetPData("snd_show_title", "1") == "1")
-    ply:SetNWBool("SND_UseTitleMat", ply:GetPData("snd_use_title_mat", "0") == "1")
-    ply:SetNWString("SND_TitleMat", ply:GetPData("snd_title_mat", "vgui/white"))
-    ply:SetNWString("SND_EmblemMat", ply:GetPData("snd_emblem_mat", isBot and (SND.Config.DefaultBotEmblem or "vgui/icon_skull") or "steam"))
+	self.BaseClass.PlayerInitialSpawn(self, ply)
+	if not ply.SND_Joined then
+		ply.SND_Joined = true
+		ply:SetTeam(math.random(1, 2) == 1 and SND.TEAM_ATTACK or SND.TEAM_DEFEND)
+		ply.SND_IsReady = false
+	end
+	
+	-- Load Calling Card
+	ply:SetNWString("SND_CardTitle", ply:GetPData("snd_card_title", "New Recruit"))
+	local isBot = (ply:IsBot() or ply.SND_IsBot) -- Check if it's a bot
+	ply:SetNWString("SND_CardMat", ply:GetPData("snd_card_mat", isBot and (SND.Config.DefaultBotBanner or "") or "")) -- Default to transparent for players/bots
+	ply:SetNWBool("SND_ShowTitle", ply:GetPData("snd_show_title", "1") == "1")
+	ply:SetNWBool("SND_UseTitleMat", ply:GetPData("snd_use_title_mat", "0") == "1")
+	ply:SetNWString("SND_TitleMat", ply:GetPData("snd_title_mat", "vgui/white"))
+	ply:SetNWString("SND_EmblemMat", ply:GetPData("snd_emblem_mat", isBot and (SND.Config.DefaultBotEmblem or "vgui/icon_skull") or "steam"))
 
 	-- Load Active Loadout Slot choice
 	local savedSlot = tonumber(ply:GetPData("snd_active_slot", "1")) or 1
