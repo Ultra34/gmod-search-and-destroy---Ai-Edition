@@ -61,42 +61,44 @@ function SND.IsCSSModel(ply)
 	return string.find(model, "/ct_") or string.find(model, "/t_")
 end
 
+local holdTypeToSuffix = {
+	["pistol"] = "PISTOL", ["revolver"] = "REVOLVER", ["smg"] = "SMG1", ["smg1"] = "SMG1",
+	["ar2"] = "AR2", ["rpg"] = "RPG", ["physgun"] = "AR2", ["shotgun"] = "SHOTGUN",
+	["melee"] = "MELEE", ["melee2"] = "MELEE", ["fist"] = "FIST", ["knife"] = "KNIFE",
+	["grenade"] = "GRENADE", ["slam"] = "SLAM", ["passive"] = "PASSIVE", ["normal"] = "PASSIVE"
+}
+
 function SND.ResolveCSSActivity(ply, velocity)
 	local speed = velocity:Length2D()
 	local wep = ply:GetActiveWeapon()
 	local hold = IsValid(wep) and wep:GetHoldType() or "ar2"
+	local suffix = holdTypeToSuffix[hold] or "AR2"
 
-	-- Activity Suffix Resolution (Strict Mapping for CS:S Skeletons)
-	local suffix = "AR2"
-	if hold == "pistol" or hold == "revolver" then suffix = "PISTOL"
-	elseif hold == "smg" or hold == "smg1" then suffix = "SMG1"
-	elseif hold == "ar2" or hold == "rpg" or hold == "physgun" then suffix = "AR2"
-	elseif hold == "shotgun" then suffix = "SHOTGUN"
-	elseif hold == "melee" or hold == "melee2" or hold == "fist" then suffix = "MELEE"
-	elseif hold == "knife" then suffix = "KNIFE"
-	elseif hold == "grenade" then suffix = "GRENADE"
-	elseif hold == "slam" then suffix = "SLAM"
-	elseif hold == "passive" or hold == "normal" then suffix = "PASSIVE"
-	end
-
-	-- Resolve final HL2MP activities directly to bypass engine translation gaps
+	-- 1. Jumping
 	if not ply:IsOnGround() then
+		if suffix == "PASSIVE" then return ACT_HL2MP_JUMP_PASSIVE end
 		return _G["ACT_HL2MP_JUMP_" .. suffix] or ACT_HL2MP_JUMP_AR2
 	end
 
+	-- 2. Crouching
 	if ply:Crouching() then
 		if speed < 15 then
-			return _G["ACT_HL2MP_IDLE_CROUCH_" .. suffix] or ACT_HL2MP_IDLE_CROUCH
+			if suffix == "PASSIVE" then return ACT_HL2MP_IDLE_CROUCH end
+			return _G["ACT_HL2MP_IDLE_CROUCH_" .. suffix] or ACT_HL2MP_IDLE_CROUCH_AR2
 		else
 			return ACT_HL2MP_WALK_CROUCH
 		end
 	end
 
+	-- 3. Standing/Moving
 	if speed < 10 then
+		if suffix == "PASSIVE" then return ACT_HL2MP_IDLE end
 		return _G["ACT_HL2MP_IDLE_" .. suffix] or ACT_HL2MP_IDLE_AR2
 	elseif speed < 150 then
+		if suffix == "PASSIVE" then return ACT_HL2MP_WALK_PASSIVE end
 		return _G["ACT_HL2MP_WALK_" .. suffix] or ACT_HL2MP_WALK_AR2
 	else
+		if suffix == "PASSIVE" then return ACT_HL2MP_RUN_PASSIVE end
 		return _G["ACT_HL2MP_RUN_" .. suffix] or ACT_HL2MP_RUN_AR2
 	end
 end
