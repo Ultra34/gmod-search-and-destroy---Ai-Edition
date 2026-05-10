@@ -3,6 +3,15 @@ include("bot_nav.lua")
 include("bot_combat.lua")
 include("bot_think.lua")
 
+-- AI State Constants
+local BS_IDLE   = 0
+local BS_PATROL = 1
+local BS_ENGAGE = 2
+local BS_CHASE  = 3
+local BS_PLANT  = 4
+local BS_DEFUSE = 5
+local BS_RELOAD = 6
+
 local PERSONALITIES = {
 	{ name="Rusher",    aggressionBias= 0.9, roamSpeedMult=1.30, holdRange=0 },
 	{ name="Stalker",   aggressionBias= 0.0, roamSpeedMult=0.85, holdRange=700 },
@@ -28,6 +37,12 @@ local function newAI()
 		shootGate = 0,
 		nextJump = 0
 	}
+end
+
+function SND.Bots.OnPlayerSpawn(ply)
+	if not ply.SND_IsBot then return end
+	SND.Teams.ApplyFactionModel(ply)
+	ply.SND_AI = newAI()
 end
 
 function SND.Bots.EnsureCount()

@@ -58,7 +58,7 @@ function SND.Bots.Think(bot, cmd)
 		else
 			ai.state = 1 -- BS_PATROL
 			local sites = SND.Config.MapSites[game.GetMap()] or {}
-			local s = sites[(bot:EntIndex() % #sites) + 1]
+			local s = (#sites > 0) and sites[(bot:EntIndex() % #sites) + 1] or nil
 			if s then goal = s.plantPos end
 		end
 
