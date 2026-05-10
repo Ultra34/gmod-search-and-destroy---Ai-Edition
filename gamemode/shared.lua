@@ -81,7 +81,7 @@ end
 
 hook.Add("CalcMainActivity", "SND_SharedCalcActivity", function(ply, velocity)
 	if not IsValid(ply) or not ply:Alive() or not SND.IsCSSModel(ply) then return end
-	return SND.ResolveCSSActivity(ply, velocity), 0
+	return SND.ResolveCSSActivity(ply, velocity), -1
 end)
 
 hook.Add("TranslateActivity", "SND_BotAnimTranslate", function(ply, act)
@@ -106,7 +106,7 @@ hook.Add("TranslateActivity", "SND_BotAnimTranslate", function(ply, act)
 		if hold == "normal" or hold == "passive" or hold == "rpg" or hold == "physgun" or hold == "grenade" or hold == "slam" then 
 			hold = "ar2" 
 		end
-		if hold == "smg1" or hold == "smg" then hold = "smg" end
+		if hold == "smg1" or hold == "smg" then hold = "smg1" end
 		if hold == "revolver" then hold = "pistol" end
 		
 		local holdUpper = string.upper(hold)
