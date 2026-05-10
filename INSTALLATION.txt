@@ -169,7 +169,7 @@ WHY THIS MATTERS
 
 STEP 1 — Subscribe to ARC9 (and dependencies the ARC9 page lists).
 
-STEP 2 — Subscribe to the ARC9 Black Ops, Modern Warfare, and WaW Classic packs.
+STEP 2 — Subscribe to the ARC9 Black Ops 1, Modern Warfare, and WaW packs.
 
 STEP 3 — Enable addons in the GMod menu (Addons → filter enabled).
 

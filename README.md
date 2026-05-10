@@ -3,7 +3,7 @@
 # GMod Search & Destroy
 
 A Garry's Mod **gamemode** built around Call of Duty-style Search & Destroy rules.  
-One life per round, bomb plant and defuse, team scoring, visual map voting, Lua-driven bots with a full AI state machine, first-person legs, 3D bomb-site markers, and loadouts powered by **ARC9 Call of Duty weapon packs** (Modern Warfare & Black Ops Classics).
+One life per round, bomb plant and defuse, team scoring, visual map voting, Lua-driven bots with a full AI state machine, first-person legs, 3D bomb-site markers, and loadouts powered by **ARC9 Call of Duty weapon packs** (Modern Warfare & Black Ops).
 
 **Repository:** Ultra34/gmod-search-and-destroy---Ai-Edition
 

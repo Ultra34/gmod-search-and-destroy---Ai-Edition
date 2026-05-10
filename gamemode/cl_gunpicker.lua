@@ -9,7 +9,7 @@ SND.GunPicker = SND.GunPicker or {}
 -- ── Friendly display names ────────────────────────────────────────────────
 -- If a weapon class has no entry here the raw class name is shown instead.
 local DISPLAY_NAMES = {
-	-- [ARC9] Black Ops Classic (Verified)
+	-- [ARC9] Black Ops 1 (Verified)
 	["arc9_bo1_ultimate_ak"] = "AK-47",
 	["arc9_bo1_aug"] = "AUG",
 	["arc9_bo1_xl60"] = "Enfield",
@@ -161,7 +161,7 @@ local DISPLAY_NAMES = {
 	["arc9_cod4e_p90"] = "P90",
 	["arc9_cod4e_skorpion"] = "Skorpion",
 
-	-- [ARC9] MW2 Extended (arc9_mw2e_*)
+	-- [ARC9] Modern Warfare 2 (arc9_mw2e_*)
 	["arc9_mw2e_acr"] = "ACR",
 	["arc9_mw2e_ak47"] = "AK-47",
 	["arc9_mw2e_f2000"] = "F2000",
@@ -190,7 +190,7 @@ local DISPLAY_NAMES = {
 	["arc9_mw2e_pp2000"] = "PP-2000",
 	["arc9_mw2e_vector"] = "Vector",
 
-	-- [ARC9] MW3 Extended (arc9_mw3e_*)
+	-- [ARC9] Modern Warfare 3 (arc9_mw3e_*)
 	["arc9_mw3e_acr"] = "ACR 6.8",
 	["arc9_mw3e_cm901"] = "CM901",
 	["arc9_mw3e_fad"] = "FAD",
@@ -235,49 +235,6 @@ local DISPLAY_NAMES = {
 	["arc9_mw3e_mp7"] = "MP7",
 	["arc9_mw3e_mp5"] = "MP5",
 
-	-- [ARC9] Modern Warfare Classic (arc9_mw3_*)
-	["arc9_mw3_acr"] = "ACR 6.8",
-	["arc9_mw3_m4a1"] = "M4A1",
-	["arc9_mw3_ak47"] = "AK-47 (MW3)",
-	["arc9_mw3_m16"] = "M16A4",
-	["arc9_mw3_scar"] = "SCAR-L",
-	["arc9_mw3_g36c"] = "G36C",
-	["arc9_mw3_cm901"] = "CM901",
-	["arc9_mw3_fad"] = "FAD",
-	["arc9_mw3_mk14"] = "MK14",
-	["arc9_mw3_type95"] = "Type 95",
-	["arc9_mw3_mp5"] = "MP5",
-	["arc9_mw3_ump45"] = "UMP45",
-	["arc9_mw3_p90"] = "P90",
-	["arc9_mw3_mp7"] = "MP7",
-	["arc9_mw3_ak74u"] = "AK-74u (MW3)",
-	["arc9_mw3_pp90m1"] = "PP90M1",
-	["arc9_mw3_pm9"] = "PM-9",
-	["arc9_mw3_m60"] = "M60 (MW3)",
-	["arc9_mw3_mg36"] = "MG36",
-	["arc9_mw3_pkp"] = "PKP Pecheneg",
-	["arc9_mw3_mk46"] = "MK46",
-	["arc9_mw3_l86"] = "L86 LSW",
-	["arc9_mw3_spas12"] = "SPAS-12 (MW3)",
-	["arc9_mw3_striker"] = "Striker",
-	["arc9_mw3_model1887"] = "Model 1887",
-	["arc9_mw3_aa12"] = "AA-12",
-	["arc9_mw3_usas12"] = "USAS-12",
-	["arc9_mw3_ksg"] = "KSG 12",
-	["arc9_mw3_msr"] = "MSR",
-	["arc9_mw3_barrett"] = "Barrett .50cal",
-	["arc9_mw3_l118a"] = "L118A",
-	["arc9_mw3_rsass"] = "RSASS",
-	["arc9_mw3_as50"] = "AS50",
-	["arc9_mw3_usp"] = "USP .45",
-	["arc9_mw3_p99"] = "P99",
-	["arc9_mw3_magnum"] = ".44 Magnum",
-	["arc9_mw3_deserteagle"] = "Desert Eagle",
-	["arc9_mw3_fiveseven"] = "Five-SeveN",
-	["arc9_mw3_mp412"] = "MP412 Rex",
-	["arc9_mw3_glock"] = "G18",
-	["arc9_mw3_fmg9"] = "FMG9",
-	["arc9_mw3_riotshield"] = "Riot Shield",
 }
 
 -- Helper to get the world model for a weapon class

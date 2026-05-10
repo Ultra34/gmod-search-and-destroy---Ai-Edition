@@ -51,31 +51,15 @@ SND.Config.MW3E_SG = { "arc9_mw3e_aa12", "arc9_mw3e_ksg12", "arc9_mw3e_striker",
 SND.Config.MW3E_SR = { "arc9_mw3e_rsass", "arc9_mw3e_msr", "arc9_mw3e_awm", "arc9_mw3e_dragunov", "arc9_mw3e_barrett", "arc9_mw3e_as50" }
 SND.Config.MW3E_PISTOLS = { "arc9_mw3e_anaconda", "arc9_mw3e_deagle", "arc9_mw3e_fiveseven", "arc9_mw3e_mp412", "arc9_mw3e_p99", "arc9_mw3e_usp", "arc9_mw3e_fmg9", "arc9_mw3e_glock", "arc9_mw3e_mp9" }
 
--- ── ARC9: Modern Warfare Classic (arc9_mw3_*) ──────────────────────────
-SND.Config.MW3_AR = { "arc9_mw3_acr", "arc9_mw3_m4a1", "arc9_mw3_ak47", "arc9_mw3_m16", "arc9_mw3_scar", "arc9_mw3_g36c", "arc9_mw3_cm901", "arc9_mw3_fad", "arc9_mw3_mk14", "arc9_mw3_type95" }
-SND.Config.MW3_SMG = { "arc9_mw3_mp5", "arc9_mw3_ump45", "arc9_mw3_p90", "arc9_mw3_mp7", "arc9_mw3_pp90m1", "arc9_mw3_pm9" }
-SND.Config.MW3_LMG = { "arc9_mw3_m60", "arc9_mw3_mg36", "arc9_mw3_pkp", "arc9_mw3_mk46", "arc9_mw3_l86" }
-SND.Config.MW3_SG = { "arc9_mw3_spas12", "arc9_mw3_striker", "arc9_mw3_model1887", "arc9_mw3_aa12", "arc9_mw3_usas12", "arc9_mw3_ksg" }
-SND.Config.MW3_SR = { "arc9_mw3_msr", "arc9_mw3_barrett", "arc9_mw3_l118a", "arc9_mw3_rsass", "arc9_mw3_as50" }
-SND.Config.MW3_PISTOLS = { "arc9_mw3_usp", "arc9_mw3_p99", "arc9_mw3_magnum", "arc9_mw3_deserteagle", "arc9_mw3_fiveseven", "arc9_mw3_mp412", "arc9_mw3_glock", "arc9_mw3_fmg9" }
-
 -- Categorized Primary weapons for UI display
 SND.Config.WeaponGroups = {
-	-- MW3 (Modern Warfare Classic)
-	{ name = "MW Classic: Assault Rifles", weapons = SND.Config.MW3_AR, cid = "mw3_ar", icon = "game_icons/mw3.png" },
-	{ name = "MW Classic: SMGs", weapons = SND.Config.MW3_SMG, cid = "mw3_smg", icon = "game_icons/mw3.png" },
-	{ name = "MW Classic: Sniper Rifles", weapons = SND.Config.MW3_SR, cid = "mw3_sr", icon = "game_icons/mw3.png" },
-	{ name = "MW Classic: LMGs", weapons = SND.Config.MW3_LMG, cid = "mw3_lmg", icon = "game_icons/mw3.png" },
-	{ name = "MW Classic: Shotguns", weapons = SND.Config.MW3_SG, cid = "mw3_sg", icon = "game_icons/mw3.png" },
-	{ name = "MW Classic: Pistols", weapons = SND.Config.MW3_PISTOLS, isSecondary = true, cid = "mw3_pistol", icon = "game_icons/mw3.png" },
-
-	-- BO1 (Black Ops Classic)
-	{ name = "BO Classic: Assault Rifles", weapons = SND.Config.BO1_AR, cid = "bo1_ar", icon = "game_icons/bo1.png" },
-	{ name = "BO Classic: SMGs", weapons = SND.Config.BO1_SMG, cid = "bo1_smg", icon = "game_icons/bo1.png" },
-	{ name = "BO Classic: Sniper Rifles", weapons = SND.Config.BO1_SR, cid = "bo1_sr", icon = "game_icons/bo1.png" },
-	{ name = "BO Classic: LMGs", weapons = SND.Config.BO1_LMG, cid = "bo1_lmg", icon = "game_icons/bo1.png" },
-	{ name = "BO Classic: Shotguns", weapons = SND.Config.BO1_SG, cid = "bo1_sg", icon = "game_icons/bo1.png" },
-	{ name = "BO Classic: Pistols", weapons = SND.Config.BO1_PISTOLS, isSecondary = true, cid = "bo1_pistol", icon = "game_icons/bo1.png" },
+	-- BO1 (Black Ops 1)
+	{ name = "Black Ops 1: Assault Rifles", weapons = SND.Config.BO1_AR, cid = "bo1_ar", icon = "game_icons/bo1.png" },
+	{ name = "Black Ops 1: SMGs", weapons = SND.Config.BO1_SMG, cid = "bo1_smg", icon = "game_icons/bo1.png" },
+	{ name = "Black Ops 1: Sniper Rifles", weapons = SND.Config.BO1_SR, cid = "bo1_sr", icon = "game_icons/bo1.png" },
+	{ name = "Black Ops 1: LMGs", weapons = SND.Config.BO1_LMG, cid = "bo1_lmg", icon = "game_icons/bo1.png" },
+	{ name = "Black Ops 1: Shotguns", weapons = SND.Config.BO1_SG, cid = "bo1_sg", icon = "game_icons/bo1.png" },
+	{ name = "Black Ops 1: Pistols", weapons = SND.Config.BO1_PISTOLS, isSecondary = true, cid = "bo1_pistol", icon = "game_icons/bo1.png" },
 
 	-- BO2 (Black Ops II)
 	{ name = "Black Ops II: Assault Rifles", weapons = SND.Config.BO2_AR, cid = "bo2_ar", icon = "game_icons/bo2.png" },
@@ -93,31 +77,31 @@ SND.Config.WeaponGroups = {
 	{ name = "World at War: Shotguns", weapons = SND.Config.WAW_SG, cid = "waw_sg", icon = "game_icons/waw.png" },
 	{ name = "World at War: Pistols", weapons = SND.Config.WAW_PISTOLS, isSecondary = true, cid = "waw_pistol", icon = "game_icons/waw.png" },
 
-	-- CoD4E (CoD4 Extended)
-	{ name = "CoD4 Extended: Assault Rifles", weapons = SND.Config.COD4E_AR, cid = "cod4e_ar", icon = "game_icons/cod4.png" },
-	{ name = "CoD4 Extended: SMGs", weapons = SND.Config.COD4E_SMG, cid = "cod4e_smg", icon = "game_icons/cod4.png" },
-	{ name = "CoD4 Extended: Sniper Rifles", weapons = SND.Config.COD4E_SR, cid = "cod4e_sr", icon = "game_icons/cod4.png" },
-	{ name = "CoD4 Extended: LMGs", weapons = SND.Config.COD4E_LMG, cid = "cod4e_lmg", icon = "game_icons/cod4.png" },
-	{ name = "CoD4 Extended: Shotguns", weapons = SND.Config.COD4E_SG, cid = "cod4e_sg", icon = "game_icons/cod4.png" },
-	{ name = "CoD4 Extended: Pistols", weapons = SND.Config.COD4E_PISTOLS, isSecondary = true, cid = "cod4e_pistol", icon = "game_icons/cod4.png" },
+	-- CoD4E (Modern Warfare)
+	{ name = "Modern Warfare: Assault Rifles", weapons = SND.Config.COD4E_AR, cid = "cod4e_ar", icon = "game_icons/cod4.png" },
+	{ name = "Modern Warfare: SMGs", weapons = SND.Config.COD4E_SMG, cid = "cod4e_smg", icon = "game_icons/cod4.png" },
+	{ name = "Modern Warfare: Sniper Rifles", weapons = SND.Config.COD4E_SR, cid = "cod4e_sr", icon = "game_icons/cod4.png" },
+	{ name = "Modern Warfare: LMGs", weapons = SND.Config.COD4E_LMG, cid = "cod4e_lmg", icon = "game_icons/cod4.png" },
+	{ name = "Modern Warfare: Shotguns", weapons = SND.Config.COD4E_SG, cid = "cod4e_sg", icon = "game_icons/cod4.png" },
+	{ name = "Modern Warfare: Pistols", weapons = SND.Config.COD4E_PISTOLS, isSecondary = true, cid = "cod4e_pistol", icon = "game_icons/cod4.png" },
 
-	-- MW2E (MW2 Extended)
-	{ name = "MW2 Extended: Assault Rifles", weapons = SND.Config.MW2E_AR, cid = "mw2e_ar", icon = "game_icons/mw2.png" },
-	{ name = "MW2 Extended: SMGs", weapons = SND.Config.MW2E_SMG, cid = "mw2e_smg", icon = "game_icons/mw2.png" },
-	{ name = "MW2 Extended: Sniper Rifles", weapons = SND.Config.MW2E_SR, cid = "mw2e_sr", icon = "game_icons/mw2.png" },
-	{ name = "MW2 Extended: LMGs", weapons = SND.Config.MW2E_LMG, cid = "mw2e_lmg", icon = "game_icons/mw2.png" },
-	{ name = "MW2 Extended: Shotguns", weapons = SND.Config.MW2E_SG, cid = "mw2e_sg", icon = "game_icons/mw2.png" },
-	{ name = "MW2 Extended: Pistols", weapons = SND.Config.MW2E_PISTOLS, isSecondary = true, cid = "mw2e_pistol", icon = "game_icons/mw2.png" },
+	-- MW2E (Modern Warfare 2)
+	{ name = "Modern Warfare 2: Assault Rifles", weapons = SND.Config.MW2E_AR, cid = "mw2e_ar", icon = "game_icons/mw2.png" },
+	{ name = "Modern Warfare 2: SMGs", weapons = SND.Config.MW2E_SMG, cid = "mw2e_smg", icon = "game_icons/mw2.png" },
+	{ name = "Modern Warfare 2: Sniper Rifles", weapons = SND.Config.MW2E_SR, cid = "mw2e_sr", icon = "game_icons/mw2.png" },
+	{ name = "Modern Warfare 2: LMGs", weapons = SND.Config.MW2E_LMG, cid = "mw2e_lmg", icon = "game_icons/mw2.png" },
+	{ name = "Modern Warfare 2: Shotguns", weapons = SND.Config.MW2E_SG, cid = "mw2e_sg", icon = "game_icons/mw2.png" },
+	{ name = "Modern Warfare 2: Pistols", weapons = SND.Config.MW2E_PISTOLS, isSecondary = true, cid = "mw2e_pistol", icon = "game_icons/mw2.png" },
 
-	-- MW3E (MW3 Extended)
-	{ name = "MW3 Extended: Assault Rifles", weapons = SND.Config.MW3E_AR, cid = "mw3e_ar", icon = "game_icons/mw3.png" },
-	{ name = "MW3 Extended: SMGs", weapons = SND.Config.MW3E_SMG, cid = "mw3e_smg", icon = "game_icons/mw3.png" },
-	{ name = "MW3 Extended: Sniper Rifles", weapons = SND.Config.MW3E_SR, cid = "mw3e_sr", icon = "game_icons/mw3.png" },
-	{ name = "MW3 Extended: LMGs", weapons = SND.Config.MW3E_LMG, cid = "mw3e_lmg", icon = "game_icons/mw3.png" },
-	{ name = "MW3 Extended: Shotguns", weapons = SND.Config.MW3E_SG, cid = "mw3e_sg", icon = "game_icons/mw3.png" },
-	{ name = "MW3 Extended: Pistols", weapons = SND.Config.MW3E_PISTOLS, isSecondary = true, cid = "mw3e_pistol", icon = "game_icons/mw3.png" },
+	-- MW3E (Modern Warfare 3)
+	{ name = "Modern Warfare 3: Assault Rifles", weapons = SND.Config.MW3E_AR, cid = "mw3e_ar", icon = "game_icons/mw3.png" },
+	{ name = "Modern Warfare 3: SMGs", weapons = SND.Config.MW3E_SMG, cid = "mw3e_smg", icon = "game_icons/mw3.png" },
+	{ name = "Modern Warfare 3: Sniper Rifles", weapons = SND.Config.MW3E_SR, cid = "mw3e_sr", icon = "game_icons/mw3.png" },
+	{ name = "Modern Warfare 3: LMGs", weapons = SND.Config.MW3E_LMG, cid = "mw3e_lmg", icon = "game_icons/mw3.png" },
+	{ name = "Modern Warfare 3: Shotguns", weapons = SND.Config.MW3E_SG, cid = "mw3e_sg", icon = "game_icons/mw3.png" },
+	{ name = "Modern Warfare 3: Pistols", weapons = SND.Config.MW3E_PISTOLS, isSecondary = true, cid = "mw3e_pistol", icon = "game_icons/mw3.png" },
 
-	{ name = "Miscellaneous", weapons = { "arc9_mw3_riotshield", "arc9_mw3e_riotshield" }, cid = "misc", icon = "game_icons/misc.png", default = "0" },
+	{ name = "Miscellaneous", weapons = { "arc9_mw3e_riotshield" }, cid = "misc", icon = "game_icons/misc.png", default = "0" },
 }
 
 -- ── Merged primary pool (everything that isn't a pistol or launcher) ──────
@@ -130,7 +114,6 @@ for _, group in ipairs(SND.Config.WeaponGroups) do
 end
 
 SND.Config.Mw2eSecondaries = {}
-table.Add(SND.Config.Mw2eSecondaries, SND.Config.MW3_PISTOLS)
 table.Add(SND.Config.Mw2eSecondaries, SND.Config.BO1_PISTOLS)
 table.Add(SND.Config.Mw2eSecondaries, SND.Config.BO2_PISTOLS)
 table.Add(SND.Config.Mw2eSecondaries, SND.Config.WAW_PISTOLS)
@@ -168,7 +151,6 @@ SND.Config.SlotLevels = {
 -- ── Bot loadout pools (no snipers / riot shield — keeps AI sane) ──────────
 SND.Config.BotPrimaries = table.Copy(SND.Config.Mw2ePrimaries)
 -- Remove riot shield from bots to prevent AI navigation issues
-table.RemoveByValue(SND.Config.BotPrimaries, "arc9_mw3_riotshield")
 table.RemoveByValue(SND.Config.BotPrimaries, "arc9_mw3e_riotshield")
 table.RemoveByValue(SND.Config.BotPrimaries, "arc9_bo2_ballistic_shield")
 
