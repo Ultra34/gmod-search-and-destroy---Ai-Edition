@@ -81,7 +81,7 @@ end
 
 hook.Add("CalcMainActivity", "SND_SharedCalcActivity", function(ply, velocity)
 	if not IsValid(ply) or not ply:Alive() or not SND.IsCSSModel(ply) then return end
-	return SND.ResolveCSSActivity(ply, velocity), -1
+	return SND.ResolveCSSActivity(ply, velocity), 0
 end)
 
 hook.Add("TranslateActivity", "SND_BotAnimTranslate", function(ply, act)
@@ -101,15 +101,27 @@ hook.Add("TranslateActivity", "SND_BotAnimTranslate", function(ply, act)
 	}
 
 	local suffix = actMap[act]
-
 	if suffix then
-		-- Fallback holdtypes to prevent T-posing on older CSS model rigs
-		if hold == "rpg" or hold == "physgun" or hold == "grenade" or hold == "slam" or hold == "passive" then hold = "ar2" end
-		if hold == "smg1" then hold = "smg" end
+		-- CSS models typically don't have 'normal', 'passive', or 'rpg' specific sets, so we map to AR2.
+		if hold == "normal" or hold == "passive" or hold == "rpg" or hold == "physgun" or hold == "grenade" or hold == "slam" then 
+			hold = "ar2" 
+		end
+		if hold == "smg1" or hold == "smg" then hold = "smg" end
 		if hold == "revolver" then hold = "pistol" end
 		
-		local mapped = _G["ACT_HL2MP_" .. suffix .. "_" .. string.upper(hold)]
+		local holdUpper = string.upper(hold)
+		local mapped = _G["ACT_HL2MP_" .. suffix .. "_" .. holdUpper]
+		
+		-- Special construction for jump as it doesn't always follow the suffix_holdtype pattern
+		if suffix == "JUMP" and not mapped then
+			mapped = _G["ACT_HL2MP_JUMP_" .. holdUpper] or ACT_HL2MP_JUMP_AR2
+		end
+
 		if mapped then return mapped end
+
+		-- Ultimate fallback to AR2 activities for CSS models to prevent T-posing
+		local fallback = _G["ACT_HL2MP_" .. suffix .. "_AR2"]
+		if fallback then return fallback end
 	end
 
 	if IsValid(wep) and wep.TranslateActivity then

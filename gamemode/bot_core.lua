@@ -214,14 +214,15 @@ hook.Add("Think", "SND_ServerBotAnims", function()
 		local bodyYaw = bot:GetAngles().y
 		local diff = math.NormalizeAngle(eyeYaw - bodyYaw)
 
-		-- Snap-Threshold Rotation:
-		-- Mimics human player turn-in-place behavior. 
-		-- Prevents the 'breaking arms' effect caused byTorso vs Feet desync.
+		-- Smoothed Snap-Threshold Rotation:
+		-- Mimics human player turn-in-place behavior and prevents bone snapping.
 		if speed > 10 then
-			bot:SetAngles(Angle(0, velocity:Angle().y, 0))
+			local moveAng = velocity:Angle()
+			bot:SetAngles(Angle(0, moveAng.y, 0))
 		elseif math.abs(diff) > 45 then 
-			-- Snap the feet to face the target once the torso turns too far.
-			bot:SetAngles(Angle(0, eyeYaw - (diff > 0 and 45 or -45), 0))
+			-- Gradually rotate the body hull if stationary to minimize torso twist
+			local targetAng = Angle(0, eyeYaw - (diff > 0 and 40 or -40), 0)
+			bot:SetAngles(LerpAngle(FrameTime() * 10, bot:GetAngles(), targetAng))
 		end
 	end
 end)
