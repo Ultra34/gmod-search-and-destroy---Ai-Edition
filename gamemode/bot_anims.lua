@@ -45,10 +45,6 @@ local function updatePoseParams(ply)
 		ply:SetPoseParameter("move_y", 0)
 	end
 
-	-- 3. Dynamic Leaning
-	local lean = (vel:Dot(ply:GetRight()) / maxSpd) * 15
-	ply:SetPoseParameter("body_yaw", lean)
-
 	if CLIENT then ply:InvalidateBoneCache() end
 end
 
@@ -107,7 +103,10 @@ end)
 -- ── Shared Playback & Pose Hook ────────────────────────────────────────────
 hook.Add("UpdateAnimation", "SND_SharedAnimLogic", function(ply, vel, maxSeqGroundSpeed)
 	if not IsValid(ply) or not ply:Alive() then return end
-	
+
+	-- Only run procedural pose and playback logic for bots to prevent logic sharing with players
+	if not ply.SND_IsBot and not ply:IsBot() then return end
+
 	local speed = vel:Length2D()
 	if speed > 10 and maxSeqGroundSpeed > 0 then
 		ply:SetPlaybackRate(math.Clamp(speed / maxSeqGroundSpeed, 0.2, 2.0))
