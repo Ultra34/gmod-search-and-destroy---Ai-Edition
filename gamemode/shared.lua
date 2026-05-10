@@ -92,38 +92,50 @@ hook.Add("CalcMainActivity", "SND_SharedCalcActivity", function(ply, velocity)
 	return SND.ResolveCSSActivity(ply, velocity), -1
 end)
 
-local holdTypeToSuffix = {
-	["pistol"] = "PISTOL", ["revolver"] = "REVOLVER", ["smg"] = "SMG1", ["smg1"] = "SMG1",
-	["ar2"] = "AR2", ["rpg"] = "RPG", ["physgun"] = "AR2", ["shotgun"] = "SHOTGUN",
-	["melee"] = "MELEE", ["melee2"] = "MELEE", ["fist"] = "FIST", ["knife"] = "KNIFE",
-	["grenade"] = "GRENADE", ["slam"] = "SLAM", ["passive"] = "PASSIVE", ["normal"] = "PASSIVE"
-}
-
 hook.Add("TranslateActivity", "SND_BotAnimTranslate", function(ply, act)
 	if not IsValid(ply) or not ply:Alive() or not SND.IsCSSModel(ply) then return end
 
-	-- Map generic player activities to the specific HL2MP versions that legacy CSS models recognize.
+	-- Map generic player activities to the base HL2MP strings
 	local moveMap = {
-		[ACT_MP_STAND_IDLE] = "IDLE", [ACT_MP_WALK] = "WALK", [ACT_MP_RUN] = "RUN",
-		[ACT_MP_CROUCH_IDLE] = "IDLE_CROUCH", [ACT_MP_CROUCHWALK] = "WALK_CROUCH", [ACT_MP_JUMP] = "JUMP"
+		[ACT_MP_STAND_IDLE]  = "IDLE",
+		[ACT_MP_WALK]        = "WALK",
+		[ACT_MP_RUN]         = "RUN",
+		[ACT_MP_CROUCH_IDLE] = "IDLE_CROUCH",
+		[ACT_MP_CROUCHWALK]  = "WALK_CROUCH",
+		[ACT_MP_JUMP]        = "JUMP"
 	}
 	
+	local base = moveMap[act]
+	if not base then
+		-- If not a movement activity, let the weapon handle it (Firing/Reloading)
+		local wep = ply:GetActiveWeapon()
+		if IsValid(wep) and wep.TranslateActivity then
+			local translated = wep:TranslateActivity(act)
+			if translated and translated ~= -1 then return translated end
+		end
+		return
+	end
+
 	local wep = ply:GetActiveWeapon()
 	local hold = IsValid(wep) and wep:GetHoldType() or "ar2"
-	local suffix = holdTypeToSuffix[hold] or "AR2"
+	
+	-- Comprehensive holdtype to Suffix mapping for legacy CSS rigs
+	local holdToSuffix = {
+		["pistol"] = "PISTOL", ["revolver"] = "REVOLVER", ["smg"] = "SMG1", ["smg1"] = "SMG1",
+		["ar2"] = "AR2", ["rpg"] = "RPG", ["physgun"] = "AR2", ["shotgun"] = "SHOTGUN",
+		["melee"] = "MELEE", ["melee2"] = "MELEE", ["fist"] = "FIST", ["knife"] = "KNIFE",
+		["grenade"] = "GRENADE", ["slam"] = "SLAM", ["duel"] = "PISTOL",
+		["passive"] = "", ["normal"] = "", ["camera"] = "", ["magic"] = ""
+	}
 
-	local base = moveMap[act]
-	if base then
-		if suffix == "PASSIVE" then
-			if base == "JUMP" then return ACT_HL2MP_JUMP_PASSIVE end
-			return _G["ACT_HL2MP_" .. base] or ACT_HL2MP_IDLE
-		end
-		-- Resolve to final activity, falling back to AR2 if the specific holdtype animation is missing.
-		return _G["ACT_HL2MP_" .. base .. "_" .. suffix] or _G["ACT_HL2MP_" .. base .. "_AR2"] or ACT_HL2MP_IDLE_AR2
+	local suffix = holdToSuffix[hold] or "AR2"
+	local actName = "ACT_HL2MP_" .. base
+	
+	-- Constructed lookup: e.g., ACT_HL2MP_RUN_PISTOL
+	if suffix ~= "" then
+		actName = actName .. "_" .. suffix
 	end
 
-	if IsValid(wep) and wep.TranslateActivity then
-		local translated = wep:TranslateActivity(act)
-		if translated and translated ~= -1 then return translated end
-	end
+	-- Resolve from global table, with strict fallbacks to avoid T-posing
+	return _G[actName] or _G["ACT_HL2MP_" .. base .. "_AR2"] or _G["ACT_HL2MP_" .. base] or ACT_HL2MP_IDLE_AR2
 end)
