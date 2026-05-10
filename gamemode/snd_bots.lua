@@ -456,9 +456,8 @@ local function getAimVector(bot, target, noise, skill)
 
 	local aimAng = (targetPos - bot:EyePos()):Angle()
 
-	-- 2. Recoil Control: High skill bots pull down
 	if bot:KeyDown(IN_ATTACK) then
-		local pull = Lerp(skillT(skill), 0, 2.5)
+		local pull = Lerp(skillT(skill), 0, 2.0)
 		aimAng.p = aimAng.p + pull
 	end
 
