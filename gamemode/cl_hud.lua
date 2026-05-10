@@ -353,9 +353,9 @@ end
 -- ── Stamina Bar ──────────────────────────────────────────────────────────
 local function drawStaminaBar(sw, sh, sc, lp)
 	local targetStam = lp:GetNWFloat("SND_Stamina", 1.0)
-	SND.HUD.LerpStamina = Lerp(FrameTime() * 8, SND.HUD.LerpStamina, targetStam)
+	lerpStamina = Lerp(FrameTime() * 8, lerpStamina, targetStam)
 	
-	if SND.HUD.LerpStamina >= 0.99 and not lp.SND_Sprinting then return end
+	if lerpStamina >= 0.99 and not lp.SND_Sprinting then return end
 
 	local w, h = 180 * sc, 4 * sc
 	local x, y = sw * 0.5 - w * 0.5, sh * 0.75
@@ -368,7 +368,7 @@ local function drawStaminaBar(sw, sh, sc, lp)
 	-- Fill
 	local barCol = isExhausted and Color(255, 60, 40, 200) or Color(255, 255, 255, 180)
 	surface.SetDrawColor(barCol)
-	surface.DrawRect(x, y, w * SND.HUD.LerpStamina, h)
+	surface.DrawRect(x, y, w * lerpStamina, h)
 end
 
 -- ── Level Up Popup ───────────────────────────────────────────────────────
@@ -386,10 +386,10 @@ end
 
 -- ── Red Damage Vignette ──────────────────────────────────────────────────
 local function drawDamageVignette(sw, sh, sc, hp)
-	SND.HUD.LerpHP = Lerp(FrameTime() * 6, SND.HUD.LerpHP, hp)
-	if SND.HUD.LerpHP >= 98 then return end
+	lerpHP = Lerp(FrameTime() * 6, lerpHP, hp)
+	if lerpHP >= 98 then return end
 	
-	local alpha = math.Clamp((100 - SND.HUD.LerpHP) / 80, 0, 1) * 210
+	local alpha = math.Clamp((100 - lerpHP) / 80, 0, 1) * 210
 	local size = 180 * sc
 	
 	surface.SetDrawColor(180, 0, 0, alpha)
