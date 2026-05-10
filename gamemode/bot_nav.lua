@@ -41,7 +41,7 @@ function SND.Bots.MoveToward(bot, cmd, targetPos, speed)
 	})
 
 	if wallTrace.Hit and wallTrace.HitWorld then
-		if CurTime() > ai.nextJump then
+		if CurTime() > (ai.nextJump or 0) then
 			cmd:SetButtons(bit.bor(cmd:GetButtons(), IN_JUMP))
 			ai.nextJump = CurTime() + 1.2
 		end
@@ -53,9 +53,10 @@ function SND.Bots.MoveToward(bot, cmd, targetPos, speed)
 	if bot:IsOnGround() and speed > 0 then
 		if myPos:DistToSqr(ai.stuckPos) < 256 then
 			if CurTime() > ai.stuckCheck then
-				if ai.stuckStartTime == 0 then ai.stuckStartTime = CurTime() end
-				if CurTime() > ai.nextJump then
-					cmd:SetButtons(bit.bor(cmd:SetButtons(), IN_JUMP))
+				if (ai.stuckStartTime or 0) == 0 then ai.stuckStartTime = CurTime() end
+				if CurTime() > (ai.nextJump or 0) then
+					local currentButtons = cmd:GetButtons() or 0
+					cmd:SetButtons(bit.bor(currentButtons, IN_JUMP))
 					ai.nextJump = CurTime() + 0.8
 				end
 				cmd:SetSideMove(math.Rand(-speed, speed))
