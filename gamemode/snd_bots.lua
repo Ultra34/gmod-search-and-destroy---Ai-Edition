@@ -156,6 +156,7 @@ function SND.Bots.EnsureCount()
 		end
 		bot.SND_IsBot = true
 		bot:SetNWBool("SND_IsBot", true) -- Critical for client-side anim logic
+		bot:SetMoveType(MOVETYPE_WALK)
 		bot.SND_AI    = newAI()
 		bot:SetTeam(pickTeam())
 		bot.SND_IsReady = true -- Bots are always ready
@@ -353,6 +354,11 @@ local function moveToward(bot, cmd, targetPos, speed)
 	if not ai.path:IsValid() then
 		cmd:ClearMovement()
 		return myPos:Distance(targetPos)
+	local moveDest = targetPos
+	if ai.path:IsValid() then
+		ai.path:Update(bot)
+		local segments = ai.path:GetAllSegments()
+		moveDest = (segments and #segments > 1) and segments[2].pos or targetPos
 	end
 
 	ai.path:Update(bot)
@@ -445,6 +451,7 @@ local function moveToward(bot, cmd, targetPos, speed)
 		curAng.y = curAng.y + diff * lerpSpeed
 		
 		bot:SetEyeAngles(curAng)
+		cmd:SetViewAngles(curAng)
 	end
 
 	if not isStuck then cmd:SetForwardMove(speed) end
@@ -563,6 +570,9 @@ hook.Add("StartCommand", "SND_BotAI", function(bot, cmd)
 		-- Aiming: High skill = faster snap
 		local aim = getAimVector(bot, enemy, aimNoise(skill), skill)
 		bot:SetEyeAngles(LerpAngle(0.12 + (skillT(skill) * 0.2), bot:EyeAngles(), aim))
+		local newAng = LerpAngle(0.12 + (skillT(skill) * 0.2), bot:EyeAngles(), aim)
+		bot:SetEyeAngles(newAng)
+		cmd:SetViewAngles(newAng)
 
 		-- Firing Gestures: Syncs weapon recoil to 3rd person model
 		if bot:KeyDown(IN_ATTACK) and now > (ai.nextFireGesture or 0) then
